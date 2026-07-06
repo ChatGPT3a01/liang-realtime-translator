@@ -211,6 +211,7 @@ const sRecognizer = new Recognizer({
     bcp: byId(cfg.s_langA).bcp,
     onInterim: (t) => setResult(sResult, t, true),
     onFinal: async (t) => {
+        sRecognizer.stop();   // 先停麥克風，讓朗讀不被辨識佔用（否則手機不出聲）
         const a = $('s_langA').value, b = $('s_langB').value;
         try {
             const out = await translate(t, a, b);
@@ -255,9 +256,29 @@ let livePending = '';
 if (socket) {
     socket.on('text_response', (d) => { if (d.text) { livePending += d.text; setResult(sResult, livePending); } });
     socket.on('turn_complete', () => {
-        if (livePending.trim()) { speak(livePending.trim(), byId($('s_langB').value).bcp); pushHistory('(語音)', livePending.trim()); }
+        // 即時模式由 Gemini 直接吐語音（audio_response 播放），不需再用瀏覽器 TTS，避免雙重朗讀
+        if (livePending.trim()) pushHistory('(即時語音)', livePending.trim());
         livePending = '';
     });
+    socket.on('audio_response', (data) => { playLiveAudio(data); });
+}
+
+// 播放 Gemini Live 原生語音 (24kHz PCM 16-bit)
+let playCtx = null, nextTime = 0;
+function playLiveAudio(data) {
+    try {
+        if (!playCtx) playCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        const int16 = new Int16Array(data);
+        const f32 = new Float32Array(int16.length);
+        for (let i = 0; i < int16.length; i++) f32[i] = int16[i] / 32768;
+        const buf = playCtx.createBuffer(1, f32.length, 24000);
+        buf.getChannelData(0).set(f32);
+        const src = playCtx.createBufferSource();
+        src.buffer = buf; src.connect(playCtx.destination);
+        const now = playCtx.currentTime;
+        if (nextTime < now) nextTime = now;
+        src.start(nextTime); nextTime += buf.duration;
+    } catch (e) { console.warn('play audio error', e); }
 }
 
 async function toggleLive() { liveOn ? stopLive() : startLive(); }
@@ -307,6 +328,7 @@ function makeFaceSide(langSelId, resultBoxId, micBtnId, getTargetId) {
         bcp: byId($(langSelId).value).bcp,
         onInterim: (t) => setResult(box, t, true),
         onFinal: async (t) => {
+            rec.stop();   // 先停麥克風，讓朗讀不被辨識佔用
             const src = $(langSelId).value, tgt = getTargetId();
             try {
                 const out = await translate(t, src, tgt);

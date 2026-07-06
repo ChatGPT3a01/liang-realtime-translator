@@ -12,7 +12,7 @@
 import os
 import requests
 
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
 
 
 def build_prompt(source: str, target: str):
@@ -43,7 +43,7 @@ def translate_openai(base_url: str, api_key: str, model: str, system: str, text:
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     payload = {
-        "model": model or "gpt-4o-mini",
+        "model": model or "gpt-5.5",
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": text},

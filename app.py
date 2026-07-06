@@ -34,7 +34,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Gemini Live realtime 模型 (即時語音對話模式)
-LIVE_MODEL = "models/gemini-2.0-flash-exp"
+# gemini-3.1-flash-live-preview 為原生語音模型，只支援 AUDIO 輸出
+LIVE_MODEL = "gemini-3.1-flash-live-preview"
 
 # Session Storage: Key: sid, Value: GeminiSession
 active_sessions = {}
@@ -68,8 +69,9 @@ class GeminiSession:
 
     async def async_process(self):
         config = {
-            "response_modalities": ["TEXT"],
+            "response_modalities": ["AUDIO"],           # 原生語音模型只支援 AUDIO
             "system_instruction": self.instructions,
+            "output_audio_transcription": {},            # 同時取得字幕文字
         }
         try:
             async with self.client.aio.live.connect(model=LIVE_MODEL, config=config) as session:
@@ -116,10 +118,17 @@ class GeminiSession:
                     break
                 server_content = response.server_content
                 if server_content is not None:
+                    # 字幕（原生語音的逐字轉錄）
+                    ot = getattr(server_content, 'output_transcription', None)
+                    if ot is not None and getattr(ot, 'text', None):
+                        socketio.emit('text_response', {'text': ot.text}, to=self.sid)
                     model_turn = server_content.model_turn
                     if model_turn is not None:
                         for part in model_turn.parts:
-                            if part.text:
+                            inline = getattr(part, 'inline_data', None)
+                            if inline is not None and inline.data:
+                                socketio.emit('audio_response', inline.data, to=self.sid)   # 24kHz PCM 語音
+                            elif getattr(part, 'text', None):
                                 socketio.emit('text_response', {'text': part.text}, to=self.sid)
                     if server_content.turn_complete:
                         socketio.emit('turn_complete', to=self.sid)
