@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: liang-translator
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: GEMINI_API_KEY      # 在 Render 儀表板填入，不寫進 repo（加密保存）
+        sync: false
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: PYTHON_VERSION
+        value: "3.12.10"

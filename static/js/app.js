@@ -1,0 +1,392 @@
+/* =========================================================
+   亮言 · 即時翻譯  —  前端主程式
+   模式：單人 (逐句 STT / Gemini Live 即時) + 面對面 (上下對開翻轉)
+   後端：/api/translate 代理 (Gemini / OpenAI 相容)
+   ========================================================= */
+
+// ---------- 語言清單 ----------
+// name: 給 LLM 的目標語言描述；label: UI 顯示；bcp: STT/TTS 用的 BCP-47
+const LANGS = [
+    { id: 'zh-TW', name: 'Traditional Chinese (Taiwan)', label: 'CHT-台灣繁體', bcp: 'zh-TW' },
+    { id: 'zh-HK', name: 'Traditional Chinese (Hong Kong)', label: 'CHT-香港繁中', bcp: 'zh-HK' },
+    { id: 'zh-CN', name: 'Simplified Chinese', label: 'CHS-簡體中文', bcp: 'zh-CN' },
+    { id: 'ja',    name: 'Japanese', label: 'Japanese-日本語', bcp: 'ja-JP' },
+    { id: 'en',    name: 'English', label: 'English-美語(美)', bcp: 'en-US' },
+    { id: 'ko',    name: 'Korean', label: 'Korean-한국어', bcp: 'ko-KR' },
+    { id: 'th',    name: 'Thai', label: 'Thai-泰語', bcp: 'th-TH' },
+    { id: 'tr',    name: 'Turkish', label: 'Turkish-土耳其語', bcp: 'tr-TR' },
+    { id: 'my',    name: 'Burmese', label: 'Burmese-緬甸語', bcp: 'my-MM' },
+    { id: 'vi',    name: 'Vietnamese', label: 'Vietnam-越南語', bcp: 'vi-VN' },
+    { id: 'id',    name: 'Indonesian', label: 'Indonesia-印尼語', bcp: 'id-ID' },
+    { id: 'ms',    name: 'Malay', label: 'Malay-馬來語', bcp: 'ms-MY' },
+    { id: 'km',    name: 'Khmer', label: 'Khmer-高棉文', bcp: 'km-KH' },
+    { id: 'fr',    name: 'French', label: 'French-法語', bcp: 'fr-FR' },
+    { id: 'de',    name: 'German', label: 'German-德語', bcp: 'de-DE' },
+    { id: 'es',    name: 'Spanish', label: 'Spanish-西班牙語', bcp: 'es-ES' },
+    { id: 'it',    name: 'Italian', label: 'Italian-義大利語', bcp: 'it-IT' },
+    { id: 'ru',    name: 'Russian', label: 'Russian-俄語', bcp: 'ru-RU' },
+];
+const byId = id => LANGS.find(l => l.id === id) || LANGS[0];
+
+// ---------- 設定 ----------
+const DEFAULT_CFG = {
+    provider: 'gemini', baseurl: 'https://api.openai.com/v1', apikey: '', model: '',
+    rate: 1, autospeak: true,
+    s_langA: 'zh-TW', s_langB: 'en',
+    f_langTop: 'en', f_langBottom: 'zh-TW',
+};
+function loadCfg() {
+    try { return { ...DEFAULT_CFG, ...JSON.parse(localStorage.getItem('liang_cfg') || '{}') }; }
+    catch { return { ...DEFAULT_CFG }; }
+}
+function saveCfg(c) { localStorage.setItem('liang_cfg', JSON.stringify(c)); }
+let cfg = loadCfg();
+
+// ---------- DOM ----------
+const $ = id => document.getElementById(id);
+const statusDot = $('statusDot');
+
+// ---------- Toast ----------
+let toastTimer;
+function toast(msg, isError = true) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.style.background = isError ? 'var(--danger)' : 'var(--ok)';
+    t.classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.add('hidden'), 3500);
+}
+
+// ---------- 翻譯 API ----------
+async function translate(text, sourceLangId, targetLangId) {
+    const src = byId(sourceLangId), tgt = byId(targetLangId);
+    const body = {
+        provider: cfg.provider,
+        text,
+        source: src.name,
+        target: tgt.name,
+        base_url: cfg.baseurl,
+        api_key: cfg.apikey,
+        model: cfg.model,
+    };
+    const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '翻譯失敗');
+    return data.translation;
+}
+
+// ---------- TTS ----------
+const synth = window.speechSynthesis;
+function speak(text, bcp) {
+    if (!synth || !cfg.autospeak || !text) return;
+    try {
+        synth.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = bcp;
+        u.rate = parseFloat(cfg.rate) || 1;
+        const voices = synth.getVoices();
+        const prefix = bcp.split('-')[0];
+        const v = voices.find(x => x.lang === bcp) || voices.find(x => x.lang.startsWith(prefix));
+        if (v) u.voice = v;
+        synth.speak(u);
+    } catch (e) { console.warn('TTS error', e); }
+}
+if (synth) synth.onvoiceschanged = () => synth.getVoices();
+
+// ---------- STT (Web Speech API) ----------
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+function sttSupported() { return !!SR; }
+
+class Recognizer {
+    constructor({ bcp, onInterim, onFinal, onState }) {
+        this.bcp = bcp; this.onInterim = onInterim; this.onFinal = onFinal; this.onState = onState;
+        this.active = false; this.rec = null;
+    }
+    start() {
+        if (!SR) { toast('此瀏覽器不支援語音辨識，請改用文字輸入'); return; }
+        if (this.active) { this.stop(); return; }
+        const rec = new SR();
+        rec.lang = this.bcp;
+        rec.interimResults = true;
+        rec.continuous = true;
+        rec.onresult = (e) => {
+            let interim = '', final = '';
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                const r = e.results[i];
+                if (r.isFinal) final += r[0].transcript; else interim += r[0].transcript;
+            }
+            if (interim) this.onInterim?.(interim);
+            if (final.trim()) this.onFinal?.(final.trim());
+        };
+        rec.onerror = (e) => {
+            if (e.error === 'no-speech' || e.error === 'aborted') return;
+            if (e.error === 'not-allowed') toast('麥克風權限被拒絕，請允許後重試');
+            else toast('語音辨識錯誤：' + e.error);
+        };
+        rec.onend = () => {
+            if (this.active) { try { rec.start(); } catch {} }  // 自動續聽
+            else this.onState?.(false);
+        };
+        this.rec = rec;
+        this.active = true;
+        try { rec.start(); this.onState?.(true); } catch (e) { toast('無法啟動麥克風'); this.active = false; }
+    }
+    stop() {
+        this.active = false;
+        if (this.rec) { try { this.rec.stop(); } catch {} }
+        this.onState?.(false);
+    }
+}
+
+// ---------- 歷史 ----------
+function pushHistory(src, dst) {
+    const h = JSON.parse(localStorage.getItem('liang_hist') || '[]');
+    h.unshift({ src, dst, t: Date.now() });
+    localStorage.setItem('liang_hist', JSON.stringify(h.slice(0, 100)));
+}
+function renderHistory() {
+    const list = $('historyList');
+    const h = JSON.parse(localStorage.getItem('liang_hist') || '[]');
+    if (!h.length) { list.innerHTML = '<div class="history-empty">尚無紀錄</div>'; return; }
+    list.innerHTML = h.map(x =>
+        `<div class="history-item"><div class="src">${escapeHtml(x.src)}</div><div class="dst">${escapeHtml(x.dst)}</div></div>`
+    ).join('');
+}
+function escapeHtml(s) { return (s || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+
+// ---------- 填充語言下拉 ----------
+function fillSelect(sel, selectedId) {
+    sel.innerHTML = LANGS.map(l => `<option value="${l.id}">${l.label}</option>`).join('');
+    sel.value = selectedId;
+}
+function initSelects() {
+    fillSelect($('s_langA'), cfg.s_langA);
+    fillSelect($('s_langB'), cfg.s_langB);
+    fillSelect($('f_langTop'), cfg.f_langTop);
+    fillSelect($('f_langBottom'), cfg.f_langBottom);
+}
+
+/* =========================================================
+   單人模式
+   ========================================================= */
+const sResult = $('s_result');
+function setResult(box, text, interim = false) {
+    box.classList.add('active');
+    box.innerHTML = interim
+        ? `<span class="interim">${escapeHtml(text)}</span>`
+        : escapeHtml(text);
+}
+
+// 文字翻譯
+$('s_text').addEventListener('input', (e) => { $('s_count').textContent = `${e.target.value.length}/200`; });
+$('s_send').addEventListener('click', async () => {
+    const text = $('s_text').value.trim();
+    if (!text) return;
+    const a = $('s_langA').value, b = $('s_langB').value;
+    try {
+        setResult(sResult, '翻譯中…', true);
+        const out = await translate(text, a, b);
+        setResult(sResult, out);
+        speak(out, byId(b).bcp);
+        pushHistory(text, out);
+    } catch (e) { toast(e.message); setResult(sResult, '（翻譯失敗）'); }
+});
+
+// 對調語言
+$('s_swap').addEventListener('click', () => {
+    const a = $('s_langA').value; $('s_langA').value = $('s_langB').value; $('s_langB').value = a;
+    cfg.s_langA = $('s_langA').value; cfg.s_langB = $('s_langB').value; saveCfg(cfg);
+});
+$('s_langA').addEventListener('change', () => { cfg.s_langA = $('s_langA').value; saveCfg(cfg); });
+$('s_langB').addEventListener('change', () => { cfg.s_langB = $('s_langB').value; saveCfg(cfg); });
+
+// 單人麥克風：依引擎切換
+function currentEngine() { return document.querySelector('input[name=engine]:checked').value; }
+
+const sRecognizer = new Recognizer({
+    bcp: byId(cfg.s_langA).bcp,
+    onInterim: (t) => setResult(sResult, t, true),
+    onFinal: async (t) => {
+        const a = $('s_langA').value, b = $('s_langB').value;
+        try {
+            const out = await translate(t, a, b);
+            setResult(sResult, out);
+            speak(out, byId(b).bcp);
+            pushHistory(t, out);
+        } catch (e) { toast(e.message); }
+    },
+    onState: (on) => toggleMic($('s_mic'), on),
+});
+
+function toggleMic(btn, on) {
+    btn.classList.toggle('listening', on);
+    const lbl = btn.querySelector('.mic-label');
+    if (lbl) lbl.textContent = on ? '聆聽中…點擊停止' : '按住／點擊說話';
+}
+
+$('s_mic').addEventListener('click', () => {
+    if (currentEngine() === 'live') { toggleLive(); return; }
+    sRecognizer.bcp = byId($('s_langA').value).bcp;
+    sRecognizer.start();
+});
+
+/* =========================================================
+   Gemini Live 即時模式 (socket 串流)
+   ========================================================= */
+// socket.io 由 CDN 載入；若載入失敗，仍要保證「文字/逐句」功能可用
+let socket = null;
+try {
+    if (typeof io === 'function') {
+        socket = io({ transports: ['websocket', 'polling'] });
+        socket.on('connect', () => statusDot.classList.add('connected'));
+        socket.on('disconnect', () => { statusDot.classList.remove('connected'); if (liveOn) stopLive(); });
+        socket.on('error', (d) => toast('伺服器：' + (d.msg || 'error')));
+    } else {
+        console.warn('socket.io 未載入，Gemini Live 即時模式停用');
+    }
+} catch (e) { console.warn('socket.io init 失敗', e); }
+
+let liveOn = false, audioCtx, liveProcessor, liveInput, liveStream;
+let livePending = '';
+if (socket) {
+    socket.on('text_response', (d) => { if (d.text) { livePending += d.text; setResult(sResult, livePending); } });
+    socket.on('turn_complete', () => {
+        if (livePending.trim()) { speak(livePending.trim(), byId($('s_langB').value).bcp); pushHistory('(語音)', livePending.trim()); }
+        livePending = '';
+    });
+}
+
+async function toggleLive() { liveOn ? stopLive() : startLive(); }
+
+async function startLive() {
+    if (!socket) { toast('即時模式需要伺服器連線 (socket.io 未載入)'); return; }
+    try {
+        liveStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        liveInput = audioCtx.createMediaStreamSource(liveStream);
+        liveProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
+        liveInput.connect(liveProcessor);
+        liveProcessor.connect(audioCtx.destination);
+        const targetRate = 16000;
+        liveProcessor.onaudioprocess = (e) => {
+            if (!liveOn) return;
+            const input = e.inputBuffer.getChannelData(0);
+            const rate = audioCtx.sampleRate;
+            const step = rate / targetRate;
+            const len = Math.floor(input.length / step);
+            const pcm = new Int16Array(len);
+            for (let i = 0; i < len; i++) {
+                let s = Math.max(-1, Math.min(1, input[Math.floor(i * step)] || 0));
+                pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            }
+            socket.emit('audio_in', pcm.buffer);
+        };
+        socket.emit('start_session', { langA: byId($('s_langA').value).name, langB: byId($('s_langB').value).name });
+        liveOn = true; toggleMic($('s_mic'), true);
+        setResult(sResult, '即時聆聽中…', true);
+    } catch (e) { toast('無法啟動麥克風：' + e.name); }
+}
+function stopLive() {
+    liveOn = false; toggleMic($('s_mic'), false);
+    if (liveProcessor) { liveProcessor.disconnect(); liveProcessor = null; }
+    if (liveInput) { liveInput.disconnect(); liveInput = null; }
+    if (liveStream) { liveStream.getTracks().forEach(t => t.stop()); liveStream = null; }
+    if (socket) socket.emit('stop_session');
+}
+
+/* =========================================================
+   面對面模式
+   ========================================================= */
+function makeFaceSide(langSelId, resultBoxId, micBtnId, getTargetId) {
+    const box = $(resultBoxId), btn = $(micBtnId);
+    const rec = new Recognizer({
+        bcp: byId($(langSelId).value).bcp,
+        onInterim: (t) => setResult(box, t, true),
+        onFinal: async (t) => {
+            const src = $(langSelId).value, tgt = getTargetId();
+            try {
+                const out = await translate(t, src, tgt);
+                // 顯示在「對面那一側」的框
+                const otherBox = (resultBoxId === 'f_resultBottom') ? $('f_resultTop') : $('f_resultBottom');
+                setResult(otherBox, out);
+                speak(out, byId(tgt).bcp);
+                pushHistory(t, out);
+            } catch (e) { toast(e.message); }
+        },
+        onState: (on) => btn.classList.toggle('listening', on),
+    });
+    btn.addEventListener('click', () => { rec.bcp = byId($(langSelId).value).bcp; rec.start(); });
+    return rec;
+}
+// 下方(你)講 bottom 語言 → 翻成 top 語言，顯示在 top(翻轉給對面看)
+makeFaceSide('f_langBottom', 'f_resultBottom', 'f_micBottom', () => $('f_langTop').value);
+// 上方(對面)講 top 語言 → 翻成 bottom 語言，顯示在 bottom
+makeFaceSide('f_langTop', 'f_resultTop', 'f_micTop', () => $('f_langBottom').value);
+$('f_langTop').addEventListener('change', () => { cfg.f_langTop = $('f_langTop').value; saveCfg(cfg); });
+$('f_langBottom').addEventListener('change', () => { cfg.f_langBottom = $('f_langBottom').value; saveCfg(cfg); });
+
+/* =========================================================
+   模式切換
+   ========================================================= */
+let mode = 'single';
+$('modeBtn').addEventListener('click', () => {
+    if (liveOn) stopLive();
+    mode = mode === 'single' ? 'face' : 'single';
+    $('singleView').classList.toggle('hidden', mode !== 'single');
+    $('faceView').classList.toggle('hidden', mode !== 'face');
+    $('modeBtn').textContent = mode === 'single' ? '👤 單人' : '👥 面對面';
+});
+
+/* =========================================================
+   設定 Modal
+   ========================================================= */
+function openSettings() {
+    $('cfg_provider').value = cfg.provider;
+    $('cfg_baseurl').value = cfg.baseurl;
+    $('cfg_apikey').value = cfg.apikey;
+    $('cfg_model').value = cfg.model;
+    $('cfg_rate').value = cfg.rate;
+    $('cfg_autospeak').checked = cfg.autospeak;
+    toggleOpenaiFields();
+    $('settingsModal').classList.remove('hidden');
+}
+function toggleOpenaiFields() {
+    $('openaiFields').style.display = $('cfg_provider').value === 'openai' ? 'block' : 'none';
+}
+$('cfg_provider').addEventListener('change', toggleOpenaiFields);
+$('settingsBtn').addEventListener('click', openSettings);
+$('cfg_cancel').addEventListener('click', () => $('settingsModal').classList.add('hidden'));
+$('cfg_save').addEventListener('click', () => {
+    cfg.provider = $('cfg_provider').value;
+    cfg.baseurl = $('cfg_baseurl').value.trim();
+    cfg.apikey = $('cfg_apikey').value.trim();
+    cfg.model = $('cfg_model').value.trim();
+    cfg.rate = $('cfg_rate').value;
+    cfg.autospeak = $('cfg_autospeak').checked;
+    saveCfg(cfg);
+    $('settingsModal').classList.add('hidden');
+    toast('已儲存設定', false);
+});
+
+/* =========================================================
+   歷史 Modal
+   ========================================================= */
+$('historyBtn').addEventListener('click', () => { renderHistory(); $('historyModal').classList.remove('hidden'); });
+$('hist_close').addEventListener('click', () => $('historyModal').classList.add('hidden'));
+$('hist_clear').addEventListener('click', () => { localStorage.removeItem('liang_hist'); renderHistory(); });
+
+/* =========================================================
+   啟動
+   ========================================================= */
+initSelects();
+if (!sttSupported()) {
+    console.warn('本瀏覽器不支援 Web Speech API，語音辨識不可用（可改用文字或 Gemini Live）');
+}
+// 註冊 Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW 註冊失敗', e));
+}
