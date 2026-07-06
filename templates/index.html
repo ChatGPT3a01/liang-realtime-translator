@@ -423,7 +423,7 @@
 // === Password Gate (SHA-256, 閱讀阻擋用途，非安全保護) ===
 (function () {
   'use strict';
-  var ADMIN_HASH       = 'abf201846450c01d558c54d0325ac33f16efcae045ffb2d48d5d17e33e34d084';
+  var ADMIN_HASH       = '3ee7f6541f8186b90ad66c06d6e5bf89ca81c3c16c07b48800d751ac21adcd23';
   // 內建（寫死於程式碼）的使用者密碼雜湊清單；新增請改原始碼並重新部署
   var BUILTIN_HASHES   = ["3ee7f6541f8186b90ad66c06d6e5bf89ca81c3c16c07b48800d751ac21adcd23"];
   var HASH_STORAGE     = 'liang_translate_pw';
@@ -498,18 +498,9 @@
       return;
     }
     sha256(val).then(function (hash) {
-      if (hash === ADMIN_HASH) {
-        pwError.textContent = '';
-        sessionStorage.setItem(AUTH_KEY, '1');
-        if (adminPanel) {
-          adminPanel.classList.add('show');
-          if (adminContent) adminContent.style.display = 'block';
-          renderHashList();
-        }
-        return;
-      }
       var extras = getExtraHashes();
-      if (BUILTIN_HASHES.indexOf(hash) !== -1 || extras.indexOf(hash) !== -1) {
+      // 進入密碼優先：任何有效密碼（含管理密碼）直接進入，管理面板另由「管理員」開啟
+      if (BUILTIN_HASHES.indexOf(hash) !== -1 || extras.indexOf(hash) !== -1 || hash === ADMIN_HASH) {
         enterSite();
       } else {
         pwError.textContent = '密碼錯誤，請重新輸入';
