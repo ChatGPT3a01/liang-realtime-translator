@@ -1,36 +1,28 @@
-/* 亮言 · 即時翻譯 — Service Worker (PWA) */
-const CACHE = 'liang-translate-v1';
-const ASSETS = [
-    '/',
-    '/static/css/style.css',
-    '/static/js/app.js',
-    '/manifest.json',
-    '/static/icon-192.png',
-    '/static/icon-512.png',
-];
+/* 亮言 · 即時翻譯 — Service Worker (PWA)
+   網路優先 (network-first)：線上一律拿最新版，離線才用快取，避免更新被舊快取卡住。 */
+const CACHE = 'liang-translate-v3';
 
 self.addEventListener('install', (e) => {
-    self.skipWaiting();
-    e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS).catch(() => {})));
+    self.skipWaiting();  // 新版立即接手
 });
 
 self.addEventListener('activate', (e) => {
-    e.waitUntil(caches.keys().then(keys =>
-        Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ));
+    e.waitUntil(
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))  // 清掉所有舊快取
+    );
     self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {
     const url = new URL(e.request.url);
-    // API 與 socket 一律走網路，不快取
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) return;
     if (e.request.method !== 'GET') return;
+    // 網路優先：先抓最新，順便更新快取；沒網路才用快取
     e.respondWith(
-        caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
+        fetch(e.request).then(res => {
             const copy = res.clone();
             caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
             return res;
-        }).catch(() => caches.match('/')))
+        }).catch(() => caches.match(e.request).then(hit => hit || caches.match('/')))
     );
 });
