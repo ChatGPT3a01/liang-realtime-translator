@@ -163,6 +163,41 @@ def api_translate():
     return jsonify(result), status
 
 
+# 雲端 TTS：用 Gemini 原生語音朗讀「任何語言」，不依賴手機內建語音包
+TTS_MODEL = "gemini-2.5-flash-preview-tts"
+
+
+@app.route('/api/tts', methods=['POST'])
+def api_tts():
+    from flask import Response
+    data = request.get_json(force=True, silent=True) or {}
+    text = (data.get('text') or '').strip()
+    if not text:
+        return ('', 204)
+    if not API_KEY:
+        return jsonify({'error': 'no gemini key'}), 400
+    try:
+        from google.genai import types
+        client = genai.Client(api_key=API_KEY)
+        resp = client.models.generate_content(
+            model=TTS_MODEL,
+            contents=text,
+            config=types.GenerateContentConfig(
+                response_modalities=['AUDIO'],
+                speech_config=types.SpeechConfig(
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name='Kore')
+                    )
+                ),
+            ),
+        )
+        audio = resp.candidates[0].content.parts[0].inline_data.data  # 24kHz 16-bit PCM
+        return Response(audio, mimetype='application/octet-stream')
+    except Exception as e:
+        logger.error(f"TTS error: {e}")
+        return jsonify({'error': str(e)}), 400
+
+
 # PWA：manifest 與 service worker 需從根路徑提供
 @app.route('/manifest.json')
 def manifest():

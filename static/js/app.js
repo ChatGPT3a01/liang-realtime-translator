@@ -60,14 +60,19 @@ function toast(msg, isError = true) {
 // ---------- 翻譯 API ----------
 async function translate(text, sourceLangId, targetLangId) {
     const src = byId(sourceLangId), tgt = byId(targetLangId);
+    // 只在 OpenAI 相容時送使用者金鑰/網址；Gemini 一律用伺服器內建金鑰
+    const isOpenai = cfg.provider === 'openai';
+    let model = cfg.model || '';
+    // 避免把 OpenAI 模型名誤送給 Gemini（反之亦然）
+    if (!isOpenai && model && !model.startsWith('gemini')) model = '';
     const body = {
         provider: cfg.provider,
         text,
         source: src.name,
         target: tgt.name,
-        base_url: cfg.baseurl,
-        api_key: cfg.apikey,
-        model: cfg.model,
+        base_url: isOpenai ? cfg.baseurl : '',
+        api_key: isOpenai ? cfg.apikey : '',
+        model: model,
     };
     const res = await fetch('/api/translate', {
         method: 'POST',
@@ -81,8 +86,9 @@ async function translate(text, sourceLangId, targetLangId) {
 
 // ---------- TTS ----------
 const synth = window.speechSynthesis;
-function speak(text, bcp) {
-    if (!synth || !cfg.autospeak || !text) return;
+// 瀏覽器內建朗讀（依賴手機語音包）
+function browserSpeak(text, bcp) {
+    if (!synth || !text) return;
     try {
         synth.cancel();
         const u = new SpeechSynthesisUtterance(text);
@@ -94,6 +100,21 @@ function speak(text, bcp) {
         if (v) u.voice = v;
         synth.speak(u);
     } catch (e) { console.warn('TTS error', e); }
+}
+// 主朗讀：優先用雲端 Gemini TTS（任何語言都有聲音，免裝手機語音包），失敗才用瀏覽器
+async function speak(text, bcp) {
+    if (!cfg.autospeak || !text) return;
+    try {
+        const res = await fetch('/api/tts', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+        });
+        if (res.ok) {
+            const buf = await res.arrayBuffer();
+            if (buf && buf.byteLength > 44) { playLiveAudio(buf); return; }
+        }
+    } catch (e) { console.warn('雲端 TTS 失敗，改用瀏覽器', e); }
+    browserSpeak(text, bcp);   // 後備
 }
 if (synth) synth.onvoiceschanged = () => synth.getVoices();
 
