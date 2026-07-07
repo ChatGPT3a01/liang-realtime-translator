@@ -42,13 +42,13 @@ def translate_openai(base_url: str, api_key: str, model: str, system: str, text:
         url = url + "/chat/completions"
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    # 注意：部分新模型（如 gpt-5.x）只支援預設 temperature，故不傳 temperature 參數
     payload = {
         "model": model or "gpt-5.5",
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": text},
         ],
-        "temperature": 0.3,
     }
     r = requests.post(url, headers=headers, json=payload, timeout=timeout)
     r.raise_for_status()
