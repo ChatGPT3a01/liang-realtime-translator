@@ -213,6 +213,16 @@ def analyze(provider: str, api_key: str, model: str, target_name: str,
     return _parse_json_result(raw)
 
 
+def generate(provider: str, api_key: str, model: str, base_url: str, system: str, user: str) -> str:
+    """通用單輪生成（system + user → text），依 provider 分派。供旅遊問答等使用。"""
+    provider = (provider or "gemini").lower()
+    if provider == "openai":
+        return translate_openai(base_url, api_key, model, system, user, timeout=45)
+    if model and not model.startswith("gemini"):
+        model = ""
+    return translate_gemini(api_key, model, system, user)
+
+
 def translate(data: dict) -> dict:
     """
     主入口。data 需含：

@@ -157,6 +157,36 @@ html, body {
 }
 .cur-rate { text-align: center; margin-top: 8px; }
 
+/* ---------- 天氣 ---------- */
+.wx-search { display: flex; gap: 8px; margin: 6px 0; }
+.wx-search input {
+    flex: 1; background: rgba(0,0,0,.25); border: 1px solid var(--card-border);
+    color: var(--text); border-radius: 10px; padding: 10px; font-family: inherit; font-size: .95rem;
+}
+.wx-search button { flex-shrink: 0; border-radius: 10px; padding: 10px 16px; }
+.wx-geo { width: 100%; margin: 4px 0 8px; padding: 10px; border-radius: 10px;
+    background: transparent; border: 1px solid var(--card-border); color: var(--text);
+    font-family: inherit; font-weight: 700; cursor: pointer; }
+.wx-result {
+    background: rgba(0,0,0,.22); border: 1px solid var(--card-border); border-radius: 14px;
+    padding: 18px; text-align: center; margin-top: 6px;
+}
+.wx-place { color: var(--muted); font-size: .95rem; }
+.wx-temp { font-size: 2rem; font-weight: 900; color: var(--gold); margin: 6px 0; }
+.wx-sub { font-size: .9rem; color: var(--text); }
+.wx-advice { margin-top: 10px; font-size: 1rem; font-weight: 700; }
+
+/* ---------- 旅遊助手 ---------- */
+#ask_q {
+    width: 100%; background: rgba(0,0,0,.25); border: 1px solid var(--card-border);
+    color: var(--text); border-radius: 12px; padding: 12px; font-family: inherit; font-size: 1rem;
+    resize: vertical; outline: none;
+}
+.ask-sources { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.ask-sources .src-title { color: var(--muted); font-size: .78rem; margin-bottom: 2px; }
+.ask-sources a { color: var(--gold-soft); font-size: .85rem; text-decoration: none; word-break: break-all; }
+.ask-sources a:hover { text-decoration: underline; }
+
 /* ---------- 面對面模式 ---------- */
 #faceView { padding: 0; }
 .face-panel { flex: 1; display: flex; padding: 16px; overflow: hidden; }

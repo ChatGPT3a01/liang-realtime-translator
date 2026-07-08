@@ -31,10 +31,12 @@ const byId = id => LANGS.find(l => l.id === id) || LANGS[0];
 // ---------- 設定 ----------
 const DEFAULT_CFG = {
     provider: 'gemini', baseurl: 'https://api.openai.com/v1', apikey: '', model: '',
+    geminikey: '', tavilykey: '', owmkey: '',          // 集中管理的第三方金鑰（皆選填）
     rate: 1, autospeak: true,
     s_langA: 'zh-TW', s_langB: 'en',
     f_langTop: 'en', f_langBottom: 'zh-TW',
     cur_from: 'JPY', cur_to: 'TWD', cur_amount: '1',   // 匯率換算：預設日圓→台幣
+    wx_place: '',                                       // 天氣：上次查詢地點
 };
 function loadCfg() {
     try { return { ...DEFAULT_CFG, ...JSON.parse(localStorage.getItem('liang_cfg') || '{}') }; }
@@ -67,7 +69,8 @@ function providerBody() {
     return {
         provider: cfg.provider,
         base_url: isOpenai ? cfg.baseurl : '',
-        api_key: isOpenai ? cfg.apikey : '',
+        // OpenAI 用 OpenAI 金鑰；Gemini 用「選填的 Gemini 覆蓋金鑰」（留空後端自動用伺服器內建）
+        api_key: isOpenai ? cfg.apikey : (cfg.geminikey || ''),
         model,
     };
 }
@@ -125,7 +128,7 @@ async function speak(text, bcp, force = false, onEnd = null) {
     try {
         const res = await fetch('/api/tts', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text })
+            body: JSON.stringify({ text, gemini_key: cfg.geminikey || '' })
         });
         if (res.ok) {
             const buf = await res.arrayBuffer();
@@ -375,7 +378,10 @@ async function startLive() {
             }
             socket.emit('audio_in', pcm.buffer);
         };
-        socket.emit('start_session', { langA: byId($('s_langA').value).name, langB: byId($('s_langB').value).name });
+        socket.emit('start_session', {
+            langA: byId($('s_langA').value).name, langB: byId($('s_langB').value).name,
+            gemini_key: cfg.geminikey || '',
+        });
         liveOn = true; toggleMic($('s_mic'), true);
         setResult(sResult, '即時聆聽中…', true);
     } catch (e) { toast('無法啟動麥克風：' + e.name); }
@@ -440,6 +446,9 @@ function openSettings() {
     $('cfg_baseurl').value = cfg.baseurl;
     $('cfg_apikey').value = cfg.apikey;
     $('cfg_model').value = cfg.model;
+    $('cfg_geminikey').value = cfg.geminikey || '';
+    $('cfg_tavilykey').value = cfg.tavilykey || '';
+    $('cfg_owmkey').value = cfg.owmkey || '';
     $('cfg_rate').value = cfg.rate;
     $('cfg_autospeak').checked = cfg.autospeak;
     toggleOpenaiFields();
@@ -456,6 +465,9 @@ $('cfg_save').addEventListener('click', () => {
     cfg.baseurl = $('cfg_baseurl').value.trim();
     cfg.apikey = $('cfg_apikey').value.trim();
     cfg.model = $('cfg_model').value.trim();
+    cfg.geminikey = $('cfg_geminikey').value.trim();
+    cfg.tavilykey = $('cfg_tavilykey').value.trim();
+    cfg.owmkey = $('cfg_owmkey').value.trim();
     cfg.rate = $('cfg_rate').value;
     cfg.autospeak = $('cfg_autospeak').checked;
     saveCfg(cfg);
@@ -675,6 +687,106 @@ $('cur_to').addEventListener('change', () => { persistCur(); doConvert(); });
 $('cur_amount').addEventListener('input', () => { persistCur(); scheduleConvert(); });
 $('cur_convert').addEventListener('click', doConvert);
 $('cur_close').addEventListener('click', () => $('currencyModal').classList.add('hidden'));
+
+/* =========================================================
+   天氣（Open-Meteo，免金鑰；填了 OWM 金鑰後端可改用 OpenWeatherMap）
+   ========================================================= */
+async function fetchWeather(payload) {
+    $('wx_result').classList.add('hidden');
+    $('wx_status').textContent = '查詢中…';
+    try {
+        const res = await fetch('/api/weather', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...payload, owm_key: cfg.owmkey || '' }),
+        });
+        const d = await res.json();
+        if (!d.ok) throw new Error(d.error || '查詢失敗');
+        const rows = [
+            `<div class="wx-place">${escapeHtml(d.place)}</div>`,
+            `<div class="wx-temp">${Math.round(d.temp)}°C　${escapeHtml(d.desc)}</div>`,
+            `<div class="wx-sub">體感 ${Math.round(d.feels)}°C · 濕度 ${d.humidity}%` +
+                (d.hi != null ? ` · 高${Math.round(d.hi)}° 低${Math.round(d.lo)}°` : '') +
+                (d.pop != null ? ` · 降雨 ${d.pop}%` : '') + `</div>`,
+            `<div class="wx-advice">${escapeHtml(d.advice)}</div>`,
+        ];
+        $('wx_result').innerHTML = rows.join('');
+        $('wx_result').classList.remove('hidden');
+        $('wx_status').textContent = '';
+    } catch (e) { $('wx_status').textContent = '❌ ' + e.message; }
+}
+$('s_weather').addEventListener('click', () => {
+    $('wx_place').value = cfg.wx_place || '';
+    $('wx_result').classList.add('hidden');
+    $('wx_status').textContent = '';
+    $('weatherModal').classList.remove('hidden');
+    if (cfg.wx_place) fetchWeather({ place: cfg.wx_place });
+});
+$('wx_go').addEventListener('click', () => {
+    const p = $('wx_place').value.trim();
+    if (!p) { $('wx_status').textContent = '請輸入地點'; return; }
+    cfg.wx_place = p; saveCfg(cfg);
+    fetchWeather({ place: p });
+});
+$('wx_place').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('wx_go').click(); });
+$('wx_geo').addEventListener('click', () => {
+    if (!navigator.geolocation) { $('wx_status').textContent = '此裝置不支援定位'; return; }
+    $('wx_status').textContent = '定位中…';
+    navigator.geolocation.getCurrentPosition(
+        (pos) => fetchWeather({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+        () => { $('wx_status').textContent = '無法取得位置（請允許定位權限）'; }
+    );
+});
+$('wx_close').addEventListener('click', () => $('weatherModal').classList.add('hidden'));
+
+/* =========================================================
+   旅遊助手問答（可選 Tavily 上網 + 設定的供應商）
+   ========================================================= */
+let lastAskText = '';
+let askSpeaking = false;
+function setAskSpeakBtn(on) { askSpeaking = on; $('ask_speak').textContent = on ? '⏹ 停止' : '🔊 朗讀'; }
+async function doAsk() {
+    const q = $('ask_q').value.trim();
+    if (!q) { $('ask_status').textContent = '請輸入問題'; return; }
+    $('ask_answer').classList.add('hidden');
+    $('ask_sources').innerHTML = '';
+    $('ask_status').textContent = (cfg.tavilykey ? '上網查詢並' : 'AI ') + '思考中…';
+    try {
+        const res = await fetch('/api/ask', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: q,
+                target: byId(cfg.s_langA).name,      // 用你的語言回答
+                tavily_key: cfg.tavilykey || '',
+                ...providerBody(),
+            }),
+        });
+        const d = await res.json();
+        if (!d.ok) throw new Error(d.error || '查詢失敗');
+        $('ask_status').textContent = d.searched ? '🌐 已參考即時搜尋' : '';
+        $('ask_answer').textContent = d.answer || '（無回覆）';
+        $('ask_answer').classList.remove('hidden');
+        lastAskText = d.answer || '';
+        if (Array.isArray(d.sources) && d.sources.length) {
+            $('ask_sources').innerHTML = '<div class="src-title">來源</div>' + d.sources.map(s =>
+                `<a href="${s.url}" target="_blank" rel="noopener">${escapeHtml(s.title || s.url)}</a>`
+            ).join('');
+        }
+        if (q && lastAskText) pushHistory('（助手）' + q, lastAskText);
+    } catch (e) { $('ask_status').textContent = '❌ ' + e.message; toast(e.message); }
+}
+$('s_ask').addEventListener('click', () => {
+    setAskSpeakBtn(false);
+    $('askModal').classList.remove('hidden');
+});
+$('ask_go').addEventListener('click', doAsk);
+$('ask_speak').addEventListener('click', () => {
+    if (askSpeaking) { stopAllAudio(); return; }
+    if (!lastAskText) { toast('沒有可朗讀的內容'); return; }
+    ensureAudioUnlocked();
+    setAskSpeakBtn(true);
+    speak(lastAskText, byId(cfg.s_langA).bcp, true, () => setAskSpeakBtn(false));
+});
+$('ask_close').addEventListener('click', () => { stopAllAudio(); setAskSpeakBtn(false); $('askModal').classList.add('hidden'); });
 
 /* =========================================================
    啟動

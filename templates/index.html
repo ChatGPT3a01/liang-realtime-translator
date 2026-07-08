@@ -345,7 +345,9 @@
             </div>
             <!-- 旅遊小工具 -->
             <div class="tool-row">
-                <button id="s_currency" class="tool-btn">💱 匯率換算</button>
+                <button id="s_weather" class="tool-btn">🌤️ 天氣</button>
+                <button id="s_currency" class="tool-btn">💱 匯率</button>
+                <button id="s_ask" class="tool-btn">🧭 助手</button>
             </div>
         </section>
 
@@ -406,6 +408,18 @@
                 <input type="text" id="cfg_model" placeholder="gemini-3.5-flash 或 gpt-5.5">
             </label>
 
+            <h3>🔑 API 金鑰（集中管理）</h3>
+            <p class="hint">第三方服務的金鑰統一放這裡。留空的用免金鑰來源或伺服器內建。</p>
+            <label>Gemini 金鑰（選填，留空用伺服器內建）
+                <input type="password" id="cfg_geminikey" placeholder="AIza...（放伺服器較安全，這裡是選填覆蓋）">
+            </label>
+            <label>Tavily 金鑰（旅遊問答上網查資料）
+                <input type="password" id="cfg_tavilykey" placeholder="tvly-...">
+            </label>
+            <label>OpenWeatherMap 金鑰（選填；天氣預設免金鑰用 Open-Meteo）
+                <input type="password" id="cfg_owmkey" placeholder="留空即可，免金鑰照樣查天氣">
+            </label>
+
             <h3>語音朗讀 (TTS)</h3>
             <label>語速 <input type="range" id="cfg_rate" min="0.5" max="1.5" step="0.1" value="1"></label>
             <label class="check"><input type="checkbox" id="cfg_autospeak" checked> 翻譯完成後自動朗讀</label>
@@ -439,6 +453,43 @@
             <div class="modal-actions">
                 <button class="ghost" id="vision_close">關閉</button>
                 <button class="primary" id="vision_speak">🔊 朗讀</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 天氣 Modal ===== -->
+    <div class="modal hidden" id="weatherModal">
+        <div class="modal-card">
+            <h2>🌤️ 天氣查詢</h2>
+            <p class="hint">免費、免金鑰（Open-Meteo）。輸入地點或用目前位置。</p>
+            <div class="wx-search">
+                <input type="text" id="wx_place" placeholder="例如：那霸、東京、台北…">
+                <button class="primary" id="wx_go">查詢</button>
+            </div>
+            <button class="ghost wx-geo" id="wx_geo">📍 用目前位置</button>
+            <div id="wx_result" class="wx-result hidden"></div>
+            <div id="wx_status" class="hint"></div>
+            <div class="modal-actions">
+                <button class="ghost" id="wx_close">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 旅遊助手 Modal ===== -->
+    <div class="modal hidden" id="askModal">
+        <div class="modal-card">
+            <h2>🧭 旅遊助手</h2>
+            <p class="hint">打一句話問任何旅遊問題。填了 Tavily 金鑰會先上網查最新，否則用 AI 既有知識回答。</p>
+            <textarea id="ask_q" rows="3" placeholder="例如：沖繩 12 月適合玩水嗎？那霸機場到國際通怎麼去？"></textarea>
+            <div class="modal-actions" style="margin-top:10px;">
+                <button class="primary" id="ask_go">送出</button>
+            </div>
+            <div id="ask_status" class="hint"></div>
+            <div id="ask_answer" class="vision-text hidden" style="margin-top:10px;"></div>
+            <div id="ask_sources" class="ask-sources"></div>
+            <div class="modal-actions">
+                <button class="ghost" id="ask_close">關閉</button>
+                <button class="primary" id="ask_speak">🔊 朗讀</button>
             </div>
         </div>
     </div>
