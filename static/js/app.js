@@ -34,6 +34,7 @@ const DEFAULT_CFG = {
     rate: 1, autospeak: true,
     s_langA: 'zh-TW', s_langB: 'en',
     f_langTop: 'en', f_langBottom: 'zh-TW',
+    cur_from: 'JPY', cur_to: 'TWD', cur_amount: '1',   // 匯率換算：預設日圓→台幣
 };
 function loadCfg() {
     try { return { ...DEFAULT_CFG, ...JSON.parse(localStorage.getItem('liang_cfg') || '{}') }; }
@@ -601,6 +602,79 @@ $('vision_close').addEventListener('click', () => {
     setVisionSpeakBtn(false);
     visionModal.classList.add('hidden');
 });
+
+/* =========================================================
+   匯率換算（免金鑰：後端代理 ER-API / Frankfurter）
+   ========================================================= */
+const CURRENCIES = [
+    { code: 'TWD', label: 'TWD 台幣' },
+    { code: 'USD', label: 'USD 美元' },
+    { code: 'JPY', label: 'JPY 日圓' },
+    { code: 'KRW', label: 'KRW 韓元' },
+    { code: 'CNY', label: 'CNY 人民幣' },
+    { code: 'HKD', label: 'HKD 港幣' },
+    { code: 'EUR', label: 'EUR 歐元' },
+    { code: 'GBP', label: 'GBP 英鎊' },
+    { code: 'THB', label: 'THB 泰銖' },
+    { code: 'SGD', label: 'SGD 新加坡幣' },
+    { code: 'MYR', label: 'MYR 馬來幣' },
+    { code: 'VND', label: 'VND 越南盾' },
+    { code: 'IDR', label: 'IDR 印尼盾' },
+    { code: 'PHP', label: 'PHP 披索' },
+    { code: 'AUD', label: 'AUD 澳幣' },
+    { code: 'CAD', label: 'CAD 加幣' },
+];
+function fillCur(sel, code) {
+    sel.innerHTML = CURRENCIES.map(c => `<option value="${c.code}">${c.label}</option>`).join('');
+    sel.value = code;
+}
+function fmtMoney(n) {
+    if (!isFinite(n)) return '—';
+    const dp = Math.abs(n) >= 100 ? 2 : 4;   // 大額 2 位、小額 4 位
+    return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: dp });
+}
+function persistCur() {
+    cfg.cur_from = $('cur_from').value;
+    cfg.cur_to = $('cur_to').value;
+    cfg.cur_amount = $('cur_amount').value;
+    saveCfg(cfg);
+}
+let curTimer = null;
+async function doConvert() {
+    const amount = parseFloat($('cur_amount').value);
+    const from = $('cur_from').value, to = $('cur_to').value;
+    if (!isFinite(amount)) { $('cur_result').textContent = '請輸入金額'; $('cur_rate').textContent = ''; return; }
+    $('cur_result').textContent = '換算中…';
+    try {
+        const res = await fetch('/api/currency', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ base: from, target: to, amount }),
+        });
+        const d = await res.json();
+        if (!d.ok) throw new Error(d.error || '查詢失敗');
+        $('cur_result').textContent = `${fmtMoney(amount)} ${from} = ${fmtMoney(d.result)} ${to}`;
+        const when = (d.date || '').replace(' (UTC)', '').slice(0, 16);
+        $('cur_rate').textContent = `1 ${from} ≈ ${fmtMoney(d.rate)} ${to}` + (when ? `　·　${when}` : '');
+    } catch (e) { $('cur_result').textContent = '—'; toast(e.message); }
+}
+function scheduleConvert() { clearTimeout(curTimer); curTimer = setTimeout(doConvert, 350); }
+
+$('s_currency').addEventListener('click', () => {
+    fillCur($('cur_from'), cfg.cur_from);
+    fillCur($('cur_to'), cfg.cur_to);
+    $('cur_amount').value = cfg.cur_amount || '1';
+    $('currencyModal').classList.remove('hidden');
+    doConvert();
+});
+$('cur_swap').addEventListener('click', () => {
+    const a = $('cur_from').value; $('cur_from').value = $('cur_to').value; $('cur_to').value = a;
+    persistCur(); doConvert();
+});
+$('cur_from').addEventListener('change', () => { persistCur(); doConvert(); });
+$('cur_to').addEventListener('change', () => { persistCur(); doConvert(); });
+$('cur_amount').addEventListener('input', () => { persistCur(); scheduleConvert(); });
+$('cur_convert').addEventListener('click', doConvert);
+$('cur_close').addEventListener('click', () => $('currencyModal').classList.add('hidden'));
 
 /* =========================================================
    啟動

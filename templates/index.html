@@ -343,6 +343,10 @@
                 <button id="s_camera" class="tool-btn">📷 拍照翻譯</button>
                 <button id="s_file" class="tool-btn">📎 上傳檔案</button>
             </div>
+            <!-- 旅遊小工具 -->
+            <div class="tool-row">
+                <button id="s_currency" class="tool-btn">💱 匯率換算</button>
+            </div>
         </section>
 
         <!-- 隱藏的檔案輸入 -->
@@ -435,6 +439,28 @@
             <div class="modal-actions">
                 <button class="ghost" id="vision_close">關閉</button>
                 <button class="primary" id="vision_speak">🔊 朗讀</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 匯率換算 Modal ===== -->
+    <div class="modal hidden" id="currencyModal">
+        <div class="modal-card">
+            <h2>💱 匯率換算</h2>
+            <p class="hint">即時匯率（歐洲央行／ER-API，免費）。點金額或幣別會自動換算。</p>
+            <label>金額
+                <input type="number" id="cur_amount" inputmode="decimal" value="1" min="0" step="any">
+            </label>
+            <div class="cur-row">
+                <select class="lang-select" id="cur_from"></select>
+                <button class="swap-btn" id="cur_swap" title="對調幣別">⇄</button>
+                <select class="lang-select" id="cur_to"></select>
+            </div>
+            <div class="cur-result" id="cur_result">—</div>
+            <div class="cur-rate hint" id="cur_rate"></div>
+            <div class="modal-actions">
+                <button class="ghost" id="cur_close">關閉</button>
+                <button class="primary" id="cur_convert">換算</button>
             </div>
         </div>
     </div>

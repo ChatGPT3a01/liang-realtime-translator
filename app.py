@@ -4,6 +4,7 @@ import asyncio
 import threading
 import queue
 import logging
+import requests
 
 # 確保本檔所在目錄在 import 路徑上 (環境可能啟用 PYTHONSAFEPATH)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -34,8 +35,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Gemini Live realtime 模型 (即時語音對話模式)
-# gemini-3.1-flash-live-preview 為原生語音模型，只支援 AUDIO 輸出
-LIVE_MODEL = "gemini-3.1-flash-live-preview"
+# gemini-3.5-live-translate-preview：3.5、專為即時翻譯設計，原生語音 AUDIO 輸出
+# （若即時翻譯品質或行為異常，可回退 gemini-3.1-flash-live-preview）
+LIVE_MODEL = "gemini-3.5-live-translate-preview"
 
 # Session Storage: Key: sid, Value: GeminiSession
 active_sessions = {}
@@ -285,8 +287,54 @@ def api_file():
     return jsonify(result), status
 
 
+# 匯率換算：免金鑰。主用 open.er-api.com（含 TWD 等多幣別），備援 frankfurter.app（歐洲央行）
+@app.route('/api/currency', methods=['POST'])
+def api_currency():
+    data = request.get_json(force=True, silent=True) or {}
+    base = (data.get('base') or 'USD').upper()
+    target = (data.get('target') or 'TWD').upper()
+    try:
+        amount = float(data.get('amount', 1) or 1)
+    except (TypeError, ValueError):
+        amount = 1.0
+
+    if base == target:
+        return jsonify({"ok": True, "base": base, "target": target, "amount": amount,
+                        "rate": 1.0, "result": amount, "date": "", "source": "same"})
+
+    # 主：open.er-api.com（免金鑰，幣別多，含 TWD）
+    try:
+        r = requests.get(f"https://open.er-api.com/v6/latest/{base}", timeout=8)
+        r.raise_for_status()
+        d = r.json()
+        rate = (d.get("rates") or {}).get(target)
+        if rate:
+            return jsonify({"ok": True, "base": base, "target": target, "amount": amount,
+                            "rate": rate, "result": amount * rate,
+                            "date": d.get("time_last_update_utc", ""), "source": "er-api"})
+    except Exception as e:
+        logger.warning(f"currency er-api failed: {e}")
+
+    # 備援：frankfurter.app（歐洲央行，無 TWD 等部分亞幣）
+    try:
+        r = requests.get("https://api.frankfurter.app/latest",
+                         params={"from": base, "to": target}, timeout=8)
+        r.raise_for_status()
+        d = r.json()
+        rate = (d.get("rates") or {}).get(target)
+        if rate:
+            return jsonify({"ok": True, "base": base, "target": target, "amount": amount,
+                            "rate": rate, "result": amount * rate,
+                            "date": d.get("date", ""), "source": "frankfurter"})
+    except Exception as e:
+        logger.warning(f"currency frankfurter failed: {e}")
+
+    return jsonify({"ok": False, "error": f"查不到 {base}→{target} 匯率（請確認幣別代碼）"}), 400
+
+
 # 雲端 TTS：用 Gemini 原生語音朗讀「任何語言」，不依賴手機內建語音包
-TTS_MODEL = "gemini-2.5-flash-preview-tts"
+# 用帳號可用的最新 TTS 模型（2.5 preview 已偏舊，改用 3.1）
+TTS_MODEL = "gemini-3.1-flash-tts-preview"
 
 
 @app.route('/api/tts', methods=['POST'])
