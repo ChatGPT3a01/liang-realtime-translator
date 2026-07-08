@@ -123,6 +123,30 @@ html, body {
     padding: 7px 16px; font-weight: 900; font-family: inherit; cursor: pointer;
 }
 
+/* ---------- 拍照 / 上傳工具列 ---------- */
+.tool-row { display: flex; gap: 10px; }
+.tool-btn {
+    flex: 1; background: var(--card); border: 1px solid var(--card-border); color: var(--text);
+    border-radius: 14px; padding: 12px; font-size: .95rem; font-weight: 700; font-family: inherit;
+    cursor: pointer; transition: .2s;
+}
+.tool-btn:active { transform: scale(.96); }
+
+/* ---------- 拍照 / 檔案結果 ---------- */
+.vision-preview { margin: 10px 0; text-align: center; }
+.vision-preview img { max-width: 100%; max-height: 220px; border-radius: 12px; border: 1px solid var(--card-border); }
+.vision-preview .file-chip {
+    display: inline-block; padding: 10px 16px; border-radius: 12px;
+    background: rgba(0,0,0,.25); border: 1px solid var(--card-border); color: var(--text); font-size: .9rem;
+}
+.vision-status { min-height: 18px; margin: 6px 0; }
+.vision-section { margin-top: 14px; }
+.vision-section h3 { margin: 0 0 6px; font-size: .95rem; color: var(--gold-soft); }
+.vision-text {
+    background: rgba(0,0,0,.22); border: 1px solid var(--card-border); border-radius: 12px;
+    padding: 12px 14px; font-size: 1.02rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+}
+
 /* ---------- 面對面模式 ---------- */
 #faceView { padding: 0; }
 .face-panel { flex: 1; display: flex; padding: 16px; overflow: hidden; }

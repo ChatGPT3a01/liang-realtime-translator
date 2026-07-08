@@ -328,7 +328,7 @@
                 </label>
             </div>
 
-            <button id="s_mic" class="mic-btn"><span class="mic-ico">🎤</span><span class="mic-label">按住／點擊說話</span></button>
+            <button id="s_mic" class="mic-btn"><span class="mic-ico">🎤</span><span class="mic-label">點一下開始說話</span></button>
 
             <div class="text-row">
                 <textarea id="s_text" maxlength="200" placeholder="或直接輸入要翻譯的文字…"></textarea>
@@ -337,7 +337,17 @@
                     <button id="s_send" class="send-btn">翻譯 ➤</button>
                 </div>
             </div>
+
+            <!-- 拍照 / 上傳檔案：摘要 + 翻譯 -->
+            <div class="tool-row">
+                <button id="s_camera" class="tool-btn">📷 拍照翻譯</button>
+                <button id="s_file" class="tool-btn">📎 上傳檔案</button>
+            </div>
         </section>
+
+        <!-- 隱藏的檔案輸入 -->
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+        <input type="file" id="fileInput" accept="image/*,application/pdf,text/plain,.pdf,.txt,.md,.csv" hidden>
 
         <!-- ===== 面對面模式 ===== -->
         <section id="faceView" class="view hidden">
@@ -373,7 +383,7 @@
             <h2>設定</h2>
 
             <h3>翻譯後端 (雲端 API)</h3>
-            <p class="hint">選 Gemini 用內建金鑰；選 OpenAI 相容可接 OpenAI / Groq / DeepSeek / OpenRouter…任何相容服務。</p>
+            <p class="hint">選 Gemini 用內建金鑰；選 OpenAI 相容可接 OpenAI / Groq / DeepSeek / OpenRouter…任何相容服務。拍照／檔案翻譯也會跟隨此設定；但 PDF 僅 Gemini 能讀，選其他供應商時 PDF 會自動改用 Gemini。</p>
             <label>供應商
                 <select id="cfg_provider">
                     <option value="gemini">Gemini (Google)</option>
@@ -399,6 +409,32 @@
             <div class="modal-actions">
                 <button class="ghost" id="cfg_cancel">取消</button>
                 <button class="primary" id="cfg_save">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 拍照 / 檔案：摘要+翻譯 Modal ===== -->
+    <div class="modal hidden" id="visionModal">
+        <div class="modal-card">
+            <h2 id="visionTitle">📷 拍照翻譯</h2>
+            <label>翻譯成
+                <select id="vision_target"></select>
+            </label>
+            <div id="visionPreview" class="vision-preview hidden"></div>
+            <div id="visionStatus" class="vision-status hint"></div>
+            <div id="visionResult" class="vision-result hidden">
+                <div class="vision-section">
+                    <h3>📌 摘要</h3>
+                    <div id="visionSummary" class="vision-text"></div>
+                </div>
+                <div class="vision-section">
+                    <h3>🌐 翻譯</h3>
+                    <div id="visionTranslation" class="vision-text"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="ghost" id="vision_close">關閉</button>
+                <button class="primary" id="vision_speak">🔊 朗讀</button>
             </div>
         </div>
     </div>

@@ -57,6 +57,20 @@ function toast(msg, isError = true) {
     toastTimer = setTimeout(() => t.classList.add('hidden'), 3500);
 }
 
+// ---------- 供應商設定（拍照/檔案與文字翻譯共用邏輯）----------
+// Gemini 一律用伺服器內建金鑰；OpenAI 相容才送使用者金鑰/網址
+function providerBody() {
+    const isOpenai = cfg.provider === 'openai';
+    let model = cfg.model || '';
+    if (!isOpenai && model && !model.startsWith('gemini')) model = '';   // 避免模型名跨供應商誤送
+    return {
+        provider: cfg.provider,
+        base_url: isOpenai ? cfg.baseurl : '',
+        api_key: isOpenai ? cfg.apikey : '',
+        model,
+    };
+}
+
 // ---------- 翻譯 API ----------
 async function translate(text, sourceLangId, targetLangId) {
     const src = byId(sourceLangId), tgt = byId(targetLangId);
@@ -102,8 +116,8 @@ function browserSpeak(text, bcp) {
     } catch (e) { console.warn('TTS error', e); }
 }
 // 主朗讀：優先用雲端 Gemini TTS（任何語言都有聲音，免裝手機語音包），失敗才用瀏覽器
-async function speak(text, bcp) {
-    if (!cfg.autospeak || !text) return;
+async function speak(text, bcp, force = false) {
+    if ((!cfg.autospeak && !force) || !text) return;
     try {
         const res = await fetch('/api/tts', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -123,25 +137,28 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 function sttSupported() { return !!SR; }
 
 class Recognizer {
-    constructor({ bcp, onInterim, onFinal, onState }) {
-        this.bcp = bcp; this.onInterim = onInterim; this.onFinal = onFinal; this.onState = onState;
-        this.active = false; this.rec = null;
+    constructor({ bcp, onInterim, onDone, onState }) {
+        this.bcp = bcp; this.onInterim = onInterim; this.onDone = onDone; this.onState = onState;
+        this.active = false; this.rec = null; this.buffer = '';
     }
     start() {
         if (!SR) { toast('此瀏覽器不支援語音辨識，請改用文字輸入'); return; }
-        if (this.active) { this.stop(); return; }
+        if (this.active) { this.stop(); return; }   // 再點一下 = 停止並翻譯
+        this.buffer = '';                            // 開始新的一段，清空累積
         const rec = new SR();
         rec.lang = this.bcp;
         rec.interimResults = true;
         rec.continuous = true;
         rec.onresult = (e) => {
-            let interim = '', final = '';
+            let interim = '';
             for (let i = e.resultIndex; i < e.results.length; i++) {
                 const r = e.results[i];
-                if (r.isFinal) final += r[0].transcript; else interim += r[0].transcript;
+                // 已確定的句段累積起來，但先不翻譯；只有停止時才整段送出
+                if (r.isFinal) this.buffer += r[0].transcript; else interim += r[0].transcript;
             }
-            if (interim) this.onInterim?.(interim);
-            if (final.trim()) this.onFinal?.(final.trim());
+            // 即時顯示逐字稿（已確定 + 正在辨識），讓使用者看到自己講到哪
+            const shown = (this.buffer + interim).trim();
+            if (shown) this.onInterim?.(shown);
         };
         rec.onerror = (e) => {
             if (e.error === 'no-speech' || e.error === 'aborted') return;
@@ -160,6 +177,9 @@ class Recognizer {
         this.active = false;
         if (this.rec) { try { this.rec.stop(); } catch {} }
         this.onState?.(false);
+        const text = this.buffer.trim();   // 講完了，整段一次交出去翻譯
+        this.buffer = '';
+        if (text) this.onDone?.(text);
     }
 }
 
@@ -231,15 +251,16 @@ function currentEngine() { return document.querySelector('input[name=engine]:che
 const sRecognizer = new Recognizer({
     bcp: byId(cfg.s_langA).bcp,
     onInterim: (t) => setResult(sResult, t, true),
-    onFinal: async (t) => {
-        sRecognizer.stop();   // 先停麥克風，讓朗讀不被辨識佔用（否則手機不出聲）
+    onDone: async (t) => {
+        // 使用者按停後才會進來：麥克風已停，整段一次翻譯（朗讀也不會被辨識佔用）
         const a = $('s_langA').value, b = $('s_langB').value;
         try {
+            setResult(sResult, '翻譯中…', true);
             const out = await translate(t, a, b);
             setResult(sResult, out);
             speak(out, byId(b).bcp);
             pushHistory(t, out);
-        } catch (e) { toast(e.message); }
+        } catch (e) { toast(e.message); setResult(sResult, '（翻譯失敗）'); }
     },
     onState: (on) => toggleMic($('s_mic'), on),
 });
@@ -247,7 +268,7 @@ const sRecognizer = new Recognizer({
 function toggleMic(btn, on) {
     btn.classList.toggle('listening', on);
     const lbl = btn.querySelector('.mic-label');
-    if (lbl) lbl.textContent = on ? '聆聽中…點擊停止' : '按住／點擊說話';
+    if (lbl) lbl.textContent = on ? '🎙️ 說話中…說完再點一下翻譯' : '點一下開始說話';
 }
 
 $('s_mic').addEventListener('click', () => {
@@ -348,8 +369,8 @@ function makeFaceSide(langSelId, resultBoxId, micBtnId, getTargetId) {
     const rec = new Recognizer({
         bcp: byId($(langSelId).value).bcp,
         onInterim: (t) => setResult(box, t, true),
-        onFinal: async (t) => {
-            rec.stop();   // 先停麥克風，讓朗讀不被辨識佔用
+        onDone: async (t) => {
+            // 講完按停才會進來：麥克風已停，整段一次翻譯
             const src = $(langSelId).value, tgt = getTargetId();
             try {
                 const out = await translate(t, src, tgt);
@@ -423,8 +444,130 @@ $('hist_close').addEventListener('click', () => $('historyModal').classList.add(
 $('hist_clear').addEventListener('click', () => { localStorage.removeItem('liang_hist'); renderHistory(); });
 
 /* =========================================================
+   拍照翻譯 / 上傳檔案翻譯 (摘要 + 翻譯)
+   後端一律走 Gemini 雲端多模態，忽略 OpenAI 設定
+   ========================================================= */
+const visionModal = $('visionModal');
+let lastVisionText = '';   // 供「朗讀」按鈕使用
+
+// 相機影像 client 端縮圖：省流量、加速雲端辨識（Gemini 最佳邊長約 1568px）
+function fileToDownscaledDataURL(file, maxDim = 1568, quality = 0.85) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+            const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('圖片讀取失敗')); };
+        img.src = url;
+    });
+}
+function dataURLToBlob(dataURL) {
+    const [head, b64] = dataURL.split(',');
+    const mime = (head.match(/data:(.*?);/) || [, 'image/jpeg'])[1];
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+}
+
+function openVision(title) {
+    $('visionTitle').textContent = title;
+    $('visionResult').classList.add('hidden');
+    $('visionSummary').textContent = '';
+    $('visionTranslation').textContent = '';
+    $('visionStatus').textContent = '';
+    const prev = $('visionPreview'); prev.classList.add('hidden'); prev.innerHTML = '';
+    lastVisionText = '';
+    visionModal.classList.remove('hidden');
+}
+function renderVision(result) {
+    $('visionStatus').textContent = result.note ? ('ℹ️ ' + result.note) : '';
+    const summary = (result.summary || '').trim();
+    const translation = (result.translation || '').trim();
+    $('visionSummary').textContent = summary || '（無摘要）';
+    $('visionTranslation').textContent = translation || '（無可翻譯文字）';
+    $('visionResult').classList.remove('hidden');
+    lastVisionText = translation || summary;
+    if (translation || summary) {
+        pushHistory('（拍照／檔案）', (summary ? summary + '\n' : '') + translation);
+    }
+}
+
+// --- 相機拍照 ---
+$('s_camera').addEventListener('click', () => $('cameraInput').click());
+$('cameraInput').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';                         // 允許再次拍同一來源
+    if (!file) return;
+    openVision('📷 拍照翻譯');
+    try {
+        $('visionStatus').textContent = '影像處理中…';
+        const dataURL = await fileToDownscaledDataURL(file);
+        $('visionPreview').innerHTML = `<img src="${dataURL}" alt="preview">`;
+        $('visionPreview').classList.remove('hidden');
+        $('visionStatus').textContent = '雲端辨識與翻譯中…（約數秒）';
+        const target = byId($('vision_target').value).name;
+        const res = await fetch('/api/vision', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: dataURL, target, ...providerBody() }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || '辨識失敗');
+        renderVision(data);
+    } catch (err) { $('visionStatus').textContent = '❌ ' + err.message; toast(err.message); }
+});
+
+// --- 上傳檔案（圖片 / PDF / 文字檔）---
+$('s_file').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    openVision('📎 檔案翻譯');
+    try {
+        const fd = new FormData();
+        fd.append('target', byId($('vision_target').value).name);
+        const pb = providerBody();
+        Object.keys(pb).forEach(k => fd.append(k, pb[k]));
+        if (file.type.startsWith('image/')) {
+            // 圖片先縮圖再上傳，並顯示預覽
+            const dataURL = await fileToDownscaledDataURL(file);
+            $('visionPreview').innerHTML = `<img src="${dataURL}" alt="preview">`;
+            $('visionPreview').classList.remove('hidden');
+            fd.append('file', dataURLToBlob(dataURL), 'upload.jpg');
+        } else {
+            $('visionPreview').innerHTML = `<div class="file-chip">📄 ${escapeHtml(file.name)}</div>`;
+            $('visionPreview').classList.remove('hidden');
+            fd.append('file', file);
+        }
+        $('visionStatus').textContent = '上傳與翻譯中…（檔案越大越久）';
+        const res = await fetch('/api/file', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || '翻譯失敗');
+        renderVision(data);
+    } catch (err) { $('visionStatus').textContent = '❌ ' + err.message; toast(err.message); }
+});
+
+$('vision_speak').addEventListener('click', () => {
+    if (!lastVisionText) { toast('沒有可朗讀的內容'); return; }
+    speak(lastVisionText, byId($('vision_target').value).bcp, true);   // 手動朗讀，不受自動朗讀設定影響
+});
+$('vision_close').addEventListener('click', () => {
+    if (synth) synth.cancel();
+    visionModal.classList.add('hidden');
+});
+
+/* =========================================================
    啟動
    ========================================================= */
+fillSelect($('vision_target'), cfg.s_langA);   // 拍照/檔案：預設翻成你的語言
 initSelects();
 if (!sttSupported()) {
     console.warn('本瀏覽器不支援 Web Speech API，語音辨識不可用（可改用文字或 Gemini Live）');
