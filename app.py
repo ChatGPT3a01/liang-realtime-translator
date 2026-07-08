@@ -298,26 +298,31 @@ def api_tts():
         return ('', 204)
     if not API_KEY:
         return jsonify({'error': 'no gemini key'}), 400
-    try:
-        from google.genai import types
-        client = genai.Client(api_key=API_KEY)
-        resp = client.models.generate_content(
-            model=TTS_MODEL,
-            contents=text,
-            config=types.GenerateContentConfig(
-                response_modalities=['AUDIO'],
-                speech_config=types.SpeechConfig(
-                    voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name='Kore')
-                    )
-                ),
-            ),
-        )
-        audio = resp.candidates[0].content.parts[0].inline_data.data  # 24kHz 16-bit PCM
-        return Response(audio, mimetype='application/octet-stream')
-    except Exception as e:
-        logger.error(f"TTS error: {e}")
-        return jsonify({'error': str(e)}), 400
+
+    from google.genai import types
+    client = genai.Client(api_key=API_KEY)
+    cfg = types.GenerateContentConfig(
+        response_modalities=['AUDIO'],
+        speech_config=types.SpeechConfig(
+            voice_config=types.VoiceConfig(
+                prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name='Kore')
+            )
+        ),
+    )
+    # 預覽版 TTS 模型偶爾會「吐文字而非音訊」導致 400 → 重試最多 3 次
+    last_err = 'unknown'
+    for _attempt in range(3):
+        try:
+            resp = client.models.generate_content(model=TTS_MODEL, contents=text, config=cfg)
+            for part in resp.candidates[0].content.parts:
+                inline = getattr(part, 'inline_data', None)
+                if inline is not None and inline.data:
+                    return Response(inline.data, mimetype='application/octet-stream')  # 24kHz 16-bit PCM
+            last_err = 'model returned text instead of audio'
+        except Exception as e:
+            last_err = str(e)
+    logger.error(f"TTS failed after retries: {last_err}")
+    return jsonify({'error': last_err}), 400
 
 
 # PWA：manifest 與 service worker 需從根路徑提供

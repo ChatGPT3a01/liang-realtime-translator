@@ -100,9 +100,9 @@ async function translate(text, sourceLangId, targetLangId) {
 
 // ---------- TTS ----------
 const synth = window.speechSynthesis;
-// 瀏覽器內建朗讀（依賴手機語音包）
-function browserSpeak(text, bcp) {
-    if (!synth || !text) return;
+// 瀏覽器內建朗讀（依賴手機語音包）；onEnd 於念完或出錯時回呼
+function browserSpeak(text, bcp, onEnd = null) {
+    if (!synth || !text) { onEnd?.(); return; }
     try {
         synth.cancel();
         const u = new SpeechSynthesisUtterance(text);
@@ -112,12 +112,15 @@ function browserSpeak(text, bcp) {
         const prefix = bcp.split('-')[0];
         const v = voices.find(x => x.lang === bcp) || voices.find(x => x.lang.startsWith(prefix));
         if (v) u.voice = v;
+        u.onend = () => onEnd?.();
+        u.onerror = () => onEnd?.();
         synth.speak(u);
-    } catch (e) { console.warn('TTS error', e); }
+    } catch (e) { console.warn('TTS error', e); onEnd?.(); }
 }
 // 主朗讀：優先用雲端 Gemini TTS（任何語言都有聲音，免裝手機語音包），失敗才用瀏覽器
-async function speak(text, bcp, force = false) {
-    if ((!cfg.autospeak && !force) || !text) return;
+// force=true 無視自動朗讀設定（手動朗讀鈕）；onEnd 於播放結束回呼（供「停止」鈕重置狀態）
+async function speak(text, bcp, force = false, onEnd = null) {
+    if ((!cfg.autospeak && !force) || !text) { onEnd?.(); return; }
     try {
         const res = await fetch('/api/tts', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -125,10 +128,25 @@ async function speak(text, bcp, force = false) {
         });
         if (res.ok) {
             const buf = await res.arrayBuffer();
-            if (buf && buf.byteLength > 44) { playLiveAudio(buf); return; }
+            if (buf && buf.byteLength > 44) { onAllAudioEnd = onEnd; playLiveAudio(buf); return; }
         }
     } catch (e) { console.warn('雲端 TTS 失敗，改用瀏覽器', e); }
-    browserSpeak(text, bcp);   // 後備
+    browserSpeak(text, bcp, onEnd);   // 後備
+}
+// 在使用者點擊當下解鎖音訊（手機／iOS 要求音訊須由手勢啟動，否則靜音）
+function ensureAudioUnlocked() {
+    try {
+        if (!playCtx) playCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        if (playCtx.state === 'suspended') playCtx.resume();
+    } catch (e) { /* ignore */ }
+}
+// 停止所有朗讀（雲端 Web Audio + 瀏覽器 TTS）
+function stopAllAudio() {
+    audioSources.forEach(s => { try { s.onended = null; s.stop(); } catch (e) {} });
+    audioSources = [];
+    nextTime = 0;
+    if (synth) { try { synth.cancel(); } catch (e) {} }
+    const cb = onAllAudioEnd; onAllAudioEnd = null; cb?.();
 }
 if (synth) synth.onvoiceschanged = () => synth.getVoices();
 
@@ -307,9 +325,12 @@ if (socket) {
 
 // 播放 Gemini Live 原生語音 (24kHz PCM 16-bit)
 let playCtx = null, nextTime = 0;
+let audioSources = [];      // 進行中的 Web Audio 節點（供停止用）
+let onAllAudioEnd = null;   // 全部播放結束時的回呼（供「停止」鈕重置狀態）
 function playLiveAudio(data) {
     try {
         if (!playCtx) playCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        if (playCtx.state === 'suspended') playCtx.resume();   // 手機須解鎖後才有聲音
         const int16 = new Int16Array(data);
         const f32 = new Float32Array(int16.length);
         for (let i = 0; i < int16.length; i++) f32[i] = int16[i] / 32768;
@@ -320,6 +341,11 @@ function playLiveAudio(data) {
         const now = playCtx.currentTime;
         if (nextTime < now) nextTime = now;
         src.start(nextTime); nextTime += buf.duration;
+        audioSources.push(src);
+        src.onended = () => {
+            audioSources = audioSources.filter(s => s !== src);
+            if (audioSources.length === 0) { const cb = onAllAudioEnd; onAllAudioEnd = null; cb?.(); }
+        };
     } catch (e) { console.warn('play audio error', e); }
 }
 
@@ -478,6 +504,7 @@ function dataURLToBlob(dataURL) {
 }
 
 function openVision(title) {
+    stopAllAudio(); setVisionSpeakBtn(false);   // 開新的一張前，先停掉上一段朗讀
     $('visionTitle').textContent = title;
     $('visionResult').classList.add('hidden');
     $('visionSummary').textContent = '';
@@ -555,12 +582,23 @@ $('fileInput').addEventListener('change', async (e) => {
     } catch (err) { $('visionStatus').textContent = '❌ ' + err.message; toast(err.message); }
 });
 
+// 朗讀鈕：可切換 —— 沒在念就開始念，念的過程中變「⏹ 停止」，可隨時中斷
+let visionSpeaking = false;
+function setVisionSpeakBtn(on) {
+    visionSpeaking = on;
+    $('vision_speak').textContent = on ? '⏹ 停止' : '🔊 朗讀';
+}
 $('vision_speak').addEventListener('click', () => {
+    if (visionSpeaking) { stopAllAudio(); return; }   // 念到一半按 = 停止
     if (!lastVisionText) { toast('沒有可朗讀的內容'); return; }
-    speak(lastVisionText, byId($('vision_target').value).bcp, true);   // 手動朗讀，不受自動朗讀設定影響
+    ensureAudioUnlocked();                              // 手機須在點擊當下解鎖音訊
+    setVisionSpeakBtn(true);
+    // 手動朗讀，不受自動朗讀設定影響；播放結束（自然念完或被停止）時把鈕還原
+    speak(lastVisionText, byId($('vision_target').value).bcp, true, () => setVisionSpeakBtn(false));
 });
 $('vision_close').addEventListener('click', () => {
-    if (synth) synth.cancel();
+    stopAllAudio();                                    // 關閉同時停掉雲端與瀏覽器語音
+    setVisionSpeakBtn(false);
     visionModal.classList.add('hidden');
 });
 
