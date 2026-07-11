@@ -41,6 +41,7 @@ code{background:rgba(0,0,0,.08);padding:1px 7px;border-radius:6px;font-family:'F
 .tc{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:1120px;align-items:start}
 .cg{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;width:100%;max-width:1120px}
 .cg.c3{grid-template-columns:repeat(3,1fr)}
+.cg.c4{grid-template-columns:repeat(4,1fr)}
 .cc{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 4px 14px rgba(0,0,0,.08);border-top:4px solid var(--p)}
 .cc .ico{font-size:30px}.cc h3{font-size:20px;margin:6px 0 4px;color:var(--ink)}.cc p{font-size:16px;color:var(--muted);margin:0}
 
