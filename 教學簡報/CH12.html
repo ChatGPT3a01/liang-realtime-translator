@@ -15,83 +15,358 @@
   <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
 </section>
 
+<!-- 2. 先回顧 -->
 <section class="slide cs">
-  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">拍照的延伸：直接上傳檔案</div></div>
+  <div class="sh"><h2>先回顧：我們現在有什麼</h2><div class="k">站在 CH11 拍照翻譯的成果上再加一層</div></div>
   <div class="body">
-    <p>拍照是用相機，這章加「上傳檔案」：<b>圖片、PDF、文字檔</b>都能翻。沿用 CH11 的 analyze()，多支援 PDF 與純文字。</p>
-    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>把外文 PDF 或圖片丟進來，得到摘要 + 翻譯。</p></div>
+    <p>上一章我們讓 App 學會「<b>看照片</b>」：按「📷 拍照翻譯」拍一張，Gemini 就給你「摘要＋翻譯」。核心是後端那個 <span class="filechip">providers.py</span> 裡的 <code>analyze()</code> 函式。</p>
+    <p>這一章我們<b>不重寫 analyze()</b>，只是換一種「餵資料進去」的方式——讓使用者能<b>直接上傳一個檔案</b>：圖片、<b>PDF</b>、文字檔都行。</p>
+    <div class="info-box">🧩 本章只加一塊：一顆「📎 上傳檔案」按鈕 + 一道新的門 <code>/api/file</code>。<code>analyze()</code> 幾乎原封不動沿用。</div>
+  </div>
+</section>
+
+<!-- 3. 這一章要做什麼 -->
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">選一個檔 → 摘要 + 翻譯</div></div>
+  <div class="body">
+    <p>按「📎 上傳檔案」，從手機或電腦裡挑一個檔案：外文<b>菜單照片</b>、一份英文<b>PDF 說明書</b>、或一個 <b>txt 文字檔</b>。App 讀懂它，用你的語言<b>摘要重點</b>，再附上<b>完整翻譯</b>。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>把外文 PDF、圖片或文字檔丟進來，就能得到「摘要＋翻譯」——不用先自己開檔、複製貼上。</p></div>
+  </div>
+</section>
+
+<!-- 4. 完成後的操作流程（先看全貌） -->
+<section class="slide cs">
+  <div class="sh"><h2>先看全貌：選一個檔，中間發生什麼事</h2><div class="k">看懂這條路，後面每一步就知道自己在做哪一段</div></div>
+  <ol class="sl body">
+    <li>使用者按「📎 上傳檔案」→ 跳出「選檔案」視窗，挑一個檔</li>
+    <li>前端判斷：<b>圖片</b>就先縮小；<b>PDF／文字檔</b>就原樣</li>
+    <li>前端用 <b>FormData</b> 把檔案送到後端的 <span class="filechip">/api/file</span></li>
+    <li>後端看檔案類型<b>分流</b>：文字→讀文字、PDF→當 PDF、圖片→當影像</li>
+    <li>三條路最後都交給同一個 <span class="filechip">providers.analyze()</span> 去讀</li>
+    <li>拿回 <code>{summary, translation}</code>，前端顯示在畫面上</li>
+  </ol>
+  <div class="info-box">👉 重點只有兩個新東西：前端「用 FormData 送檔」、後端「依類型分流」。其餘都跟 CH11 一樣。</div>
+</section>
+
+<!-- 5. 觀念一：FormData vs JSON -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念①：這次為什麼用「FormData」</h2><div class="k">跟 CH11 拍照的送法不一樣</div></div>
+  <div class="body">
+    <p>CH11 拍照時，我們把照片轉成一長串文字（dataURL），用 <b>JSON</b> 送。但這章要送的可能是 <b>PDF</b>，把整個 PDF 塞進 JSON 又肥又慢。</p>
+    <p>所以改用 <b>FormData</b>——它是瀏覽器內建、專門用來「像交表單一樣夾帶檔案」的工具，可以把<b>原始檔案</b>直接夾著送，不用轉成文字。</p>
+    <table class="tbl">
+      <tr><th></th><th>CH11 拍照（JSON）</th><th>CH12 上傳（FormData）</th></tr>
+      <tr><td>送什麼</td><td>照片轉成的文字 dataURL</td><td>原始檔案本身</td></tr>
+      <tr><td>後端怎麼收</td><td><code>request.get_json()</code></td><td><code>request.files.get('file')</code></td></tr>
+      <tr><td>要不要設 Content-Type</td><td>要設 <code>application/json</code></td><td><b>不用設</b>，瀏覽器自動處理</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- 6. 觀念二：三種檔案怎麼處理 -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念②：三種檔案，三條路</h2><div class="k">圖片、PDF、文字，各走各的分流</div></div>
+  <table class="tbl body">
+    <tr><th>檔案類型</th><th>怎麼處理</th><th>交給 analyze() 的參數</th></tr>
+    <tr><td>圖片 jpg/png…</td><td>當影像丟給 AI（同拍照）</td><td><code>file_bytes</code> + <code>mime_type</code></td></tr>
+    <tr><td>PDF</td><td>當 <code>application/pdf</code> 原生讀取</td><td><code>file_bytes</code> + <code>mime_type='application/pdf'</code></td></tr>
+    <tr><td>文字檔 txt/md/csv</td><td>直接讀出裡面的文字</td><td><code>text</code>（純文字）</td></tr>
+  </table>
+  <div class="warn-box body">📌 <b>PDF 有個限制</b>：只有 <b>Gemini</b> 能原生「讀」PDF。若使用者在設定裡選了別家（例如 OpenAI 相容），後端會<b>自動改用 Gemini</b> 來讀這份 PDF，並回一句提示。這點下面步驟二會再說。</div>
+</section>
+
+<!-- 6b. 沿用 analyze() 的說明 -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念③：這章為什麼「幾乎不用寫 AI 程式」</h2><div class="k">CH11 的 analyze() 早就準備好了</div></div>
+  <div class="body">
+    <p>回顧 CH11 那個 <code>analyze()</code>，它的參數其實是<b>刻意設計成三選一</b>的：</p>
+    <div class="term"><pre><span class="cm"># providers.py（CH11 已寫好，這章不改）</span>
+def analyze(provider, api_key, model, target_name,
+            base_url=&quot;&quot;, <b>text</b>=None, <b>file_bytes</b>=None, mime_type=None):
+    ...</pre></div>
+    <p>看到 <code>text</code> 和 <code>file_bytes</code> 了嗎？CH11 只用到 <code>file_bytes</code>（照片）。這章我們把<b>文字檔</b>塞 <code>text</code>、<b>PDF／圖片</b>塞 <code>file_bytes</code>——同一個函式，三種餵法。</p>
+    <div class="info-box">🎯 這就是「好的設計」的回報：當初多寫一個 <code>text</code> 參數，這章就省下重寫 AI 邏輯的功夫。</div>
+  </div>
+</section>
+
+<!-- 7. 檔案地圖 -->
+<section class="slide cs">
+  <div class="sh"><h2>動工前：這章會改到哪些檔案</h2><div class="k">先知道等一下要打開哪幾個檔</div></div>
+  <table class="tbl body">
+    <tr><th>檔案</th><th>加什麼</th></tr>
+    <tr><td><span class="filechip">providers.py</span></td><td><b>不用改</b>！沿用 CH11 的 <code>analyze()</code>（它本來就能吃 <code>text</code> 或 <code>file_bytes</code>）</td></tr>
+    <tr><td><span class="filechip">app.py</span></td><td>新增 <code>/api/file</code> 端點：收上傳檔、依類型分流</td></tr>
+    <tr><td><span class="filechip">templates/index.html</span></td><td>加一顆「📎 上傳檔案」按鈕 + 一個隱藏的 <code>&lt;input type=file&gt;</code></td></tr>
+    <tr><td><span class="filechip">static/js/app.js</span></td><td>按鈕按下後：判斷類型 → 用 FormData 送出 → 顯示結果</td></tr>
+  </table>
+  <div class="info-box">📂 因為 <code>analyze()</code> 已經寫好，這章其實只動三個檔。每一步都會告訴你「打開哪一個、貼在哪裡」。</div>
+</section>
+
+<!-- ============ 步驟一：後端 /api/file ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：開一道「收檔案」的門</h2><div class="k">在 app.py 新增 /api/file</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 1／3</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/file</code>，讓前端能把整個檔案交上來。後端收下後，<b>看是哪種檔</b>，再用對的方式叫 <code>analyze()</code> 去讀。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把端點<b>貼在 CH11 做的 <code>/api/vision</code> 旁邊</b>（其他 <code>@app.route</code> 附近）。</p>
+    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請在 app.py 新增一個 /api/file 端點（POST），用 multipart（FormData）接收上傳檔案：
+用 request.files.get('file') 拿檔案、request.form.get('target') 拿目標語言。
+限制 15MB，超過就回錯誤。
+依 MIME 與副檔名分流：
+ - text/plain 或 .txt/.md/.csv → 讀成文字，用 text= 呼叫 analyze()
+ - application/pdf 或 .pdf → 用 file_bytes= 呼叫，mime 設 application/pdf，並強制走 Gemini
+ - image/* → 用 file_bytes= 呼叫，帶上圖片的 mime
+最後回 {ok, summary, translation}，並附上 filename。</pre></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>三種檔案，怎麼處理</h2><div class="k">Gemini 原生就能讀圖與 PDF</div></div>
+  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py — 檔案大小上限與可接受的圖片副檔名</span>
+MAX_FILE_BYTES = 15 * 1024 * 1024   <span class="cm"># 15MB</span>
+IMAGE_EXTS = {'jpg','jpeg','png','webp','heic','heif','gif'}
+
+@app.route('/api/file', methods=['POST'])
+def api_file():
+    f = request.files.get('file')                 <span class="cm"># FormData 裡的檔案</span>
+    target = request.form.get('target') or 'Traditional Chinese (Taiwan)'
+    if not f: return jsonify({"ok":False,"error":"no file"}), 400
+    filename = f.filename or 'upload'
+    raw = f.read()                                 <span class="cm"># 讀成 bytes</span>
+    if not raw: return jsonify({"ok":False,"error":"空白檔案"}), 400
+    if len(raw) &gt; MAX_FILE_BYTES:
+        return jsonify({"ok":False,"error":"檔案過大（上限 15MB）"}), 400
+    mime = (f.mimetype or '').lower()
+    ext = filename.rsplit('.',1)[-1].lower() if '.' in filename else ''
+
+    if mime=='text/plain' or ext in ('txt','md','csv'):       <span class="cm"># ① 文字檔</span>
+        text = raw.decode('utf-8', errors='replace')
+        result, status = _run_analyze(pc, target, text=text)
+    elif mime=='application/pdf' or ext=='pdf':               <span class="cm"># ② PDF → 強制 Gemini</span>
+        result, status = _run_analyze(pc, target, force_gemini=True,
+                                      file_bytes=raw, mime_type='application/pdf')
+    elif mime.startswith('image/') or ext in IMAGE_EXTS:      <span class="cm"># ③ 圖片</span>
+        if not mime.startswith('image/'): mime = 'image/jpeg'
+        result, status = _run_analyze(pc, target, file_bytes=raw, mime_type=mime)
+    else:
+        return jsonify({"ok":False,"error":f"不支援的檔案類型：{mime or ext}"}), 400
+
+    result.setdefault("filename", filename)        <span class="cm"># 把檔名一起回傳</span>
+    return jsonify(result), status</pre></div>
+  <p class="note body">💡 <code>pc</code> 是「使用者選了哪家 AI」的設定；<code>_run_analyze()</code> 是個小幫手，負責挑金鑰、呼叫 <code>analyze()</code>、包好錯誤——下一張說明。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：逐段看懂</h2><div class="k">這道門怎麼「分流」</div></div>
   <table class="tbl body">
-    <tr><th>檔案類型</th><th>做法</th></tr>
-    <tr><td>圖片 jpg/png</td><td>當影像丟給 Gemini（同拍照）</td></tr>
-    <tr><td>PDF</td><td>Gemini 原生讀取，當 application/pdf 丟進去</td></tr>
-    <tr><td>文字檔 txt</td><td>直接讀文字內容，當純文字翻譯</td></tr>
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>request.files.get('file')</code></td><td>從 FormData 拿出那個檔案（跟 CH11 的 <code>get_json()</code> 不同）</td></tr>
+    <tr><td><code>raw = f.read()</code></td><td>把檔案讀成一串 bytes（原始位元組）</td></tr>
+    <tr><td><code>len(raw) &gt; MAX_FILE_BYTES</code></td><td>擋掉太大的檔（超過 15MB 直接回錯誤，保護伺服器）</td></tr>
+    <tr><td><code>mime</code> / <code>ext</code></td><td>取得「檔案類型」和「副檔名」，用來判斷是哪種檔</td></tr>
+    <tr><td>① 文字：<code>raw.decode('utf-8')</code></td><td>把 bytes 轉回可讀文字，用 <code>text=</code> 送給 analyze()</td></tr>
+    <tr><td>② PDF：<code>force_gemini=True</code></td><td>PDF 只有 Gemini 能讀 → 強制用 Gemini（下一張細講）</td></tr>
+    <tr><td>③ 圖片：<code>file_bytes=raw</code></td><td>當影像處理，跟拍照走同一條路</td></tr>
+    <tr><td><code>result.setdefault("filename", ...)</code></td><td>把檔名一起回傳，前端可顯示「你剛翻的是哪個檔」</td></tr>
   </table>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>提示詞</h2><div class="k">用 multipart 上傳、依類型分流</div></div>
-  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>做 /api/file：用 multipart 接收上傳檔案，
-依副檔名/MIME 分流：txt→讀文字、pdf→當 application/pdf、
-圖片→當影像，都交給 analyze() 回 {summary, translation}。
-限制 15MB。前端用 &lt;input type=file&gt; + FormData 上傳。</pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>後端 /api/file</h2><div class="k">依類型分流</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py</span>
-@app.route('/api/file', methods=['POST'])
-def api_file():
-    f = request.files.get('file')
-    target = request.form.get('target','Traditional Chinese (Taiwan)')
-    raw = f.read()
-    if len(raw) &gt; 15*1024*1024: return jsonify({'ok':False,'error':'檔案過大'}),400
-    mime = (f.mimetype or '').lower()
-    ext = f.filename.rsplit('.',1)[-1].lower()
-    key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
-    if mime=='text/plain' or ext in ('txt','md','csv'):
-        res = providers.analyze(key, target, text=raw.decode('utf-8','replace'))
-    elif mime=='application/pdf' or ext=='pdf':
-        res = providers.analyze(key, target, file_bytes=raw, mime_type='application/pdf')
-    else:  <span class="cm"># 圖片</span>
-        res = providers.analyze(key, target, file_bytes=raw, mime_type=mime or 'image/jpeg')
-    return jsonify({'ok':True, **res})</pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>前端：上傳</h2><div class="k">FormData 送檔</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>&lt;input type="file" id="fileIn" accept="image/*,application/pdf,text/plain,.pdf,.txt" hidden&gt;
-&lt;button onclick="fileIn.click()"&gt;📎 上傳檔案&lt;/button&gt;
-
-fileIn.onchange = async (e)=&gt;{
-  const file = e.target.files[0]; if(!file) return;
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('target', 'Traditional Chinese (Taiwan)');
-  const res = await fetch('/api/file', {method:'POST', body:fd});   <span class="cm">// 不用設 Content-Type</span>
-  const d = await res.json();
-  showResult(d.summary, d.translation);
-};</pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>實測</h2><div class="k">丟一份外文 PDF</div></div>
+  <div class="sh"><h2>步驟一 · 重點：PDF 為什麼要「強制 Gemini」</h2><div class="k">force_gemini=True 的用意</div></div>
   <div class="body">
-    <p>按「📎 上傳檔案」選一份英文/日文 PDF 或圖片，稍等就得到摘要 + 翻譯。</p>
-    <div class="shot"><span class="cam">📸</span>請截圖：上傳 PDF 後的摘要 + 翻譯</div>
-    <div class="ok-box">✅ 圖片建議也先縮圖再上傳；PDF、txt 直接送即可。</div>
+    <p>圖片幾乎每家 AI 都看得懂，但<b>直接讀 PDF</b> 是 Gemini 的強項——它能原生把 PDF 當一份文件讀進去。若使用者在設定裡選了別家（例如 OpenAI 相容供應商），碰到 PDF 就會讀不了。</p>
+    <div class="ok-box">✅ <b>解法</b>：遇到 PDF 時傳 <code>force_gemini=True</code>，後端就<b>自動改用 Gemini</b> 來讀這一份，並在回傳裡附一句 <code>note</code>：「PDF 不支援所選供應商，已自動改用 Gemini」。使用者完全不用管，照樣拿到翻譯。</div>
+    <div class="warn-box">🔧 <b>卡住了？</b>　PDF 一直失敗，多半是：① 伺服器沒有 Gemini 金鑰（就算選別家，PDF 也要靠它）→ 到 <code>.env</code> 補 <code>GEMINI_API_KEY</code>；② 檔案超過 15MB → 先壓縮或拆頁。</div>
+  </div>
+</section>
+
+<!-- ============ 步驟二：前端按鈕 ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：加一顆「上傳檔案」按鈕</h2><div class="k">在畫面上放按鈕，按了會開「選檔案」</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 2／3</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：在畫面加一顆「📎 上傳檔案」，按下去跳出系統的「選檔案」視窗，讓使用者挑圖片／PDF／文字檔。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把按鈕<b>放在 CH11 那顆「📷 拍照翻譯」的旁邊</b>（同一排功能區）。</p>
+    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">&lt;!-- 一顆漂亮按鈕 + 一個藏起來的檔案選擇框 --&gt;</span>
+&lt;button id="s_file" class="tool-btn"&gt;📎 上傳檔案&lt;/button&gt;
+
+&lt;input type="file" id="fileInput" hidden
+       accept="image/*,application/pdf,text/plain,.pdf,.txt,.md,.csv"&gt;</pre></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>🎁 檔案類型設定生成器</h2><div class="k">勾選要支援的類型，產生設定</div></div>
+  <div class="sh"><h2>步驟二：逐段看懂 + 預期</h2><div class="k">accept 決定「能挑哪些檔」</div></div>
+  <div class="body">
+    <p>🔍 <code>accept="image/*,application/pdf,text/plain,.pdf,.txt…"</code>：告訴「選檔案」視窗<b>只顯示這些類型</b>——圖片、PDF、文字檔，避免使用者挑到不支援的檔。<code>hidden</code> 把醜醜的原生檔案框藏起來，改用我們自己的漂亮按鈕去點它（下一步用 JS 把兩者接起來）。</p>
+    <div class="ok-box">✅ <b>預期</b>：畫面功能區多一顆「📎 上傳檔案」，按下去跳出系統的檔案選擇視窗。</div>
+    <div class="mockrow">
+      <div class="mock">
+        <div class="m-top"><span>15:57</span><b>5G ▲</b></div>
+        <div class="m-title">🌐 亮言 · 即時翻譯</div>
+        <div class="m-card m-muted">翻譯結果會顯示在這裡…</div>
+        <div class="m-btn">🎙️ 點一下開始說話</div>
+        <div class="m-row"><span class="m-pill">📷 拍照翻譯</span><span class="m-pill">📎 上傳檔案</span></div>
+      </div>
+    </div>
+    <div class="mock-cap">模擬畫面：多出「📎 上傳檔案」按鈕（示意，非真實截圖）</div>
+  </div>
+</section>
+
+<!-- ============ 步驟三：前端送檔 ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：挑完檔 → 送出 → 顯示</h2><div class="k">整章最關鍵的一段前端邏輯</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 3／3</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：使用者挑好檔後，前端判斷「是圖片還是別的」，圖片先縮小，其餘原樣，用 <b>FormData</b> 送到 <code>/api/file</code>，拿回摘要＋翻譯後顯示。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段<b>接在 CH11 拍照那段的下面</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>幫我接上「📎 上傳檔案」按鈕：按下 s_file 就觸發隱藏的 fileInput。
+選好檔後，用 FormData 夾帶檔案送 POST 到 /api/file，並帶 target（目標語言）。
+如果是圖片，先縮圖再放進 FormData；PDF、文字檔就直接放原檔。
+拿回結果後，用 renderVision() 顯示摘要與翻譯。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 按「📎 上傳檔案」→ 點一下那個藏起來的檔案框</span>
+$('s_file').addEventListener('click', () =&gt; $('fileInput').click());
+
+$('fileInput').addEventListener('change', async (e) =&gt; {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';                       <span class="cm">// 清掉，下次選同一檔也能觸發</span>
+  if (!file) return;
+  openVision('📎 檔案翻譯');                  <span class="cm">// 打開結果彈窗</span>
+  try {
+    const fd = new FormData();               <span class="cm">// ← 關鍵：用表單方式夾檔</span>
+    fd.append('target', byId($('vision_target').value).name);
+    if (file.type.startsWith('image/')) {    <span class="cm">// 圖片：先縮圖再送</span>
+      const dataURL = await fileToDownscaledDataURL(file);
+      fd.append('file', dataURLToBlob(dataURL), 'upload.jpg');
+    } else {                                 <span class="cm">// PDF / 文字檔：原檔直接送</span>
+      fd.append('file', file);
+    }
+    $('visionStatus').textContent = '上傳與翻譯中…（檔案越大越久）';
+    const res = await fetch('/api/file', { method:'POST', body: fd });  <span class="cm">// 不用設 Content-Type</span>
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '翻譯失敗');
+    renderVision(data);                      <span class="cm">// 顯示摘要 + 翻譯</span>
+  } catch (err) { $('visionStatus').textContent = '❌ ' + err.message; }
+});</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：逐段看懂</h2><div class="k">這段每一行在幹嘛</div></div>
+  <table class="tbl body">
+    <tr><th>這一行</th><th>在做什麼</th></tr>
+    <tr><td><code>$('s_file')...click → fileInput.click()</code></td><td>按下漂亮按鈕，等於偷偷去點那個藏起來的檔案框</td></tr>
+    <tr><td><code>const file = e.target.files[0]</code></td><td>拿到使用者剛挑的那個檔</td></tr>
+    <tr><td><code>e.target.value = ''</code></td><td>清空，讓下次選<b>同一個檔</b>也能再次觸發</td></tr>
+    <tr><td><code>new FormData()</code></td><td>建一個「表單信封」，等下把檔案和 target 夾進去</td></tr>
+    <tr><td><code>file.type.startsWith('image/')</code></td><td>判斷是不是圖片：是圖片才縮圖，PDF／文字檔原樣</td></tr>
+    <tr><td><code>dataURLToBlob(dataURL)</code></td><td>把縮好的圖轉回「檔案物件」塞進 FormData</td></tr>
+    <tr><td><code>fetch('/api/file', {body: fd})</code></td><td>把整個信封送到步驟一做的那道門</td></tr>
+    <tr><td><code>renderVision(data)</code></td><td>把摘要與翻譯塞進結果彈窗顯示（沿用 CH11 的顯示函式）</td></tr>
+  </table>
+  <div class="info-box">🧰 <code>fileToDownscaledDataURL()</code>（縮圖）、<code>dataURLToBlob()</code>（轉檔）、<code>renderVision()</code>（顯示）都是 CH11 已經有的小幫手，這章<b>直接重用</b>，不用重寫。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>為什麼圖片要縮、PDF 卻不縮？</h2><div class="k">兩種檔的取捨不一樣</div></div>
+  <div class="body">
+    <p><b>圖片</b>：手機拍的照片動輒好幾 MB、幾千像素。縮到最長邊約 1568 像素，字還看得清楚，但檔案小很多——<b>又快又穩</b>，跟 CH11 一樣的道理。</p>
+    <p><b>PDF／文字檔</b>：它們本來就是「文件」，縮圖會破壞內容，所以<b>原樣送</b>，只靠後端那條 15MB 上限把關即可。</p>
+    <div class="ok-box">✅ 這就是「看菜下飯」——不同資料用不同前處理，體驗才順。</div>
+  </div>
+</section>
+
+<!-- 預期畫面（真實截圖 shot-result） -->
+<section class="slide cs">
+  <div class="sh"><h2>實測：丟一份外文 PDF 或圖片</h2><div class="k">成功長這樣</div></div>
+  <div class="body">
+    <p>按「📎 上傳檔案」，挑一份英文／日文 <b>PDF</b> 或一張外文<b>菜單照片</b>。稍等（檔案越大越久），就會跳出「摘要」＋「翻譯」。</p>
+    <div class="img-box"><img src="assets/shots/shot-result.jpg" alt="檔案翻譯結果：摘要 + 翻譯"><div class="hint">實拍：上傳後，上方「📌 摘要」用你的語言講重點，下方「🌐 翻譯」是完整翻譯</div></div>
+    <div class="ok-box">✅ <b>預期</b>：結果彈窗先顯示「上傳與翻譯中…」，接著出現摘要與翻譯，還能按「🔊 朗讀」念出來。若是 PDF 且你選了別家 AI，上方會多一句「已自動改用 Gemini」的提示。</div>
+  </div>
+</section>
+
+<!-- 上傳中的模擬畫面 -->
+<section class="slide cs">
+  <div class="sh"><h2>上傳中會看到什麼</h2><div class="k">從「選好檔」到「出結果」的中間狀態</div></div>
+  <div class="body">
+    <div class="mockrow">
+      <div class="mock">
+        <div class="m-top"><span>15:58</span><b>5G ▲</b></div>
+        <div class="m-title">📎 檔案翻譯</div>
+        <div class="m-card"><span class="m-pill">📄 menu_jp.pdf</span></div>
+        <div class="m-card m-muted">上傳與翻譯中…（檔案越大越久）</div>
+      </div>
+      <div class="mock">
+        <div class="m-top"><span>15:58</span><b>5G ▲</b></div>
+        <div class="m-title">📎 檔案翻譯</div>
+        <div class="m-card">📌 摘要：這是一份日式定食菜單，主餐含…</div>
+        <div class="m-card m-muted">🌐 翻譯：牛肉蓋飯（附味噌湯）…</div>
+        <div class="m-btn ghost">🔊 朗讀</div>
+      </div>
+    </div>
+    <div class="mock-cap">模擬畫面：左＝上傳中顯示 PDF 檔名 chip；右＝完成後的摘要＋翻譯（示意，非真實截圖）</div>
+  </div>
+</section>
+
+<!-- 小補充：multipart 是什麼 -->
+<section class="slide cs">
+  <div class="sh"><h2>小補充：一個檔案在網路上怎麼「飛過去」</h2><div class="k">multipart／form-data 的直覺</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">✉️</div><h3>FormData ＝ 信封</h3><p>把「檔案」和「target 語言」一起裝進一個信封。瀏覽器會自動貼好正確的郵票（Content-Type），你不用手動設。</p></div>
+    <div class="cc"><div class="ico">📬</div><h3>後端 ＝ 收件人</h3><p>Flask 用 <code>request.files</code> 取信封裡的檔案、<code>request.form</code> 取一般欄位。跟 JSON 走的 <code>request.get_json()</code> 是兩套不同信箱。</p></div>
+  </div>
+  <div class="info-box body">💡 記住一句話就好：<b>要夾檔案 → 用 FormData；只送文字資料 → 用 JSON。</b>這章夾了檔，所以用 FormData。</div>
+</section>
+
+<!-- 除錯集 -->
+<section class="slide cs">
+  <div class="sh"><h2>🔧 卡住了？本章常見的四個坑</h2><div class="k">對症下藥</div></div>
+  <div class="body">
+    <div class="warn-box">① <b>回「不支援的檔案類型」</b>：你挑的檔不是圖片／PDF／文字。確認副檔名是 <code>.jpg/.png/.pdf/.txt/.md/.csv</code> 之一。</div>
+    <div class="warn-box">② <b>回「檔案過大（上限 15MB）」</b>：檔太大。圖片會自動縮，但 PDF 不縮——請先壓縮或拆頁。</div>
+    <div class="warn-box">③ <b>PDF 一直失敗</b>：多半是伺服器沒有 Gemini 金鑰。就算你選別家，PDF 也要靠 Gemini，<code>.env</code> 要有 <code>GEMINI_API_KEY</code>。</div>
+    <div class="warn-box">④ <b>文字檔翻出來是亂碼</b>：檔案不是 UTF-8 編碼。用記事本「另存為 UTF-8」再上傳。</div>
+  </div>
+</section>
+
+<!-- 三章對照回顧 -->
+<section class="slide cs">
+  <div class="sh"><h2>回顧：同一套 analyze()，三種入口</h2><div class="k">CH11 + CH12 一起看，路更清楚</div></div>
+  <table class="tbl body">
+    <tr><th>入口</th><th>使用者動作</th><th>送法</th><th>後端端點</th></tr>
+    <tr><td>拍照（CH11）</td><td>📷 開相機拍一張</td><td>JSON（dataURL）</td><td><span class="filechip">/api/vision</span></td></tr>
+    <tr><td>上傳圖片（CH12）</td><td>📎 選一張圖</td><td>FormData（縮圖）</td><td><span class="filechip">/api/file</span></td></tr>
+    <tr><td>上傳 PDF（CH12）</td><td>📎 選一份 PDF</td><td>FormData（原檔）</td><td><span class="filechip">/api/file</span> → Gemini</td></tr>
+    <tr><td>上傳文字（CH12）</td><td>📎 選一個 txt</td><td>FormData（原檔）</td><td><span class="filechip">/api/file</span></td></tr>
+  </table>
+  <div class="info-box body">🧩 四個入口，最後都匯流到同一個 <code>providers.analyze()</code>。這就是為什麼加新功能越來越快——底層已經打好地基。</div>
+</section>
+
+<!-- 動手練習 -->
+<section class="slide cs">
+  <div class="sh"><h2>動手練習</h2><div class="k">改一點點，感受差異</div></div>
+  <ul class="sl body">
+    <li>把 <code>accept</code> 裡的 <code>application/pdf,.pdf</code> 拿掉，再點按鈕——看「選檔案」視窗是不是就不讓你選 PDF 了（體會 accept 的過濾作用）。</li>
+    <li>把後端的 <code>MAX_FILE_BYTES</code> 從 <code>15 * 1024 * 1024</code> 改成 <code>1 * 1024 * 1024</code>（1MB），上傳一份大一點的 PDF，看它是不是被擋下並回「檔案過大」。</li>
+    <li>準備一個中文 txt，把送出的 <code>target</code> 改成 <code>English</code>，看它把中文檔翻成英文。</li>
+  </ul>
+</section>
+
+<!-- 生成器（保留） -->
+<section class="slide cs">
+  <div class="sh"><h2>🎁 檔案類型設定生成器</h2><div class="k">勾選要支援的類型，產生 accept 與白名單</div></div>
   <div class="gen body">
     <div class="gh">⚙️ 產生 accept 與白名單</div>
     <div class="field"><label>要支援哪些？（逗號分隔：image, pdf, txt）</label><input id="f_types" placeholder="image, pdf, txt"></div>
@@ -103,20 +378,23 @@ fileIn.onchange = async (e)=&gt;{
   </div>
 </section>
 
+<!-- 驗收 -->
 <section class="slide cs">
   <div class="sh"><h2>本章驗收</h2><div class="k">會讀檔的 App</div></div>
   <ul class="goals body">
-    <li>/api/file 依類型分流（圖片/PDF/文字）。</li>
-    <li>有 15MB 大小限制。</li>
-    <li>前端上傳後顯示摘要 + 翻譯。</li>
+    <li>app.py 的 <code>/api/file</code> 用 FormData 收檔，依類型分流（圖片／PDF／文字）。</li>
+    <li>有 15MB 大小限制；PDF 會自動走 Gemini。</li>
+    <li>前端「📎 上傳檔案」→ 送出 → 顯示摘要 + 翻譯（沿用 renderVision）。</li>
+    <li>看得懂 FormData 和 CH11 的 JSON 上傳差在哪。</li>
   </ul>
-  <div class="milestone body"><div class="mh">🎁 你現在有：會讀檔的 App</div><p>拍照、檔案都能翻了！接下來換上不用 AI、免金鑰的實用小工具——先做「匯率換算」。</p></div>
+  <div class="milestone body"><div class="mh">🎁 你現在有：會讀檔的 App</div><p>拍照、上傳檔都能翻了！接下來換上不用 AI、免金鑰的實用小工具——先做「匯率換算」。</p></div>
 </section>
 
+<!-- 下一章 -->
 <section class="slide cs">
   <div class="sh"><h2>下一章 · CH13</h2><div class="k">匯率換算（免金鑰）</div></div>
   <div class="body">
-    <p>出國購物最實用的就是匯率！下一章串接<b>免金鑰</b>的匯率 API，即時換算，不用申請任何帳號。</p>
+    <p>出國購物最實用的就是匯率！下一章串接<b>免金鑰</b>的匯率 API，即時換算，不用申請任何帳號、不用任何 AI。</p>
     <div class="info-box">💱 CH13 加上匯率工具。</div>
   </div>
 </section>
@@ -135,9 +413,9 @@ fileIn.onchange = async (e)=&gt;{
 function genFile(){
   var t=(document.getElementById('f_types').value||'image, pdf, txt').toLowerCase();
   var acc=[], mime=[];
-  if(t.indexOf('image')&gt;=0){acc.push('image/*');mime.push('image/jpeg','image/png','image/webp');}
-  if(t.indexOf('pdf')&gt;=0){acc.push('application/pdf','.pdf');mime.push('application/pdf');}
-  if(t.indexOf('txt')&gt;=0){acc.push('text/plain','.txt');mime.push('text/plain');}
+  if(t.indexOf('image')>=0){acc.push('image/*');mime.push('image/jpeg','image/png','image/webp');}
+  if(t.indexOf('pdf')>=0){acc.push('application/pdf','.pdf');mime.push('application/pdf');}
+  if(t.indexOf('txt')>=0){acc.push('text/plain','.txt');mime.push('text/plain');}
   var out="// 前端 input accept\naccept=\""+acc.join(',')+"\"\n\n"+
           "# 後端可接受 MIME\nALLOWED = "+JSON.stringify(mime);
   document.getElementById('f_out').textContent=out;

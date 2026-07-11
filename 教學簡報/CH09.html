@@ -8,6 +8,7 @@
 </head>
 <body>
 
+<!-- 1. 封面 -->
 <section class="slide cover">
   <div class="tag">第二篇 · Part 2 · 核心翻譯</div>
   <h1>CH09 · <span class="g">Gemini Live 即時語音</span></h1>
@@ -15,138 +16,563 @@
   <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
 </section>
 
+<!-- 2. 先回顧 -->
+<section class="slide cs">
+  <div class="sh"><h2>先回顧：我們現在有什麼</h2><div class="k">站在前面幾章的成果上，往上加一層</div></div>
+  <div class="body">
+    <p>到上一章為止，你的 App 已經會：<b>打字翻譯（CH06）、聽你說話變文字（CH07）、把翻譯念出來（CH08）</b>。</p>
+    <p>但這些都是「<b>逐句</b>」——你得說完、按停，它才開始翻。這一章我們讓它升級成「<b>即時口譯</b>」：你一邊說，它一邊翻、一邊出聲，像旁邊真的坐了一位口譯員。</p>
+    <div class="info-box">🧩 本章只加一塊：一個「即時」開關。按下去它就持續聽、持續翻、持續講。其他既有功能都不動。</div>
+  </div>
+</section>
+
+<!-- 3. 這一章要做什麼 -->
 <section class="slide cs">
   <div class="sh"><h2>這一章要做出什麼</h2><div class="k">即時模式：不用等你說完</div></div>
   <div class="body">
-    <p>逐句模式要「說完按停」；<b>即時模式</b>邊說就邊翻、直接吐語音，延遲很低。我們接 <b>Gemini Live</b> 原生語音來做。</p>
-    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個「即時口譯」切換：按下去持續聽、持續翻、持續說。</p></div>
+    <p>逐句模式要「說完按停」；<b>即時模式</b>邊說就邊翻、直接吐語音，延遲很低。我們接 <b>Gemini Live</b> 這個「原生語音」的即時模型來做。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個「即時口譯」切換：按下去持續聽、持續翻、持續說，中英夾雜也能自動雙向翻。</p></div>
+    <div class="warn-box">😤 <b>先講清楚</b>：這是<b>全課最難的一章</b>。它牽涉到「即時連線」「原始聲音」「多執行緒」。別慌——我們會把每一小塊拆開，一步一步驗證。你只要照著貼、照著看，就能通關。</div>
+  </div>
+</section>
+
+<!-- 4. 逐句 vs 即時 -->
+<section class="slide cs">
+  <div class="sh"><h2>逐句 vs 即時：差在哪</h2><div class="k">兩種模式各有用途，不是誰取代誰</div></div>
+  <table class="tbl body">
+    <tr><th></th><th>逐句（CH07-08）</th><th>即時（本章）</th></tr>
+    <tr><td>時機</td><td>說完按停才翻</td><td>邊說邊翻</td></tr>
+    <tr><td>延遲</td><td>較高（要等你停）</td><td>很低（幾乎同步）</td></tr>
+    <tr><td>技術</td><td>瀏覽器 STT ＋ 翻譯 ＋ TTS 三段</td><td>Gemini Live 原生語音，一條龍</td></tr>
+    <tr><td>連線</td><td>一般 HTTP（問一次答一次）</td><td>WebSocket 即時雙向（一直連著）</td></tr>
+    <tr><td>耗量</td><td>省</td><td>較耗（一直在傳音訊）</td></tr>
+  </table>
+  <div class="info-box">👉 逐句像「寫紙條互相傳」；即時像「電話一直通著」。這章要學會怎麼把電話接通。</div>
+</section>
+
+<!-- 5. 先看全貌：資料怎麼流 -->
+<section class="slide cs">
+  <div class="sh"><h2>先看全貌：一句話的旅程</h2><div class="k">看懂這條路，後面每一步就知道自己在做哪一段</div></div>
+  <div class="term body"><pre><span class="out">🎤 你的麥克風
+   ↓ ① 瀏覽器擷取聲音，轉成 16kHz PCM（原始聲音）
+🌐 瀏覽器 ──(WebSocket)──▶ 你的 Flask 伺服器
+   ↓ ② 伺服器把音訊轉送出去
+🤖 Gemini Live（即時翻譯模型）
+   ↓ ③ 回傳「翻好的語音 + 字幕」
+🌐 Flask ──(WebSocket)──▶ 瀏覽器
+   ↓ ④ 播放 24kHz 語音、字幕即時顯示</span></pre></div>
+  <div class="info-box">🧭 這章就是把這四段「① 送出 → ② 轉送 → ③ 回傳 → ④ 播放」一段一段接起來。等一下的「階段檢核」就是照這條路，一段一段確認有沒有通。</div>
+</section>
+
+<!-- 6. 白話觀念（陌生名詞） -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念（一）：WebSocket 與串流</h2><div class="k">先把陌生名詞講成人話</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">📞</div><h3>WebSocket</h3><p>一種「講電話」式的連線。一般網頁是「你問一句、它答一句」就掛斷；WebSocket 是<b>一直連著</b>，雙方隨時能講話。即時口譯要一直傳聲音，所以用它。</p></div>
+    <div class="cc"><div class="ico">🌊</div><h3>串流（streaming）</h3><p>不是「等整段錄好才送」，而是像<b>水流一樣邊產生邊送</b>。你講一點就送一點，AI 翻一點就回一點，所以感覺很即時。</p></div>
+  </div>
+  <div class="info-box">💡 這章我們用 <code>flask-socketio</code> 這個套件來做 WebSocket，前端則用 <code>socket.io</code> 來連。名字很像，是一組的。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念（二）：PCM 與 16kHz</h2><div class="k">聲音在電腦裡長什麼樣</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">🎚️</div><h3>PCM</h3><p>「沒壓縮的原始聲音」。MP3 是壓過的（檔案小、但要解壓）；<b>PCM 是最原始的一串數字</b>，直接就是聲音的波形。即時傳輸不想花時間壓縮解壓，所以用 PCM。</p></div>
+    <div class="cc"><div class="ico">🔢</div><h3>16kHz 取樣</h3><p>「每秒鐘量 16000 次聲音大小」。量越多越清楚、檔越大。人聲用 16kHz 就夠清楚了，這也是 Gemini Live <b>要求送進去的規格</b>。</p></div>
+  </div>
+  <div class="info-box">🔎 小記：<b>送進去</b>用 16kHz PCM，<b>回來的語音</b>是 24kHz PCM（品質更好一點）。這兩個數字後面會用到，先有個印象就好。</div>
+</section>
+
+<!-- 7. 檔案地圖 -->
+<section class="slide cs">
+  <div class="sh"><h2>動工前：這章會改到哪些檔案</h2><div class="k">先知道等一下要打開哪幾個檔</div></div>
+  <table class="tbl body">
+    <tr><th>檔案</th><th>加什麼</th></tr>
+    <tr><td><span class="filechip">requirements.txt</span></td><td>加 2 個套件：<code>flask-socketio</code>、<code>simple-websocket</code></td></tr>
+    <tr><td><span class="filechip">app.py</span></td><td>啟用 SocketIO ＋ 一個 <code>GeminiSession</code> 類別 ＋ 4 個 socket 事件</td></tr>
+    <tr><td><span class="filechip">templates/index.html</span></td><td>載入 <code>socket.io</code>，加一顆「即時」開關按鈕</td></tr>
+    <tr><td><span class="filechip">static/js/app.js</span></td><td><code>startLive()</code>／<code>stopLive()</code>／收播語音</td></tr>
+  </table>
+  <div class="info-box">📂 就這四個檔。下面每一步都會告訴你「打開哪一個、貼在哪裡」。</div>
+</section>
+
+<!-- ===================== 步驟一：裝套件 ===================== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：裝 WebSocket 套件</h2><div class="k">讓 Flask 會「講電話」</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 1／5</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：裝兩個套件，讓你的 Flask 伺服器支援 WebSocket（一直連著的即時連線）。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">requirements.txt</span>，在<b>最下面加兩行</b>。</p>
+    <div class="term body"><div class="lbl">requirements.txt 增加</div><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="out">flask-socketio
+simple-websocket</span></pre></div>
+    <p>💬 <b>存檔後，回終端機這樣做</b>（重新安裝一次）：</p>
+    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">pip install -r requirements.txt</span>
+<span class="out">Successfully installed flask-socketio... simple-websocket...</span></pre></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>逐句 vs 即時</h2><div class="k">兩種模式各有用途</div></div>
+  <div class="sh"><h2>步驟一：逐段看懂 + 卡住了？</h2><div class="k">這兩個套件各做什麼</div></div>
   <table class="tbl body">
-    <tr><th></th><th>逐句（CH07-08）</th><th>即時（本章）</th></tr>
-    <tr><td>時機</td><td>說完按停才翻</td><td>邊說邊翻</td></tr>
-    <tr><td>延遲</td><td>較高</td><td>很低</td></tr>
-    <tr><td>技術</td><td>瀏覽器 STT + 翻譯 + TTS</td><td>Gemini Live 原生語音串流</td></tr>
-    <tr><td>連線</td><td>一般 HTTP</td><td>WebSocket 即時雙向</td></tr>
+    <tr><th>套件</th><th>負責什麼</th></tr>
+    <tr><td><code>flask-socketio</code></td><td>讓 Flask 會用 WebSocket 收發訊息（我們的主角）</td></tr>
+    <tr><td><code>simple-websocket</code></td><td>底層的 WebSocket 引擎，flask-socketio 靠它運作</td></tr>
+  </table>
+  <div class="ok-box">✅ <b>預期</b>：終端機出現 <code>Successfully installed</code>，沒有紅字。</div>
+  <div class="warn-box">🔧 <b>卡住了？</b>　若出現 <code>ModuleNotFoundError: flask_socketio</code> → 十之八九是<b>忘了重跑 pip</b>，或裝到別的 Python 環境。確認你在專案資料夾、且用的是同一個 Python。</div>
+</section>
+
+<!-- ===================== 步驟二：啟用 SocketIO ===================== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：把伺服器「電話線」接上</h2><div class="k">在 app.py 啟用 SocketIO</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 2／5</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：讓 <code>app.py</code> 建立一個 SocketIO 物件，並在最後用 <code>socketio.run</code> 啟動（取代原本的 <code>app.run</code>）。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>。import 區加一行、建立 app 的地方加一行、最底下啟動改一下。</p>
+    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請幫我在 app.py 啟用 flask-socketio：
+1. 從 flask_socketio import SocketIO, emit
+2. 建好 app 後加 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+3. 加一個常數 LIVE_MODEL = "gemini-3.5-live-translate-preview"
+4. 檔案最底下改用 socketio.run(app, ...) 啟動，並加 allow_unsafe_werkzeug=True
+我是新手，請標清楚每行貼在哪裡。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py — 最上面的 import 區加這行</span>
+from flask_socketio import SocketIO, emit
+
+<span class="cm"># 建好 app = Flask(__name__) 之後，加這兩行</span>
+app.config['SECRET_KEY'] = 'gemini_secret!'
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+<span class="cm"># 即時語音模型：3.5、專為即時翻譯設計，原生吐語音</span>
+LIVE_MODEL = "gemini-3.5-live-translate-preview"
+
+<span class="cm"># 存放每位使用者的即時對話（下一步會用到）</span>
+active_sessions = {}
+
+<span class="cm"># === 檔案最底下：啟動改用 socketio.run ===</span>
+if __name__ == '__main__':
+    port = int(os.getenv('PORT', '5001'))
+    debug = os.getenv('FLASK_DEBUG', '0') == '1'
+    socketio.run(app, host='0.0.0.0', port=port, debug=debug, allow_unsafe_werkzeug=True)</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：逐段看懂</h2><div class="k">每一行在做什麼，白話講一遍</div></div>
+  <table class="tbl body">
+    <tr><th>這一行</th><th>在做什麼</th></tr>
+    <tr><td><code>SocketIO(app, ...)</code></td><td>把「電話功能」裝到你的 Flask app 上</td></tr>
+    <tr><td><code>cors_allowed_origins="*"</code></td><td>允許前端連進來（開發時全開，方便測試）</td></tr>
+    <tr><td><code>async_mode='threading'</code></td><td>用「多執行緒」處理，不會卡住其他請求（下一步會用到執行緒）</td></tr>
+    <tr><td><code>LIVE_MODEL = "...live-translate-preview"</code></td><td>指定即時翻譯專用模型的名字，之後連線用它</td></tr>
+    <tr><td><code>active_sessions = {}</code></td><td>一個空字典，等一下用來「一個使用者一份對話」</td></tr>
+    <tr><td><code>socketio.run(...)</code></td><td>啟動伺服器。<b>一定要改成這行</b>，用 <code>app.run</code> 收不到 WebSocket</td></tr>
   </table>
 </section>
 
+<!-- 階段檢核 ① -->
 <section class="slide cs">
-  <div class="sh"><h2>即時模式的資料流</h2><div class="k">先懂原理再動手</div></div>
-  <div class="term body"><pre><span class="out">你的麥克風
-   ↓ 擷取音訊、轉成 16kHz PCM
-瀏覽器 → (WebSocket) → 你的 Flask 伺服器
-   ↓ 轉送
-Gemini Live（即時翻譯模型）
-   ↓ 回傳翻譯後的語音 + 字幕
-Flask → (WebSocket) → 瀏覽器
-   ↓ 播放 24kHz 語音、顯示字幕</span></pre></div>
+  <div class="sh"><h2>✅ 階段檢核 ①：socket 有連上嗎？</h2><div class="k">第一關：先確認「電話接通了」</div></div>
+  <div class="body">
+    <p>先別急著做語音。我們先確認「前端連得上後端」。在 <span class="filechip">app.py</span> 的 socket 事件區，加一段最簡單的「連上就印一行 log」：</p>
+    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm"># app.py — 加在檔案下半部（route 之後）</span>
+@socketio.on('connect')
+def handle_connect():
+    logger.info(f"Client connected: {request.sid}")   <span class="cm"># 有人連上就印</span>
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    logger.info(f"Client disconnected: {request.sid}")</pre></div>
+    <div class="ok-box">✅ <b>預期：你會看到什麼</b>　重啟伺服器、瀏覽器打開頁面後，<b>終端機</b>就會冒出一行：<br><code>INFO ... Client connected: xxxxxxxx</code>。看到它 = 第一關過，電話通了。</div>
+  </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>安裝 WebSocket 套件</h2><div class="k">flask-socketio</div></div>
-  <div class="term body"><div class="lbl">requirements.txt 增加</div><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="out">flask-socketio
-simple-websocket</span></pre></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">pip install -r requirements.txt</span></pre></div>
+  <div class="sh"><h2>階段檢核 ①：卡住了？</h2><div class="k">connect 那行一直不出現</div></div>
+  <div class="body">
+    <div class="warn-box">🔧 <b>終端機都沒印 connected</b>：<br>① 前端還沒載入 <code>socket.io</code>（步驟四會加，若你先跳來測，先確認 index.html 有那行 <code>&lt;script src=...socket.io...&gt;</code>）。<br>② 啟動還在用舊的 <code>app.run</code>——一定要改成 <code>socketio.run</code>。<br>③ 頁面沒重新整理。</div>
+    <div class="info-box">🧭 <b>為什麼先測這關？</b>　即時語音出問題時，最怕「不知道是連線斷、還是聲音錯」。先把「連線」單獨確認過，後面就能安心往下走。</div>
+  </div>
+</section>
+
+<!-- ===================== 步驟三：GeminiSession ===================== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：後端「一通電話一個接線生」</h2><div class="k">在 app.py 新增 GeminiSession 類別</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 3／5</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：每位使用者按下「即時」，就替他開一條到 Gemini Live 的專線。我們用一個 <code>GeminiSession</code> 類別包起來：它在<b>背景執行緒</b>裡連 Gemini，一邊收你送來的音訊往上丟，一邊把 Gemini 回來的語音往下傳。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把這個類別<b>貼在 route 前面（LIVE_MODEL 那幾行之後）</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請在 app.py 新增一個 GeminiSession 類別（用 google-genai 的 live 即時 API）：
+每個 session 一條執行緒跑 asyncio，連到 LIVE_MODEL。
+config 要 response_modalities=["AUDIO"]、system_instruction、output_audio_transcription={}。
+sender：把佇列裡的 PCM 用 send_realtime_input 送給 Gemini。
+receiver：收到語音就 emit('audio_response')、收到字幕 emit('text_response')、一輪結束 emit('turn_complete')。
+我是新手，請附完整程式碼。</pre></div>
+  </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>後端：啟用 SocketIO</h2><div class="k">改造 app.py</div></div>
+  <div class="sh"><h2>步驟三：AI 會給你這段（上半：連線）</h2><div class="k">貼進 app.py</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py</span>
-from flask_socketio import SocketIO, emit
-socketio = SocketIO(app, cors_allowed_origins='*', async_mode='threading')
-LIVE_MODEL = 'gemini-3.5-live-translate-preview'   <span class="cm"># 專為翻譯的即時模型</span>
+    <pre><span class="cm"># app.py — GeminiSession：一位使用者一份即時對話</span>
+class GeminiSession:
+    def __init__(self, sid, instructions, api_key=None):
+        self.sid = sid                          <span class="cm"># 是誰（哪個瀏覽器）</span>
+        self.instructions = instructions        <span class="cm"># 翻譯指令</span>
+        self.audio_in_queue = queue.Queue()      <span class="cm"># 你送來的音訊排隊處</span>
+        self.stop_event = threading.Event()      <span class="cm"># 按停止用的旗子</span>
+        self.thread = None
+        self.client = genai.Client(api_key=(api_key or API_KEY),
+                                   http_options={'api_version': 'v1alpha'})
 
-<span class="cm"># 啟動改用 socketio.run</span>
-if __name__ == '__main__':
-    port = int(os.getenv('PORT','5001'))
-    socketio.run(app, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)</pre></div>
+    def start(self):
+        self.thread = threading.Thread(target=self.run_loop)
+        self.thread.start()                      <span class="cm"># 開背景執行緒</span>
+
+    def stop(self):
+        self.stop_event.set()                    <span class="cm"># 舉旗：該收工了</span>
+        if self.thread: self.thread.join(timeout=2)
+
+    def add_audio(self, audio_data):
+        self.audio_in_queue.put(audio_data)      <span class="cm"># 音訊丟進佇列</span>
+
+    def run_loop(self):
+        asyncio.run(self.async_process())        <span class="cm"># 在執行緒裡跑 async</span></pre></div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>後端：連上 Gemini Live</h2><div class="k">一個 Session 管一次對話（重點）</div></div>
+  <div class="sh"><h2>步驟三：AI 會給你這段（中半：真正連 Gemini）</h2><div class="k">async_process：接上專線</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># 概念版：每個使用者一個 Session（用執行緒跑 async）</span>
+    <pre>    async def async_process(self):
+        config = {
+            "response_modalities": ["AUDIO"],        <span class="cm"># 原生語音只吐 AUDIO</span>
+            "system_instruction": self.instructions,
+            "output_audio_transcription": {},        <span class="cm"># 順便要字幕</span>
+        }
+        try:
+            async with self.client.aio.live.connect(
+                    model=LIVE_MODEL, config=config) as session:
+                logger.info(f"Session {self.sid} connected to Gemini Live.")
+                sender_task = asyncio.create_task(self.sender(session))
+                receiver_task = asyncio.create_task(self.receiver(session))
+                while not self.stop_event.is_set():   <span class="cm"># 沒喊停就一直跑</span>
+                    await asyncio.sleep(0.1)
+                sender_task.cancel(); receiver_task.cancel()
+        except Exception as e:
+            logger.error(f"Gemini connection error: {e}")
+            socketio.emit('error', {'msg': str(e)}, to=self.sid)</pre></div>
+  <div class="warn-box">⚠️ <b>進階，先跳過不影響主線</b>：實際專案裡這個 while 迴圈還會「幫掛掉的 sender/receiver 復活」（自動重啟）。那是穩定性優化，看不懂沒關係，照抄能跑就好。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：AI 會給你這段（下半：送與收）</h2><div class="k">sender 往上送、receiver 往下傳</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>    async def sender(self, session):        <span class="cm"># 把你的 PCM 送給 Gemini</span>
+        from google.genai.types import Blob
+        while True:
+            if not self.audio_in_queue.empty():
+                chunk = self.audio_in_queue.get()
+                blob = Blob(data=chunk, mime_type="audio/pcm")
+                await session.send_realtime_input(audio=blob)
+            else:
+                await asyncio.sleep(0.01)
+
+    async def receiver(self, session):      <span class="cm"># 收 Gemini 回來的東西</span>
+        async for response in session.receive():
+            sc = response.server_content
+            if sc is None: continue
+            ot = getattr(sc, 'output_transcription', None)
+            if ot and getattr(ot, 'text', None):
+                socketio.emit('text_response', {'text': ot.text}, to=self.sid)  <span class="cm"># 字幕</span>
+            if sc.model_turn:
+                for part in sc.model_turn.parts:
+                    inline = getattr(part, 'inline_data', None)
+                    if inline and inline.data:
+                        socketio.emit('audio_response', inline.data, to=self.sid) <span class="cm"># 24kHz 語音</span>
+            if sc.turn_complete:
+                socketio.emit('turn_complete', to=self.sid)   <span class="cm"># 一輪結束</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：逐段看懂</h2><div class="k">整個 GeminiSession 的分工</div></div>
+  <table class="tbl body">
+    <tr><th>角色</th><th>在做什麼</th></tr>
+    <tr><td><code>audio_in_queue</code>（佇列）</td><td>你送來的音訊先排隊，sender 再一份份拿去送。像「收件匣」</td></tr>
+    <tr><td><code>start()</code> 開執行緒</td><td>即時連線要一直跑，不能卡住主程式，所以丟到<b>背景執行緒</b></td></tr>
+    <tr><td><code>live.connect(...)</code></td><td>真正撥通到 Gemini Live 的即時專線</td></tr>
+    <tr><td><code>sender</code></td><td>不停檢查佇列，有音訊就 <code>send_realtime_input</code> 送上去</td></tr>
+    <tr><td><code>receiver</code></td><td>不停收 Gemini 回來的：語音→<code>audio_response</code>、字幕→<code>text_response</code></td></tr>
+    <tr><td><code>stop_event</code></td><td>一面「該收工了」的旗子，按停止時舉起來，迴圈就結束</td></tr>
+  </table>
+  <div class="info-box">🧩 一句話總結：<b>一位使用者 = 一個 GeminiSession = 一條執行緒 = 一通到 Gemini 的電話</b>。</div>
+</section>
+
+<!-- ===================== 步驟四：socket 事件 + 前端載入 ===================== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：接四個「按鈕線路」</h2><div class="k">在 app.py 加 socket 事件</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 4／5</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：前端會發四種訊號進來——「開始」「送音訊」「停止」「斷線」。我們在 <code>app.py</code> 各接一個處理函式。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把這幾個事件<b>貼在剛剛 connect／disconnect 的旁邊</b>。</p>
+    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm"># app.py — 四個 socket 事件</span>
 @socketio.on('start_session')
-def start(data):
-    inst = (f"You are a real-time voice translator. "
-            f"When you hear {data['langA']}, reply in {data['langB']}; "
-            f"when you hear {data['langB']}, reply in {data['langA']}. "
-            "Output ONLY the translation.")
-    <span class="cm"># 在背景執行緒開 client.aio.live.connect(model=LIVE_MODEL, config=...)</span>
-    <span class="cm"># config: response_modalities=['AUDIO'], system_instruction=inst,</span>
-    <span class="cm">#         output_audio_transcription={}  # 同時要字幕</span>
-
-@socketio.on('audio_in')
-def audio_in(chunk):
-    <span class="cm"># 把瀏覽器送來的 PCM 丟進該 session 的佇列，轉送給 Gemini</span>
-    pass</pre></div>
-  <p class="note body">完整版可請 AI 依「用執行緒＋asyncio 跑 live.connect，收到 inline_data 就 emit('audio_response')」補齊。</p>
+def handle_start(data):
+    sid = request.sid
+    langA = data.get('langA', 'Chinese'); langB = data.get('langB', 'English')
+    user_key = (data.get('gemini_key') or '').strip() or None
+    instruction = (
+        f"You are a real-time voice translator. Your ONLY job is to translate speech.\n"
+        f"- When you hear {langA}, translate it to {langB} and reply in {langB}.\n"
+        f"- When you hear {langB}, translate it to {langA} and reply in {langA}.\n"
+        f"Rules: Output ONLY the translation. No greeting or explanation. Speak naturally.")
+    if sid in active_sessions: active_sessions[sid].stop()
+    session = GeminiSession(sid, instruction, api_key=user_key)
+    active_sessions[sid] = session; session.start()
+    emit('status', {'msg': 'Session Started'})</pre></div>
+  </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>前端：擷取麥克風 PCM</h2><div class="k">轉成 16kHz 送出去</div></div>
+  <div class="sh"><h2>步驟四：另外三個事件</h2><div class="k">送音訊 / 停止 / 斷線</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// app.js（即時模式）</span>
-const socket = io();
+    <pre><span class="cm"># app.py — 續前</span>
+@socketio.on('audio_in')                <span class="cm"># 前端一直送來的音訊</span>
+def handle_audio(data):
+    sid = request.sid
+    if sid in active_sessions:
+        active_sessions[sid].add_audio(data)   <span class="cm"># 丟進那位使用者的佇列</span>
+
+@socketio.on('stop_session')            <span class="cm"># 按停止</span>
+def handle_stop():
+    sid = request.sid
+    if sid in active_sessions:
+        active_sessions[sid].stop()
+        del active_sessions[sid]
+
+@socketio.on('disconnect')              <span class="cm"># 關網頁 / 斷線也要收工</span>
+def handle_disconnect():
+    sid = request.sid
+    if sid in active_sessions:
+        active_sessions[sid].stop(); del active_sessions[sid]
+    logger.info(f"Client disconnected: {sid}")</pre></div>
+  <p class="note body">💡 若你在階段檢核①已加過 <code>disconnect</code>，就把它換成這個「會清掉 session」的完整版。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：逐段看懂 + 哪個事件配哪段旅程</h2><div class="k">四個事件 vs 那條路</div></div>
+  <table class="tbl body">
+    <tr><th>socket 事件</th><th>對應「全貌」哪一段</th></tr>
+    <tr><td><code>start_session</code></td><td>按下「即時」→ 開一條到 Gemini 的專線，並寫好雙向翻譯指令</td></tr>
+    <tr><td><code>audio_in</code></td><td>旅程 ①→②：把你麥克風的 PCM 收進佇列，轉送 Gemini</td></tr>
+    <tr><td><code>stop_session</code></td><td>按停止 → 收線、清掉這位使用者的 session</td></tr>
+    <tr><td><code>disconnect</code></td><td>關網頁／斷網 → 也要收線，免得背景執行緒殘留</td></tr>
+  </table>
+  <div class="info-box">🧭 注意：語音「回來」的路（audio_response／text_response）不是靠事件觸發，是 <code>GeminiSession</code> 的 <code>receiver</code> 主動 <code>emit</code> 給前端的。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：前端要先載入 socket.io</h2><div class="k">在 index.html 加一行</div></div>
+  <div class="body">
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：前端要有 <code>socket.io</code> 才連得上後端。用 CDN 載入即可。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把這行<b>放在你自己的 <code>app.js</code> 之前</b>（通常在 <code>&lt;/body&gt;</code> 上方）。</p>
+    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>&lt;script src="https://cdn.socket.io/4.7.2/socket.io.min.js"&gt;&lt;/script&gt;
+&lt;script src="/static/js/app.js"&gt;&lt;/script&gt;   <span class="cm">&lt;!-- 你原本就有的 --&gt;</span></pre></div>
+    <div class="ok-box">✅ <b>預期</b>：重整頁面後，回頭看階段檢核①——終端機這下應該印出 <code>Client connected</code> 了。</div>
+  </div>
+</section>
+
+<!-- ===================== 步驟五：前端麥克風 + 播放 ===================== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟五：前端擷取麥克風、送 16kHz</h2><div class="k">startLive()：整章最關鍵的前端邏輯</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 5／5</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：按下「即時」後，開麥克風、把聲音<b>降到 16kHz PCM</b>，用 socket 一份份送出去。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段加在即時模式區塊。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請在 app.js 寫 startLive()：用 getUserMedia 開麥克風，
+建立 AudioContext + ScriptProcessor(4096) 擷取音訊，
+把音訊從裝置取樣率降到 16000Hz、轉成 Int16 PCM，
+用 socket.emit('audio_in', pcm.buffer) 送出，
+再 socket.emit('start_session', {langA, langB}) 開始。
+另外寫 stopLive() 關麥克風、發 stop_session。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟五：AI 會給你這段（startLive）</h2><div class="k">貼進 static/js/app.js</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>let liveOn = false, audioCtx, liveProcessor, liveInput, liveStream;
+
 async function startLive(){
-  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-  const ctx = new AudioContext();
-  const src = ctx.createMediaStreamSource(stream);
-  const proc = ctx.createScriptProcessor(4096,1,1);
-  src.connect(proc); proc.connect(ctx.destination);
-  proc.onaudioprocess = (e)=&gt;{
+  liveStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+  audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+  liveInput = audioCtx.createMediaStreamSource(liveStream);
+  liveProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
+  liveInput.connect(liveProcessor); liveProcessor.connect(audioCtx.destination);
+  const targetRate = 16000;                    <span class="cm">// Gemini 要 16kHz</span>
+  liveProcessor.onaudioprocess = (e)=&gt;{
+    if(!liveOn) return;
     const input = e.inputBuffer.getChannelData(0);
-    const pcm = downsampleTo16k(input, ctx.sampleRate);  <span class="cm">// 轉 16kHz Int16</span>
-    socket.emit('audio_in', pcm.buffer);
+    const step = audioCtx.sampleRate / targetRate;   <span class="cm">// 降採樣的步進</span>
+    const len = Math.floor(input.length / step);
+    const pcm = new Int16Array(len);
+    for(let i=0;i&lt;len;i++){
+      let s = Math.max(-1, Math.min(1, input[Math.floor(i*step)]||0));
+      pcm[i] = s &lt; 0 ? s*0x8000 : s*0x7FFF;    <span class="cm">// -1~1 轉 16-bit 整數</span>
+    }
+    socket.emit('audio_in', pcm.buffer);        <span class="cm">// 一份份送出</span>
   };
-  socket.emit('start_session', {langA:'Chinese', langB:'English'});
+  socket.emit('start_session', { langA:'Chinese', langB:'English' });
+  liveOn = true; setResult(sResult, '即時聆聽中…', true);
+}</pre></div>
+</section>
+
+<!-- 階段檢核 ② -->
+<section class="slide cs">
+  <div class="sh"><h2>✅ 階段檢核 ②：音訊真的有送出去嗎？</h2><div class="k">第二關：確認你的聲音有離開瀏覽器</div></div>
+  <div class="body">
+    <p>連線通了、也開始送音訊了，但看不見摸不著。加一行 log 確認「真的有在送」。在 <code>onaudioprocess</code> 裡的 <code>socket.emit('audio_in'...)</code> <b>前面</b>暫時加一行：</p>
+    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>if(liveOn) console.log('送出音訊 bytes:', pcm.buffer.byteLength);
+socket.emit('audio_in', pcm.buffer);</pre></div>
+    <div class="ok-box">✅ <b>預期：你會看到什麼</b>　開麥克風、對它說話時，瀏覽器 <b>F12 → Console</b> 會<b>連續</b>冒出 <code>送出音訊 bytes: 4096</code>（數字約 4096 或相近）。一直在冒 = 第二關過，聲音正在往伺服器流。</div>
+    <p class="note body">🧹 確認過後可以把這行 <code>console.log</code> 拿掉，免得洗版。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>階段檢核 ②：卡住了？</h2><div class="k">Console 沒冒 bytes</div></div>
+  <div class="body">
+    <div class="warn-box">🔧 <b>完全不冒數字</b>：<br>① 沒按到「即時」，<code>liveOn</code> 還是 false。<br>② 麥克風權限被擋——瀏覽器網址列左邊要允許麥克風。<br>③ <code>getUserMedia</code> 失敗：<b>正式網址必須 HTTPS</b>；本機用 <code>127.0.0.1</code> 例外允許。</div>
+    <div class="warn-box">🔧 <b>數字一直是 0</b>：麥克風沒收到聲音（靜音、選錯裝置）。到系統設定確認預設麥克風。</div>
+    <div class="info-box">🧭 <b>為什麼分兩關測？</b>　到這裡你已能斷定「連線 OK、送出 OK」。若最後沒聲音，問題一定在「回來」那段，範圍縮小一半。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟五：收語音 + 字幕 + 播放</h2><div class="k">把 Gemini 回來的聲音放出來</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// app.js — 綁定 Gemini 回來的三種訊號</span>
+let livePending = '';
+socket.on('text_response', (d)=&gt;{ if(d.text){ livePending += d.text; setResult(sResult, livePending); } });  <span class="cm">// 字幕逐字出現</span>
+socket.on('audio_response', (data)=&gt; playLiveAudio(data));   <span class="cm">// 播放翻譯語音</span>
+socket.on('turn_complete', ()=&gt;{ livePending = ''; });        <span class="cm">// 一輪講完，字幕清空</span>
+
+<span class="cm">// 播放 Gemini 原生語音（24kHz PCM 16-bit）</span>
+let playCtx = null, nextTime = 0;
+function playLiveAudio(data){
+  if(!playCtx) playCtx = new (window.AudioContext||window.webkitAudioContext)({ sampleRate:24000 });
+  if(playCtx.state==='suspended') playCtx.resume();   <span class="cm">// 手機須先解鎖才有聲</span>
+  const int16 = new Int16Array(data);
+  const f32 = new Float32Array(int16.length);
+  for(let i=0;i&lt;int16.length;i++) f32[i] = int16[i] / 32768;  <span class="cm">// 整數轉回 -1~1</span>
+  const buf = playCtx.createBuffer(1, f32.length, 24000);
+  buf.getChannelData(0).set(f32);
+  const src = playCtx.createBufferSource();
+  src.buffer = buf; src.connect(playCtx.destination);
+  const now = playCtx.currentTime; if(nextTime &lt; now) nextTime = now;
+  src.start(nextTime); nextTime += buf.duration;      <span class="cm">// 一段接一段，不會疊在一起</span>
 }</pre></div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>前端：收語音 + 字幕</h2><div class="k">播放 Gemini 回來的聲音</div></div>
+  <div class="sh"><h2>步驟五：逐段看懂播放邏輯</h2><div class="k">為什麼要 nextTime 這一招</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>new Int16Array(data)</code></td><td>把後端傳來的一串 bytes 讀成「16-bit 整數」的聲音樣本</td></tr>
+    <tr><td><code>int16[i] / 32768</code></td><td>整數轉回 <code>-1~1</code> 的小數，這是 Web Audio 要的格式</td></tr>
+    <tr><td><code>createBuffer(1, len, 24000)</code></td><td>建一段 <b>24kHz</b>、單聲道的音訊緩衝（回來的語音是 24kHz）</td></tr>
+    <tr><td><code>nextTime</code> 排程</td><td>語音是一小段一小段回來的。用 <code>nextTime</code> 把每段<b>接龍排好</b>，才不會全部擠在同一刻播、聽起來像雜訊</td></tr>
+  </table>
+  <div class="info-box">🔊 這就是「串流播放」的精髓：邊收邊排、排好就放，聽感上就像連續一句話。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟五：加開關 + stopLive</h2><div class="k">把「即時」按鈕接起來</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// 沿用 CH08 的 playPCM 播放</span>
-socket.on('audio_response', (data)=&gt; playPCM(data));
-socket.on('text_response', (d)=&gt; result.textContent += d.text);   <span class="cm">// 字幕</span>
-socket.on('turn_complete', ()=&gt;{ /* 一輪結束 */ });</pre></div>
-  <p class="note body">前端載入 socket.io：<code>&lt;script src="https://cdn.socket.io/4.7.2/socket.io.min.js"&gt;&lt;/script&gt;</code></p>
+    <pre><span class="cm">// app.js — 一顆按鈕切換即時開/關</span>
+async function toggleLive(){ liveOn ? stopLive() : startLive(); }
+
+function stopLive(){
+  liveOn = false;
+  if(liveProcessor){ liveProcessor.disconnect(); liveProcessor = null; }
+  if(liveInput){ liveInput.disconnect(); liveInput = null; }
+  if(liveStream){ liveStream.getTracks().forEach(t=&gt;t.stop()); liveStream = null; }  <span class="cm">// 關麥克風燈</span>
+  if(socket) socket.emit('stop_session');
+}
+
+<span class="cm">// index.html 放一顆按鈕：&lt;button onclick="toggleLive()"&gt;🎙️ 即時&lt;/button&gt;</span></pre></div>
+  <div class="info-box">🧹 <code>stopLive()</code> 很重要：不關麥克風，瀏覽器那顆紅點會一直亮、也會一直耗流量。務必把三個東西（processor／input／stream）都收乾淨。</div>
 </section>
 
+<!-- 階段檢核 ③ -->
 <section class="slide cs">
-  <div class="sh"><h2>實測即時模式</h2><div class="k">按下就開始口譯</div></div>
+  <div class="sh"><h2>✅ 階段檢核 ③：有聲音回來嗎？</h2><div class="k">第三關，也是最後一關：完整跑一次</div></div>
   <div class="body">
-    <p>加一個「即時」開關，按下呼叫 startLive()。對著麥克風連續說中文，App 幾乎<b>同步</b>吐出英文語音。</p>
-    <div class="shot"><span class="cam">📸</span>請截圖：即時模式運作中（字幕 + 連線狀態）</div>
-    <div class="warn-box">⚠️ 正式上線需 HTTPS 才能用麥克風（getUserMedia）。本機 127.0.0.1 可測。</div>
+    <p>三段都接好了。存檔、重啟伺服器、重整頁面，按「🎙️ 即時」，對著麥克風<b>慢慢說一句中文</b>，例如「你好，很高興認識你」。</p>
+    <div class="ok-box">✅ <b>預期：你會看到／聽到什麼</b><br>① 畫面先顯示「即時聆聽中…」。<br>② 你講的話翻成的英文<b>字幕逐字出現</b>。<br>③ 幾乎同時，喇叭<b>唸出英文翻譯</b>。<br>三個都出現 = 恭喜，最難的一章通關了！</div>
+    <div class="mockrow">
+      <div class="mock">
+        <div class="m-top"><span>15:57</span><b>5G ▲</b></div>
+        <div class="m-row"><div class="m-title">🌐 亮言 · 即時翻譯</div><span class="m-pill">⚙️</span></div>
+        <div class="m-card">🎧 即時聆聽中…</div>
+        <div class="m-card m-muted">Hello, nice to meet you.</div>
+        <div class="m-btn">🎙️ 即時中（再按一下停止）</div>
+      </div>
+      <div class="mock-cap">模擬畫面：即時聆聽中，字幕逐字出現（示意，非真實截圖）</div>
+    </div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>常見問題</h2><div class="k">即時模式的雷</div></div>
-  <div class="tc body">
-    <div>
-      <p><b>連不上 / 沒聲音？</b></p>
-      <p class="note">確認 socketio.run 啟動、前端有載 socket.io、麥克風權限允許。</p>
-      <p><b>延遲很大？</b></p>
-      <p class="note">網路品質影響大；PCM 取樣要正確降到 16kHz。</p>
-    </div>
-    <div>
-      <p><b>翻譯行為怪？</b></p>
-      <p class="note">若即時翻譯品質或行為異常，可回退到通用即時模型 gemini-3.1-flash-live-preview（通用版，非專為翻譯優化）比較差異。</p>
-      <p><b>額度到了？</b></p>
-      <p class="note">即時模式較耗用量，注意 Gemini 支出上限。</p>
-    </div>
+  <div class="sh"><h2>階段檢核 ③：三種常見結果對照</h2><div class="k">哪一關卡住，回哪裡查</div></div>
+  <table class="tbl body">
+    <tr><th>你看到的情況</th><th>問題在哪一段</th></tr>
+    <tr><td>連 <code>Client connected</code> 都沒印</td><td>連線沒通 → 回<b>階段檢核①</b></td></tr>
+    <tr><td>Console 沒冒 <code>送出音訊</code></td><td>音訊沒送出 → 回<b>階段檢核②</b>（多半是麥克風權限／HTTPS）</td></tr>
+    <tr><td>有字幕、但<b>沒聲音</b></td><td>播放那段 → 手機須先點一下解鎖 <code>playCtx.resume()</code>；或喇叭靜音</td></tr>
+    <tr><td>有聲音、但<b>沒字幕</b></td><td>後端 config 少了 <code>output_audio_transcription={}</code></td></tr>
+    <tr><td>都沒有、終端機報 error</td><td>看 <code>Gemini connection error</code> 訊息 → 多半金鑰或模型名</td></tr>
+  </table>
+</section>
+
+<!-- 除錯集 -->
+<section class="slide cs">
+  <div class="sh"><h2>🔧 卡住了？本章常見的坑總整理</h2><div class="k">對症下藥</div></div>
+  <div class="body">
+    <div class="warn-box">① <b>麥克風開不了 / getUserMedia 失敗</b>：正式網址一定要 <b>HTTPS</b>；本機測用 <code>http://127.0.0.1:5001</code> 是被允許的。瀏覽器要按「允許」麥克風。</div>
+    <div class="warn-box">② <b>連不上 / 沒任何反應</b>：確認啟動用的是 <code>socketio.run</code>（不是 <code>app.run</code>）、前端有載 <code>socket.io</code>。</div>
+    <div class="warn-box">③ <b>延遲很大 / 聲音斷斷續續</b>：多半是網路。也確認 PCM 有正確降到 <b>16kHz</b>（步驟五的 <code>step</code> 算式）。</div>
+    <div class="warn-box">④ <b>翻譯行為怪 / 亂翻</b>：可暫時把模型換成通用即時模型 <code>gemini-3.1-flash-live-preview</code> 比較差異（通用版，非專為翻譯優化）。</div>
+    <div class="warn-box">⑤ <b>回 429 / 額度</b>：即時模式較耗量，Gemini 免費額度容易到上限，等一下或換金鑰。</div>
   </div>
 </section>
 
+<!-- 動手練習 -->
+<section class="slide cs">
+  <div class="sh"><h2>動手練習</h2><div class="k">改一點點，感受即時模式的脾氣</div></div>
+  <ul class="sl body">
+    <li>把 <code>start_session</code> 的 <code>langB</code> 從 <code>'English'</code> 改成 <code>'Japanese'</code>，用中文說一句，聽它即時翻成日文。</li>
+    <li>把播放的 <code>createBuffer(1, len, 24000)</code> 的 <code>24000</code> 故意改成 <code>16000</code>，聽聽看聲音變得又慢又低沉——體會「取樣率對不上」會怎樣（測完改回 24000）。</li>
+    <li>把 <code>ScriptProcessor(4096, ...)</code> 的 <code>4096</code> 改成 <code>16384</code>，感覺送出頻率變低、延遲略增——體會「一次送多少」的取捨。</li>
+  </ul>
+</section>
+
+<!-- 生成器（保留） -->
 <section class="slide cs">
   <div class="sh"><h2>🎁 Live 翻譯指令生成器</h2><div class="k">選雙語，產生 system_instruction</div></div>
   <div class="gen body">
@@ -160,27 +586,32 @@ socket.on('turn_complete', ()=&gt;{ /* 一輪結束 */ });</pre></div>
       <button class="alt" onclick="cp(this)">📋 複製</button>
     </div>
     <div class="out" id="lv_out">填雙語後按產生，這裡會出現雙向即時翻譯的 system 指令…</div>
+    <div class="hint">把產生的字串當成 GeminiSession 的 instruction，雙向翻譯更聽話。</div>
   </div>
 </section>
 
+<!-- 驗收 -->
 <section class="slide cs">
   <div class="sh"><h2>本章驗收</h2><div class="k">即時口譯上線</div></div>
   <ul class="goals body">
-    <li>裝好 flask-socketio，app.py 用 socketio.run 啟動。</li>
-    <li>能開麥克風串流，Gemini Live 回傳即時語音。</li>
-    <li>字幕即時顯示、能開關即時模式。</li>
+    <li>裝好 <code>flask-socketio</code>，app.py 改用 <code>socketio.run</code> 啟動。</li>
+    <li>有 <code>GeminiSession</code>（背景執行緒）＋四個 socket 事件。</li>
+    <li>前端能開麥克風、送 16kHz PCM，並播放 24kHz 回來的語音。</li>
+    <li>三段階段檢核都能過：①連線 ②送音訊 ③收語音＋字幕。</li>
   </ul>
-  <div class="milestone body"><div class="mh">🎁 你現在有：即時口譯 App</div><p>逐句 + 即時兩種模式都有了！下一章做「面對面模式」，讓兩個人隔著手機也能對話。</p></div>
+  <div class="milestone body"><div class="mh">🎁 你現在有：即時口譯 App</div><p>逐句 + 即時兩種模式都有了！這是全課最難的一章，你撐過來了。下一章做「面對面模式」，讓兩個人隔著手機也能對話。</p></div>
 </section>
 
+<!-- 下一章 -->
 <section class="slide cs">
   <div class="sh"><h2>下一章 · CH10</h2><div class="k">面對面模式</div></div>
   <div class="body">
     <p>下一章把手機平放桌上，畫面<b>上下對開</b>：對面的人看倒過來的一半、你看正的一半，各講各的語言，翻譯顯示在對方那側。</p>
-    <div class="info-box">👥 CH10 完成 Part 2。</div>
+    <div class="info-box">👥 CH10 完成 Part 2。相較本章，它輕鬆很多，回到熟悉的「逐句 + 翻譯」，只是排版對開。</div>
   </div>
 </section>
 
+<!-- 版權 -->
 <section class="slide cover">
   <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
   <h1 style="font-size:38px">CH09 完成！<span class="g">即時口譯</span></h1>

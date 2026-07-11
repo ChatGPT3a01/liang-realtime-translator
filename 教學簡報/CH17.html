@@ -8,101 +8,573 @@
 </head>
 <body>
 
+<!-- 1. 封面 -->
 <section class="slide cover">
   <div class="tag">第三篇 · Part 4 · 上線與加值</div>
   <h1>CH17 · <span class="g">密碼閘門與金鑰設定</span></h1>
-  <h2>集中管理金鑰，加一道基本門禁</h2>
+  <h2>設定面板 + 密碼門禁 + 一鍵換背景配色</h2>
   <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
 </section>
 
+<!-- 2. 先回顧 -->
 <section class="slide cs">
-  <div class="sh"><h2>這一章要做兩件事</h2><div class="k">設定面板 + 密碼閘門</div></div>
-  <div class="cg body">
-    <div class="cc"><div class="ico">🔑</div><h3>金鑰集中設定</h3><p>一個設定面板，讓使用者填自己的 Gemini／Tavily（及選配的 OpenAI 相容）金鑰。</p></div>
-    <div class="cc"><div class="ico">🔒</div><h3>密碼閘門</h3><p>進站前先輸入密碼，做基本的存取阻擋（非高強度保護）。</p></div>
-  </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>金鑰放哪裡？三選一</h2><div class="k">複習 CH02 的觀念</div></div>
-  <table class="tbl body">
-    <tr><th>位置</th><th>特性</th></tr>
-    <tr><td>Render 環境變數</td><td>最安全，全裝置共用（CH18）</td></tr>
-    <tr><td>App 設定面板（localStorage）</td><td>使用者自填、單機生效</td></tr>
-    <tr><td>.env（本機開發）</td><td>自己電腦測試用</td></tr>
-  </table>
-  <p class="note body" style="margin-top:10px">這章做「設定面板」，讓使用者能在網頁填金鑰，前端請求時一起帶給後端。</p>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>設定面板（localStorage）</h2><div class="k">存在使用者瀏覽器</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// app.js — 讀寫設定</span>
-const DEFAULT_CFG = { provider:'gemini', geminikey:'', tavilykey:'', owmkey:'' };
-function loadCfg(){ return {...DEFAULT_CFG, ...JSON.parse(localStorage.getItem('cfg')||'{}')}; }
-function saveCfg(c){ localStorage.setItem('cfg', JSON.stringify(c)); }
-let cfg = loadCfg();
-<span class="cm">// 請求時帶上（Gemini 空的話後端用伺服器內建）</span>
-function providerBody(){ return { provider:cfg.provider, api_key:cfg.geminikey||'' }; }</pre></div>
-  <p class="note body">後端各端點改成「有帶金鑰就用、沒帶就用伺服器內建」，彈性最大。</p>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>密碼閘門怎麼做？</h2><div class="k">用 SHA-256 雜湊，不存明文</div></div>
+  <div class="sh"><h2>先回顧：我們現在有什麼</h2><div class="k">站在前面章節的成果上，往上加一層</div></div>
   <div class="body">
-    <p>把「正確密碼」的 <b>SHA-256 雜湊</b>寫在程式裡。使用者輸入密碼時，前端算它的雜湊，跟存好的比對，對了才放行。</p>
-    <div class="warn-box">⚠️ 這是「閱讀阻擋」等級，不是高強度保護（前端的東西使用者都看得到）。真正機密仍要靠後端與環境變數。</div>
+    <p>到上一章為止，你的 App 已經很完整了：<b>打字翻譯、語音翻譯、即時口譯、面對面對話、拍照與檔案翻譯、天氣與旅遊問答</b>都能用了。</p>
+    <div class="info-box">🧩 本章不加新的「翻譯能力」，而是幫 App 補上三塊<b>好用又貼心</b>的東西：設定面板、密碼門禁、換背景配色。做完就準備下一章上線。</div>
+  </div>
+</section>
+
+<!-- 3. 這一章要做出什麼 -->
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">三塊：設定 / 門禁 / 換色</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">🔑</div><h3>設定面板</h3><p>一個彈窗，讓使用者填自己的金鑰、調語速、選自動朗讀，全部記在自己的瀏覽器。</p></div>
+    <div class="cc"><div class="ico">🔒</div><h3>密碼閘門</h3><p>進站前先輸密碼，做基本的存取阻擋。密碼不存明文，用 SHA-256 雜湊比對。</p></div>
+    <div class="cc"><div class="ico">🎨</div><h3>背景風格切換</h3><p>設定面板多一個下拉選單，選了整頁立刻換色——紫金、海洋藍、森林綠…七款任選。</p></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>密碼閘門程式</h2><div class="k">比對雜湊</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// 只存雜湊，不存明文密碼</span>
-const HASHES = ['3ee7f6...要換成你的密碼雜湊'];
-async function sha256(str){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return [...new Uint8Array(buf)].map(b=&gt;b.toString(16).padStart(2,'0')).join('');
-}
-async function check(pw){
-  const h = await sha256(pw);
-  if(HASHES.includes(h)){ sessionStorage.setItem('authed','1'); hideGate(); }
-  else alert('密碼錯誤');
-}</pre></div>
+  <div class="sh"><h2>本章小成品</h2><div class="k">先看終點在哪</div></div>
+  <div class="body">
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個「有門禁、能自訂金鑰、還能一鍵換背景配色」的 App。重整頁面先跳密碼視窗；進站後點右上角 ⚙️ 就能填金鑰、換主題色，關掉設定下次打開全都記得。</p></div>
+  </div>
 </section>
 
+<!-- 4. 完成後的操作流程（先看全貌） -->
+<section class="slide cs">
+  <div class="sh"><h2>先看全貌：這三塊各是怎麼運作的</h2><div class="k">看懂這條路，後面每一步就知道自己在做哪一段</div></div>
+  <ol class="sl body">
+    <li><b>密碼閘門</b>：打開網頁 → 先蓋一層密碼視窗 → 輸入密碼 → 前端算它的 SHA-256 → 跟存好的雜湊比對 → 對了才掀開視窗進站。</li>
+    <li><b>設定面板</b>：點 ⚙️ → 彈出設定 → 填金鑰／調語速／選主題 → 按「儲存」→ 寫進瀏覽器的 localStorage → 下次打開自動帶回。</li>
+    <li><b>背景風格</b>：在設定選一個顏色 → 立刻預覽 → 按儲存記住 → 下次開機自動套用你上次選的色。</li>
+  </ol>
+  <div class="info-box">👉 這一章就是把這三條路，一段一段做出來。</div>
+</section>
+
+<!-- 5. 觀念：localStorage -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念 (1)：localStorage 是什麼</h2><div class="k">瀏覽器裡的小抽屜</div></div>
+  <div class="body">
+    <p><b>localStorage</b> 就是瀏覽器幫每個網站準備的一個<b>小抽屜</b>。你把資料（例如金鑰、語速、主題色）放進去，關掉分頁、關掉電腦都還在，下次打開同一個網站又拿得回來。</p>
+    <p>它是<b>存在使用者自己的瀏覽器</b>裡，不是我們的伺服器。所以每個人填的金鑰只有自己看得到，換一台電腦就要重填。</p>
+    <div class="info-box">💡 比喻：localStorage 像你家門口的鞋櫃，只有你這台裝置用得到；伺服器環境變數（CH18）才是「全裝置共用的中央保險箱」。</div>
+  </div>
+</section>
+
+<!-- 6. 觀念：SHA-256 -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念 (2)：SHA-256 雜湊</h2><div class="k">把密碼變成「單行道指紋」</div></div>
+  <div class="body">
+    <p><b>SHA-256</b> 是一種把任何文字變成一串固定長度亂碼（64 個字元）的算法。同樣的輸入永遠得到同樣的亂碼，但<b>反過來算不回去</b>——這是「單行道」。</p>
+    <p>所以我們不把密碼明文寫在程式裡，只寫它的<b>雜湊（指紋）</b>。使用者輸入密碼時，前端當場算指紋、跟存好的指紋比對，一樣就放行。就算有人翻你的程式碼，也只看到指紋、看不到原始密碼。</p>
+    <div class="warn-box">⚠️ 這是「閱讀阻擋」等級，<b>不是高強度保護</b>——前端的東西使用者理論上都摸得到。真正的機密（例如金鑰）仍要靠後端與環境變數（CH18）。</div>
+  </div>
+</section>
+
+<!-- 7. 觀念：CSS 變數換色原理 -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念 (3)：為什麼能「一鍵換色」</h2><div class="k">全 App 顏色都指向同一組變數</div></div>
+  <div class="body">
+    <p>祕密是：整個 App 的顏色，<b>沒有一處寫死</b>，全部指向一組叫「CSS 變數」的公用色票——像 <code>--bg1</code>（底色）、<code>--gold</code>（重點金）。按鈕、卡片、文字全都寫「用 <code>--gold</code>」。</p>
+    <p>換色時，我們只要在 <code>&lt;body&gt;</code> 掛上一個標記 <code>data-theme="ocean"</code>，CSS 就會用另一套值<b>覆蓋</b>這組變數。一改，全站幾百處顏色<b>同時</b>跟著變。</p>
+    <div class="info-box">🎨 比喻：整間房子的燈都接到同一個「調光開關」（CSS 變數）。你不用一盞一盞換，轉一下總開關，全部一起變色。</div>
+  </div>
+</section>
+
+<!-- 8. 檔案地圖 -->
+<section class="slide cs">
+  <div class="sh"><h2>動工前：這章會改到哪些檔案</h2><div class="k">先知道等一下要打開哪幾個檔</div></div>
+  <table class="tbl body">
+    <tr><th>檔案</th><th>加什麼</th></tr>
+    <tr><td><span class="filechip">static/js/app.js</span></td><td><code>DEFAULT_CFG</code> 預設值、<code>loadCfg/saveCfg</code> 讀寫設定、<code>openSettings/cfg_save</code>、<code>applyTheme()</code> 換色</td></tr>
+    <tr><td><span class="filechip">templates/index.html</span></td><td>設定彈窗 <code>#settingsModal</code>（含金鑰欄位、🎨 主題下拉）＋ 密碼閘門的 SHA-256 比對 <code>&lt;script&gt;</code></td></tr>
+    <tr><td><span class="filechip">static/css/style.css</span></td><td><code>:root</code> 定義預設色票，再為每個主題寫一組 <code>body[data-theme="..."]</code> 覆蓋</td></tr>
+  </table>
+  <div class="info-box">📂 就這三個檔。下面每一步都會告訴你「打開哪一個、貼在哪裡」。</div>
+</section>
+
+<!-- ============ 步驟一：設定面板 localStorage ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：做「會記住設定」的抽屜</h2><div class="k">在 app.js 定義 DEFAULT_CFG 與讀寫函式</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 1／6</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：先訂好「有哪些設定、預設值是什麼」，再寫兩個小函式：一個把設定<b>讀出來</b>、一個把設定<b>存回去</b>。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，貼在檔案<b>上方「設定」區塊</b>（其他邏輯之前）。</p>
+    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>幫我在 app.js 最上面做一個設定系統：
+定義 DEFAULT_CFG 物件，包含供應商 provider、各種金鑰（geminikey/tavilykey/owmkey）、
+語速 rate、自動朗讀 autospeak、背景主題 theme（預設 'purple'）。
+再寫 loadCfg() 從 localStorage 的 'liang_cfg' 讀出並補上預設值、
+saveCfg(c) 存回去。最後 let cfg = loadCfg() 載入目前設定。
+我是新手，請附完整程式碼與逐段說明。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.js 上方</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// static/js/app.js — 設定系統</span>
+const DEFAULT_CFG = {
+  provider:'gemini', baseurl:'https://api.openai.com/v1', apikey:'', model:'',
+  geminikey:'', tavilykey:'', owmkey:'',   <span class="cm">// 集中管理的金鑰（皆選填）</span>
+  rate:1, autospeak:true,
+  theme:'purple',                          <span class="cm">// 背景風格主題</span>
+  s_langA:'zh-TW', s_langB:'en',
+};
+function loadCfg(){
+  try{ return {...DEFAULT_CFG, ...JSON.parse(localStorage.getItem('liang_cfg')||'{}')}; }
+  catch{ return {...DEFAULT_CFG}; }
+}
+function saveCfg(c){ localStorage.setItem('liang_cfg', JSON.stringify(c)); }
+let cfg = loadCfg();   <span class="cm">// 開機就把上次存的設定載進來</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：逐段看懂</h2><div class="k">每一段在做什麼，白話講一遍</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>DEFAULT_CFG = {...}</code></td><td>把「所有設定的預設值」列成一張清單。使用者沒改過的，就用這裡的值</td></tr>
+    <tr><td><code>{...DEFAULT_CFG, ...JSON.parse(...)}</code></td><td>先鋪一層預設，再蓋上使用者存過的值。<b>好處</b>：以後新增設定項，老使用者也不會少那一格</td></tr>
+    <tr><td><code>localStorage.getItem('liang_cfg')</code></td><td>從瀏覽器抽屜拿出上次存的那包設定（一串文字）</td></tr>
+    <tr><td><code>try{...}catch{...}</code></td><td>萬一抽屜裡的資料壞了、解析失敗，就退回全預設，不讓程式當掉</td></tr>
+    <tr><td><code>saveCfg(c)</code></td><td>把設定打包成文字，塞回抽屜（鍵名 <code>liang_cfg</code>）</td></tr>
+    <tr><td><code>let cfg = loadCfg()</code></td><td>程式一啟動就載入，之後全 App 都讀這個 <code>cfg</code></td></tr>
+  </table>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：預期會看到什麼</h2><div class="k">先確認抽屜有在運作</div></div>
+  <div class="body">
+    <div class="ok-box">✅ 目前畫面還沒變化（我們只做了「底層記憶」）。可以按 <code>F12</code> 打開主控台，輸入 <code>loadCfg()</code> 按 Enter，會印出一包設定物件，代表抽屜通了。</div>
+    <div class="term body"><pre><span class="cm">&gt; loadCfg()</span>
+<span class="out">{ provider: "gemini", geminikey: "", rate: 1, autospeak: true, theme: "purple", ... }</span></pre></div>
+    <div class="warn-box">🔧 <b>卡住了？</b>　主控台若報 <code>loadCfg is not defined</code> → 這段貼太下面或存檔後沒重整。存檔、重整頁面再試。</div>
+  </div>
+</section>
+
+<!-- ============ 步驟二：設定彈窗 UI ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：畫出設定彈窗</h2><div class="k">在 index.html 加 #settingsModal</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 2／6</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：在畫面加一個平常藏起來的「設定彈窗」，裡面放金鑰欄位、語速、自動朗讀、以及等一下要用的 🎨 主題下拉。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把彈窗<b>放在 <code>&lt;body&gt;</code> 內、其他內容的後面</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>幫我在 index.html 加一個設定彈窗 &lt;div id="settingsModal"&gt;（預設 hidden）：
+裡面有「供應商」下拉、Gemini／Tavily／OpenWeatherMap 金鑰輸入框、
+語速 range、自動朗讀 checkbox，還有一個「🎨 背景風格」的 &lt;select id="cfg_theme"&gt;。
+下面放「取消」和「儲存」兩顆按鈕。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：AI 會給你這段（貼上去）</h2><div class="k">貼進 templates/index.html</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">&lt;!-- 設定彈窗；平常靠 hidden 藏起來 --&gt;</span>
+&lt;div class="modal hidden" id="settingsModal"&gt;
+  &lt;div class="modal-card"&gt;
+    &lt;h2&gt;設定&lt;/h2&gt;
+
+    &lt;h3&gt;🔑 API 金鑰（集中管理）&lt;/h3&gt;
+    &lt;label&gt;Gemini 金鑰（選填，留空用伺服器內建）
+      &lt;input type="password" id="cfg_geminikey" placeholder="AIza…你的金鑰"&gt;
+    &lt;/label&gt;
+    &lt;label&gt;Tavily 金鑰（旅遊問答上網查）
+      &lt;input type="password" id="cfg_tavilykey" placeholder="tvly-…你的金鑰"&gt;
+    &lt;/label&gt;
+
+    &lt;h3&gt;🎨 背景風格&lt;/h3&gt;
+    &lt;label&gt;主題
+      &lt;select id="cfg_theme"&gt;…（下一張補上七個選項）…&lt;/select&gt;
+    &lt;/label&gt;
+
+    &lt;h3&gt;語音朗讀 (TTS)&lt;/h3&gt;
+    &lt;label&gt;語速 &lt;input type="range" id="cfg_rate" min="0.5" max="1.5" step="0.1" value="1"&gt;&lt;/label&gt;
+    &lt;label class="check"&gt;&lt;input type="checkbox" id="cfg_autospeak" checked&gt; 翻譯完成後自動朗讀&lt;/label&gt;
+
+    &lt;div class="modal-actions"&gt;
+      &lt;button id="cfg_cancel"&gt;取消&lt;/button&gt;
+      &lt;button class="primary" id="cfg_save"&gt;儲存&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：逐段看懂</h2><div class="k">彈窗的骨架</div></div>
+  <div class="body">
+    <p>🔍 <code>class="modal hidden"</code>：這是一個「彈窗」，加了 <code>hidden</code> 平常就<b>藏起來</b>，等使用者點 ⚙️ 再拿掉 <code>hidden</code> 顯示。</p>
+    <p>🔍 每個 <code>&lt;input&gt;</code> 都有一個 <code>id</code>（像 <code>cfg_geminikey</code>）——這是給 JavaScript「認人」用的名牌，等一下讀寫設定就靠它找到這格。</p>
+    <p>🔍 金鑰欄用 <code>type="password"</code>，輸入會變成小圓點，不會被旁邊的人看光。</p>
+    <div class="info-box">💡 <code>placeholder="AIza…你的金鑰"</code> 只是<b>提示範例</b>，是灰字，不是真的金鑰。真正的金鑰由使用者自己填。</div>
+  </div>
+</section>
+
+<!-- ============ 步驟三：讀寫設定連動 ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：打開設定 / 按儲存的邏輯</h2><div class="k">在 app.js 加 openSettings 與 cfg_save</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 3／6</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：讓「打開設定」時把目前的值<b>填進每一格</b>，按「儲存」時把每一格<b>收回 cfg 存起來</b>。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，貼在<b>設定 Modal 區塊</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>幫我寫 openSettings()：把 cfg 裡的值填進設定彈窗每一格（含 cfg_theme），
+再拿掉 settingsModal 的 hidden 顯示它。
+另外綁定「儲存」按鈕 cfg_save：把每一格的值收回 cfg、呼叫 saveCfg(cfg) 存起來、
+關掉彈窗、跳一個「已儲存設定」的提示。「取消」則直接關掉彈窗。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 打開設定：把目前 cfg 的值填進每一格</span>
+function openSettings(){
+  $('cfg_theme').value    = cfg.theme || 'purple';
+  $('cfg_geminikey').value= cfg.geminikey || '';
+  $('cfg_tavilykey').value= cfg.tavilykey || '';
+  $('cfg_owmkey').value   = cfg.owmkey || '';
+  $('cfg_rate').value     = cfg.rate;
+  $('cfg_autospeak').checked = cfg.autospeak;
+  $('settingsModal').classList.remove('hidden');   <span class="cm">// 顯示彈窗</span>
+}
+$('settingsBtn').addEventListener('click', openSettings);   <span class="cm">// 點 ⚙️ 打開</span>
+
+<span class="cm">// 按「儲存」：把每一格收回 cfg 並存起來</span>
+$('cfg_save').addEventListener('click', ()=&gt;{
+  cfg.geminikey = $('cfg_geminikey').value.trim();
+  cfg.tavilykey = $('cfg_tavilykey').value.trim();
+  cfg.owmkey    = $('cfg_owmkey').value.trim();
+  cfg.rate      = $('cfg_rate').value;
+  cfg.autospeak = $('cfg_autospeak').checked;
+  cfg.theme     = $('cfg_theme').value;   <span class="cm">// 記住選的主題</span>
+  applyTheme(cfg.theme);                  <span class="cm">// 立刻套用（步驟五定義）</span>
+  saveCfg(cfg);                           <span class="cm">// 寫進抽屜</span>
+  $('settingsModal').classList.add('hidden');
+  toast('已儲存設定', false);
+});</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：逐段看懂</h2><div class="k">開與存，兩個方向</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>$('cfg_theme').value = cfg.theme</code></td><td><b>開的時候</b>：把 cfg 裡記住的值，回填到畫面上的每一格</td></tr>
+    <tr><td><code>classList.remove('hidden')</code></td><td>拿掉隱藏，把彈窗顯示出來</td></tr>
+    <tr><td><code>settingsBtn ... click</code></td><td>點右上角 ⚙️ 就呼叫 openSettings 打開設定</td></tr>
+    <tr><td><code>cfg.xxx = $('cfg_xxx').value</code></td><td><b>存的時候</b>：反過來，把畫面每一格的值收回 cfg 這個物件</td></tr>
+    <tr><td><code>saveCfg(cfg)</code></td><td>把整包 cfg 寫進 localStorage，下次開機還在</td></tr>
+    <tr><td><code>toast('已儲存設定', false)</code></td><td>跳一個綠色小提示，讓使用者知道存好了</td></tr>
+  </table>
+  <div class="info-box">🔁 記住這個「開＝填進格子、存＝收回物件」的來回，設定面板的核心就這麼簡單。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：預期會看到什麼</h2><div class="k">設定面板活起來了</div></div>
+  <div class="body">
+    <div class="ok-box">✅ 點右上角 ⚙️ 會彈出設定視窗；填一把金鑰、調語速、按「儲存」→ 跳「已儲存設定」→ 關掉再打開，剛才填的還在。</div>
+    <div class="mockrow">
+      <div class="mock">
+        <div class="m-top"><span>15:57</span><b>5G ▲</b></div>
+        <div class="m-title">⚙️ 設定</div>
+        <div class="m-card">🔑 Gemini 金鑰：AIza…你的金鑰</div>
+        <div class="m-card">🔑 Tavily 金鑰：tvly-…你的金鑰</div>
+        <div class="m-card m-muted">🎨 背景風格：紫金（預設） ▾</div>
+        <div class="m-card m-muted">🔈 語速 ▁▂▃▄▅　☑ 自動朗讀</div>
+        <div class="m-row"><span class="m-pill ghost">取消</span><span class="m-btn">儲存</span></div>
+      </div>
+    </div>
+    <div class="mock-cap">模擬畫面：設定彈窗（金鑰為佔位示意，非真實金鑰）</div>
+  </div>
+</section>
+
+<!-- ============ 步驟四：CSS 主題色票 ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：準備各種背景配色</h2><div class="k">在 style.css 定義主題色票</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 4／6</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：先在 <code>:root</code> 定義「預設紫金」這組色票變數，再為每個主題各寫一組覆蓋值。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/css/style.css</span>，貼在<b>檔案最上面</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>幫我在 style.css 最上面用 CSS 變數做主題系統：
+:root 定義預設紫金色票 --bg1/--bg2/--bg3（背景漸層三色）與 --gold（重點金）。
+再為每個主題寫一組 body[data-theme="ocean"]、body[data-theme="forest"]…
+覆蓋這些變數。給我 ocean（海洋藍）、forest（森林綠）、sunset（夕陽橙）三款示範。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/css/style.css 最上面</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">/* 預設色票：紫金 */</span>
+:root {
+  --bg1:#1a1030; --bg2:#2a1a4a; --bg3:#3a2560;   <span class="cm">/* 背景漸層三色 */</span>
+  --gold:#f5c451; --gold-soft:#f7d98a;           <span class="cm">/* 重點金 */</span>
+}
+<span class="cm">/* 換色：body 掛上 data-theme 就覆蓋上面的變數 */</span>
+body[data-theme="ocean"] {   <span class="cm">/* 海洋藍 */</span>
+  --bg1:#0a1e33; --bg2:#12304f; --bg3:#1a4a70;
+  --gold:#4fc3f7; --gold-soft:#9fdcff;
+}
+body[data-theme="forest"] {  <span class="cm">/* 森林綠 */</span>
+  --bg1:#0d1f16; --bg2:#163524; --bg3:#1f4a30;
+  --gold:#5bd18a; --gold-soft:#9fe6b8;
+}
+body[data-theme="sunset"] {  <span class="cm">/* 夕陽橙 */</span>
+  --bg1:#2a1410; --bg2:#4a2418; --bg3:#6a2f1a;
+  --gold:#ff9d5c; --gold-soft:#ffc79f;
+}</pre></div>
+  <p class="note body">💡 專案裡還多做了 <code>rose</code>（玫瑰粉）、<code>mono</code>（暗夜黑省電）、<code>light</code>（日光淺色）三款，作法一模一樣——複製一組、換掉顏色值即可。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：逐段看懂</h2><div class="k">變數與覆蓋的關係</div></div>
+  <div class="body">
+    <p>🔍 <code>:root { --bg1:#1a1030; ... }</code>：<code>:root</code> 是「全站最外層」。在這裡宣告的 <code>--變數</code> 全站都能用。這組是<b>預設值</b>（沒選任何主題時就用它）。</p>
+    <p>🔍 <code>body[data-theme="ocean"] { --bg1:...; }</code>：意思是「當 <code>&lt;body&gt;</code> 帶著 <code>data-theme="ocean"</code> 時，把 <code>--bg1</code> 等變數<b>改成這一組</b>」。因為它更具體，會<b>蓋過</b> <code>:root</code> 的預設。</p>
+    <p>🔍 App 各處的按鈕、卡片早就寫成 <code>background: var(--gold)</code>、<code>linear-gradient(var(--bg1), var(--bg2), var(--bg3))</code>——變數一被覆蓋，它們<b>全部自動跟著變</b>，我們一行都不用改。</p>
+    <div class="info-box">🎯 這就是威力：換色只改「一組變數」，不用逐一改幾百處顏色。</div>
+  </div>
+</section>
+
+<!-- ============ 步驟五：applyTheme 即時預覽 ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟五：讓下拉選單真的換色</h2><div class="k">在 app.js 加 applyTheme 與即時預覽</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 5／6</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個 <code>applyTheme()</code>，把選到的主題名寫到 <code>&lt;body data-theme&gt;</code>；再讓下拉「一選就立刻預覽」、開機自動套用上次選的色。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>幫我寫 applyTheme(t)：把主題名寫到 document.body.dataset.theme（空的就用 'purple'）。
+讓 cfg_theme 下拉「一選就立刻套用」做即時預覽（先不存）。
+「取消」時還原成已儲存的 cfg.theme（撤銷預覽）。
+程式最後 applyTheme(cfg.theme) 一次，開機就套用上次選的背景。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟五：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 套用背景風格：把主題名寫到 &lt;body data-theme&gt;，CSS 依此覆蓋配色變數</span>
+function applyTheme(t){ document.body.dataset.theme = t || 'purple'; }
+
+<span class="cm">// 選了主題立刻預覽（尚未儲存）</span>
+$('cfg_theme').addEventListener('change', ()=&gt; applyTheme($('cfg_theme').value));
+
+<span class="cm">// 取消：還原成已儲存的主題（撤銷剛才的即時預覽）</span>
+$('cfg_cancel').addEventListener('click', ()=&gt;{
+  applyTheme(cfg.theme);
+  $('settingsModal').classList.add('hidden');
+});
+
+<span class="cm">// …（省略：cfg_save 裡也會 applyTheme(cfg.theme)，見步驟三）</span>
+
+applyTheme(cfg.theme);   <span class="cm">// 開機就套用上次選的背景風格</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟五：逐段看懂</h2><div class="k">預覽、撤銷、開機三件事</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>document.body.dataset.theme = t</code></td><td>等同在 <code>&lt;body&gt;</code> 加上 <code>data-theme="ocean"</code>，CSS 立刻換上那組色</td></tr>
+    <tr><td><code>cfg_theme … 'change'</code></td><td>下拉一改就 <code>applyTheme</code>，做「<b>選了立刻看到</b>」的即時預覽（還沒存）</td></tr>
+    <tr><td><code>cfg_cancel … applyTheme(cfg.theme)</code></td><td>按「取消」時，還原成<b>已儲存</b>的主題——撤銷剛才的預覽，不弄髒設定</td></tr>
+    <tr><td><code>applyTheme(cfg.theme)</code>（最後一行）</td><td>程式一啟動就套用上次存的主題，<b>開機即記得</b></td></tr>
+  </table>
+  <div class="info-box">💡 只有按「儲存」才會 <code>saveCfg</code> 寫進抽屜。預覽是暫時的，取消就回到原樣——這種設計最貼心。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟五：預期會看到什麼</h2><div class="k">同一個 App，換三種心情</div></div>
+  <div class="body">
+    <div class="ok-box">✅ 打開設定 → 主題下拉選「海洋藍」→ 整頁背景與金色重點<b>當場</b>變成藍色系；再選「森林綠」「夕陽橙」也是秒換。按儲存記住，下次開機自動是你選的色。</div>
+    <div class="mockrow">
+      <div class="mock" style="background:linear-gradient(160deg,#1a1030,#2a1a4a 55%,#3a2560);">
+        <div class="m-title" style="color:#f5c451;">紫金（預設）</div>
+        <div class="m-card m-muted">CHT ⇄ Japanese</div>
+        <div class="m-btn" style="background:linear-gradient(135deg,#f5c451,#f7d98a);color:#2a1a4a;">🎙️ 開始說話</div>
+      </div>
+      <div class="mock" style="background:linear-gradient(160deg,#0a1e33,#12304f 55%,#1a4a70);">
+        <div class="m-title" style="color:#4fc3f7;">海洋藍</div>
+        <div class="m-card m-muted">CHT ⇄ Japanese</div>
+        <div class="m-btn" style="background:linear-gradient(135deg,#4fc3f7,#9fdcff);color:#0a1e33;">🎙️ 開始說話</div>
+      </div>
+      <div class="mock" style="background:linear-gradient(160deg,#0d1f16,#163524 55%,#1f4a30);">
+        <div class="m-title" style="color:#5bd18a;">森林綠</div>
+        <div class="m-card m-muted">CHT ⇄ Japanese</div>
+        <div class="m-btn" style="background:linear-gradient(135deg,#5bd18a,#9fe6b8);color:#0d1f16;">🎙️ 開始說話</div>
+      </div>
+    </div>
+    <div class="mock-cap">模擬畫面：同一畫面切三種主題（示意，非真實截圖）</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟五：再看兩款重口味</h2><div class="k">夕陽橙 / 暗夜黑 / 日光淺色</div></div>
+  <div class="body">
+    <div class="mockrow">
+      <div class="mock" style="background:linear-gradient(160deg,#2a1410,#4a2418 55%,#6a2f1a);">
+        <div class="m-title" style="color:#ff9d5c;">夕陽橙</div>
+        <div class="m-card m-muted">溫暖的橘紅漸層</div>
+        <div class="m-btn" style="background:linear-gradient(135deg,#ff9d5c,#ffc79f);color:#2a1410;">🎙️ 開始說話</div>
+      </div>
+      <div class="mock" style="background:linear-gradient(160deg,#000,#0e0e14 55%,#1a1a24);">
+        <div class="m-title" style="color:#d4af57;">暗夜黑（省電）</div>
+        <div class="m-card m-muted">純黑底，OLED 省電</div>
+        <div class="m-btn" style="background:linear-gradient(135deg,#d4af57,#ecd9a0);color:#000;">🎙️ 開始說話</div>
+      </div>
+      <div class="mock" style="background:linear-gradient(160deg,#eef0f6,#e3e7f1 55%,#d6dcec);">
+        <div class="m-title" style="color:#c8811f;">日光淺色</div>
+        <div class="m-card m-muted" style="color:#555;">白天戶外看更清楚</div>
+        <div class="m-btn" style="background:linear-gradient(135deg,#c8811f,#e0a94a);color:#fff;">🎙️ 開始說話</div>
+      </div>
+    </div>
+    <div class="mock-cap">模擬畫面：另外三款主題（示意，非真實截圖）</div>
+    <div class="info-box">🌈 想加自己的配色？複製任何一組 <code>body[data-theme="..."]</code>，換個名字、換掉顏色值，再到 <code>&lt;select&gt;</code> 加一個 <code>&lt;option&gt;</code> 就多一款。</div>
+  </div>
+</section>
+
+<!-- ============ 步驟六：密碼閘門 ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟六：加一道密碼門禁</h2><div class="k">在 index.html 加密碼閘門與 SHA-256 比對</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 6／6</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：打開網頁時先蓋一層「密碼視窗」，輸入密碼 → 前端算 SHA-256 → 跟寫死在程式裡的雜湊比對 → 對了才掀開進站。程式裡<b>只放雜湊，不放明文</b>。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>；密碼視窗的 HTML 放 <code>&lt;body&gt;</code> 最前面，比對邏輯放 <code>&lt;script&gt;</code>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>幫我做一個前端密碼閘門：頁面一打開先蓋一層密碼視窗 #passwordGate。
+使用者輸入密碼、按進入，用 crypto.subtle 算 SHA-256，
+跟寫死的雜湊清單 BUILTIN_HASHES 比對，對了就記到 sessionStorage 並掀開視窗。
+程式裡絕不出現明文密碼。並用 sessionStorage 記住「本次已通過」，重整不用再輸入。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟六：AI 會給你這段（貼上去）</h2><div class="k">貼進 templates/index.html 的 &lt;script&gt;</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// === 密碼閘門（SHA-256，閱讀阻擋用途，非安全保護）===</span>
+(function(){
+  <span class="cm">// 只存雜湊、不存明文；換密碼＝換這裡的雜湊（用下面的生成器算）</span>
+  var BUILTIN_HASHES = ['貼上你用生成器算出的 SHA-256 雜湊'];
+  var AUTH_KEY = 'liang_translate_authed';
+  var gate = document.getElementById('passwordGate');
+  if (!gate) return;
+  <span class="cm">// 本次已通過就直接放行（重整免再輸入）</span>
+  if (sessionStorage.getItem(AUTH_KEY) === '1'){ gate.style.display='none'; return; }
+
+  function sha256(str){
+    var enc = new TextEncoder();
+    return crypto.subtle.digest('SHA-256', enc.encode(str)).then(function(buf){
+      return Array.from(new Uint8Array(buf))
+        .map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+    });
+  }
+  function checkPassword(){
+    var val = document.getElementById('pwInput').value.trim();
+    if(!val) return;
+    sha256(val).then(function(hash){
+      if (BUILTIN_HASHES.indexOf(hash) !== -1){       <span class="cm">// 指紋對上</span>
+        sessionStorage.setItem(AUTH_KEY, '1');
+        gate.classList.add('hidden');                 <span class="cm">// 掀開進站</span>
+      } else {
+        document.getElementById('pwError').textContent = '密碼錯誤，請重新輸入';
+      }
+    });
+  }
+  document.getElementById('pwSubmit').addEventListener('click', checkPassword);
+})();</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟六：逐段看懂</h2><div class="k">比對指紋的每一步</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>BUILTIN_HASHES = [...]</code></td><td>放「正確密碼的指紋」，<b>不是明文</b>。用下一張的生成器算出來貼進去</td></tr>
+    <tr><td><code>sessionStorage ... === '1'</code></td><td>本次分頁已通過就直接放行，重整不用再輸入（關掉分頁才重問）</td></tr>
+    <tr><td><code>sha256(val)</code></td><td>用瀏覽器內建的 <code>crypto.subtle</code> 把輸入的密碼算成 64 字元指紋</td></tr>
+    <tr><td><code>BUILTIN_HASHES.indexOf(hash) !== -1</code></td><td>算出的指紋在清單裡＝密碼正確</td></tr>
+    <tr><td><code>sessionStorage.setItem(...)</code></td><td>記下「這次已通過」，並掀開密碼視窗進站</td></tr>
+    <tr><td><code>pwError.textContent = ...</code></td><td>不對就顯示「密碼錯誤」，不放行</td></tr>
+  </table>
+  <div class="warn-box">🔐 全程<b>沒有明文密碼</b>出現在程式碼裡，只比對指紋——這就是不存明文的好處。</div>
+</section>
+
+<!-- SHA-256 生成器（保留原有互動生成器） -->
 <section class="slide cs">
   <div class="sh"><h2>🎁 SHA-256 密碼雜湊生成器</h2><div class="k">輸入密碼，算出雜湊貼進程式</div></div>
   <div class="gen body">
     <div class="gh">⚙️ 產生密碼雜湊</div>
-    <div class="field"><label>設定一個密碼</label><input id="pw_in" placeholder="輸入你要的密碼"></div>
+    <div class="field"><label>設定一個密碼（範例：MyPass123）</label><input id="pw_in" placeholder="輸入你要的密碼，例如 MyPass123"></div>
     <div class="btns">
       <button onclick="genHash()">⚙️ 算出 SHA-256</button>
       <button class="alt" onclick="cp(this)">📋 複製</button>
     </div>
     <div class="out" id="pw_out">輸入密碼後按「算出 SHA-256」，這裡會出現雜湊值…</div>
-    <div class="hint">把雜湊值放進程式的 HASHES 陣列。程式碼裡看不到明文密碼，較安全。</div>
+    <div class="hint">把雜湊值放進程式的 BUILTIN_HASHES 陣列。程式碼裡看不到明文密碼，較安全。</div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>實測</h2><div class="k">設定 + 密碼都試一遍</div></div>
+  <div class="sh"><h2>怎麼用生成器換自己的密碼</h2><div class="k">三步驟</div></div>
+  <ol class="sl body">
+    <li>在上面的生成器輸入你想要的密碼（示範用 <code>MyPass123</code>，正式請換自己的）。</li>
+    <li>按「算出 SHA-256」，它會給你一行 <code>const BUILTIN_HASHES = ['…64 字元…'];</code>。</li>
+    <li>把這行複製，取代 <span class="filechip">index.html</span> 密碼閘門裡原本那一行 <code>BUILTIN_HASHES</code>，存檔重整。</li>
+  </ol>
+  <div class="info-box">🔑 之後進站就要輸入你剛設的那組密碼。想給多人不同密碼？把多個雜湊用逗號排進同一個陣列即可。</div>
+</section>
+
+<!-- 預期畫面：真實截圖 shot-gate -->
+<section class="slide cs">
+  <div class="sh"><h2>實測：密碼閘門長這樣</h2><div class="k">重整頁面先跳門禁</div></div>
   <div class="body">
-    <p>用生成器算出你的密碼雜湊、放進 HASHES；重整頁面應先跳密碼閘門，輸入正確密碼才進站。到設定面板填一把金鑰，確認翻譯仍正常。</p>
-    <div class="shot"><span class="cam">📸</span>請截圖：密碼閘門畫面 / 設定面板</div>
+    <p>存檔後重整頁面，會先蓋一層密碼視窗；輸入正確密碼（例如你剛設的 <code>MyPass123</code>）按「進入」，視窗掀開才進到 App。</p>
+    <div class="img-box" style="text-align:center"><img src="assets/shots/shot-gate.jpg" alt="密碼閘門實拍"><div class="hint" style="margin-top:6px">實拍：密碼閘門（僅為閱讀阻擋、非安全防護；密碼以 SHA-256 雜湊比對）</div></div>
+    <div class="ok-box">✅ <b>預期</b>：密碼對 → 進站；密碼錯 → 顯示「密碼錯誤，請重新輸入」；進站後重整同一分頁不必再輸入。</div>
   </div>
 </section>
 
+<!-- 除錯集 -->
 <section class="slide cs">
-  <div class="sh"><h2>本章驗收</h2><div class="k">有設定、有門禁</div></div>
-  <ul class="goals body">
-    <li>設定面板能填金鑰、存 localStorage、請求時帶上。</li>
-    <li>密碼閘門用 SHA-256 比對，不存明文。</li>
-    <li>用生成器產生過自己的密碼雜湊。</li>
-  </ul>
-  <div class="milestone body"><div class="mh">🎁 你現在有：能自訂金鑰、有門禁的 App</div><p>只差最後一哩路——把它<b>部署上線</b>！下一章用 GitHub + Render，讓你走到哪都能用（密碼把關，只有你和授權的人進得來）。</p></div>
+  <div class="sh"><h2>🔧 卡住了？本章常見的四個坑</h2><div class="k">對症下藥</div></div>
+  <div class="body">
+    <div class="warn-box">① <b>換色沒反應</b>：多半是 CSS 主題那組 <code>body[data-theme=...]</code> 沒貼到，或某些顏色寫死沒改用 <code>var(--gold)</code>。確認 style.css 有那幾組覆蓋。</div>
+    <div class="warn-box">② <b>重開設定，剛選的主題又跳回原色</b>：忘了在 <code>cfg_save</code> 裡 <code>cfg.theme = $('cfg_theme').value</code> 並 <code>saveCfg</code>。沒存＝只是預覽。</div>
+    <div class="warn-box">③ <b>密碼一直說錯</b>：多半是 <code>BUILTIN_HASHES</code> 還是範例字串，沒換成生成器算出的雜湊；或雜湊複製時多了空白／引號。</div>
+    <div class="warn-box">④ <b>金鑰存了卻沒生效</b>：確認 <code>cfg_save</code> 有把每一格收回 cfg，且請求時有帶上金鑰（前面章節的 <code>cfg.geminikey</code>）。</div>
+  </div>
 </section>
 
+<!-- 動手練習 -->
+<section class="slide cs">
+  <div class="sh"><h2>動手練習</h2><div class="k">改一點點，感受變化</div></div>
+  <ul class="sl body">
+    <li>複製一組 <code>body[data-theme="ocean"]</code>，改名成 <code>candy</code>、把 <code>--gold</code> 換成你喜歡的粉色，再到 <code>&lt;select&gt;</code> 加一個 <code>&lt;option value="candy"&gt;糖果粉&lt;/option&gt;</code>——你就多做了一款專屬主題。</li>
+    <li>把某個主題的 <code>--gold</code> 故意改成跟背景很接近的顏色，重整看看按鈕文字變得多難讀——體會「對比度」為什麼重要。</li>
+    <li>用生成器把密碼改成 <code>Travel2026</code>，換掉雜湊，重整後試舊密碼（應該被擋）與新密碼（應該放行）。</li>
+  </ul>
+</section>
+
+<!-- 驗收 -->
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">有設定、有門禁、能換色</div></div>
+  <ul class="goals body">
+    <li>設定面板能填金鑰／調語速／選自動朗讀，存 localStorage，關掉再開還記得。</li>
+    <li>背景風格下拉：選了立刻預覽、取消可還原、儲存後開機自動套用。</li>
+    <li>密碼閘門用 SHA-256 比對，程式裡不存明文；用過生成器產生自己的密碼雜湊。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：能自訂金鑰、能換色、有門禁的 App</div><p>只差最後一哩路——把它<b>部署上線</b>！下一章用 GitHub + Render，讓你走到哪都能用（密碼把關，只有你和授權的人進得來）。</p></div>
+</section>
+
+<!-- 下一章 -->
 <section class="slide cs">
   <div class="sh"><h2>下一章 · CH18</h2><div class="k">部署到 Render</div></div>
   <div class="body">
@@ -113,7 +585,7 @@ async function check(pw){
 
 <section class="slide cover">
   <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
-  <h1 style="font-size:38px">CH17 完成！<span class="g">設定與門禁就緒</span></h1>
+  <h1 style="font-size:38px">CH17 完成！<span class="g">設定、門禁、配色就緒</span></h1>
   <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
   <div class="endbtns">
     <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
@@ -127,7 +599,7 @@ async function genHash(){
   if(!pw){document.getElementById('pw_out').textContent='請先輸入密碼';return;}
   var buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
   var hex=[].slice.call(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0')}).join('');
-  document.getElementById('pw_out').textContent="// 你的密碼雜湊（放進 HASHES 陣列）\nconst HASHES = ['"+hex+"'];";
+  document.getElementById('pw_out').textContent="// 你的密碼雜湊（放進 BUILTIN_HASHES 陣列）\nconst BUILTIN_HASHES = ['"+hex+"'];";
 }
 </script>
 <script>window.SLIDE_CFG={title:'CH17 · 密碼閘門與金鑰設定',part:'#E74C3C',next:'CH18.html'}</script>

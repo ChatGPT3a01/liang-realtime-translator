@@ -33,6 +33,7 @@ const DEFAULT_CFG = {
     provider: 'gemini', baseurl: 'https://api.openai.com/v1', apikey: '', model: '',
     geminikey: '', tavilykey: '', owmkey: '',          // 集中管理的第三方金鑰（皆選填）
     rate: 1, autospeak: true,
+    theme: 'purple',                                   // 背景風格主題（設定面板可換）
     s_langA: 'zh-TW', s_langB: 'en',
     f_langTop: 'en', f_langBottom: 'zh-TW',
     cur_from: 'JPY', cur_to: 'TWD', cur_amount: '1',   // 匯率換算：預設日圓→台幣
@@ -461,7 +462,11 @@ $('modeBtn').addEventListener('click', () => {
 /* =========================================================
    設定 Modal
    ========================================================= */
+// 套用背景風格：把主題名寫到 <body data-theme>，CSS 依此覆蓋配色變數
+function applyTheme(t) { document.body.dataset.theme = t || 'purple'; }
+
 function openSettings() {
+    $('cfg_theme').value = cfg.theme || 'purple';
     $('cfg_provider').value = cfg.provider;
     $('cfg_baseurl').value = cfg.baseurl;
     $('cfg_apikey').value = cfg.apikey;
@@ -478,8 +483,11 @@ function toggleOpenaiFields() {
     $('openaiFields').style.display = $('cfg_provider').value === 'openai' ? 'block' : 'none';
 }
 $('cfg_provider').addEventListener('change', toggleOpenaiFields);
+// 選了主題立刻預覽（尚未儲存）
+$('cfg_theme').addEventListener('change', () => applyTheme($('cfg_theme').value));
 $('settingsBtn').addEventListener('click', openSettings);
-$('cfg_cancel').addEventListener('click', () => $('settingsModal').classList.add('hidden'));
+// 取消：還原成已儲存的主題（撤銷剛才的即時預覽）
+$('cfg_cancel').addEventListener('click', () => { applyTheme(cfg.theme); $('settingsModal').classList.add('hidden'); });
 $('cfg_save').addEventListener('click', () => {
     cfg.provider = $('cfg_provider').value;
     cfg.baseurl = $('cfg_baseurl').value.trim();
@@ -490,6 +498,8 @@ $('cfg_save').addEventListener('click', () => {
     cfg.owmkey = $('cfg_owmkey').value.trim();
     cfg.rate = $('cfg_rate').value;
     cfg.autospeak = $('cfg_autospeak').checked;
+    cfg.theme = $('cfg_theme').value;
+    applyTheme(cfg.theme);
     saveCfg(cfg);
     $('settingsModal').classList.add('hidden');
     toast('已儲存設定', false);
@@ -811,6 +821,7 @@ $('ask_close').addEventListener('click', () => { stopAllAudio(); setAskSpeakBtn(
 /* =========================================================
    啟動
    ========================================================= */
+applyTheme(cfg.theme);                          // 套用上次選的背景風格
 fillSelect($('vision_target'), cfg.s_langA);   // 拍照/檔案：預設翻成你的語言
 initSelects();
 if (!sttSupported()) {

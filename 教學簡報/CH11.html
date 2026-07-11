@@ -15,37 +15,84 @@
   <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
 </section>
 
+<!-- 2. 先回顧 -->
+<section class="slide cs">
+  <div class="sh"><h2>先回顧：我們現在有什麼</h2><div class="k">站在前面章節的成果上，往上加一層</div></div>
+  <div class="body">
+    <p>到上一章為止，你的 App 已經會：<b>打字翻譯、語音翻譯、即時口譯、面對面對話</b>。</p>
+    <p>這些都是處理「<b>文字</b>」。這一章我們讓 App 多一個能力——看懂「<b>圖片</b>」。</p>
+    <div class="info-box">🧩 本章只加一塊：讓後端會「讀圖」，前端多一顆「📷 拍照翻譯」按鈕。其他檔案都不動。</div>
+  </div>
+</section>
+
+<!-- 3. 這一章要做什麼 -->
 <section class="slide cs">
   <div class="sh"><h2>這一章要做出什麼</h2><div class="k">拍一張 → 摘要 + 翻譯</div></div>
   <div class="body">
-    <p>按下「📷 拍照翻譯」開相機拍一張外文菜單／看板，Gemini 幫你「看懂」內容，用中文<b>摘要重點</b>，再附<b>完整翻譯</b>。</p>
+    <p>按下「📷 拍照翻譯」開相機拍一張外文菜單／看板，Gemini 幫你「看懂」內容，用你的語言<b>摘要重點</b>，再附上<b>完整翻譯</b>。</p>
     <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個「拍照就翻譯」的功能——出國看不懂的東西，拍一下就清楚。</p></div>
   </div>
 </section>
 
+<!-- 4. 完成後的操作流程（先看全貌） -->
 <section class="slide cs">
-  <div class="sh"><h2>什麼是「多模態」？</h2><div class="k">AI 同時看圖 + 讀字</div></div>
+  <div class="sh"><h2>先看全貌：拍一張照片，中間發生什麼事</h2><div class="k">看懂這條路，後面每一步就知道自己在做哪一段</div></div>
+  <ol class="sl body">
+    <li>使用者按「📷 拍照翻譯」→ 手機打開後鏡頭拍照</li>
+    <li>前端先把照片<b>縮小</b>（省流量、變快）</li>
+    <li>前端把縮小的照片送到後端的 <span class="filechip">/api/vision</span></li>
+    <li>後端呼叫 <span class="filechip">providers.analyze()</span>，把圖丟給 Gemini 讀</li>
+    <li>Gemini 回傳 <code>{summary, translation}</code>（摘要＋翻譯）</li>
+    <li>前端把摘要與翻譯<b>顯示在畫面上</b></li>
+  </ol>
+  <div class="info-box">👉 這一章就是照著這 6 步，一段一段做出來。</div>
+</section>
+
+<!-- 5. 觀念 -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念：什麼是「多模態」</h2><div class="k">AI 同時看圖 + 讀字</div></div>
   <div class="body">
-    <p>一般翻譯只吃「文字」。<b>多模態（multimodal）</b>模型能同時理解「圖片」和「文字」——所以它能看懂照片裡的菜單、招牌。</p>
-    <p>Gemini 的 <code>gemini-3.5-flash</code> 就支援圖片與 PDF，我們直接把影像丟給它。</p>
+    <p>一般翻譯只吃「文字」。<b>多模態（multimodal）</b>的 AI 能同時理解「圖片」和「文字」——所以它能看懂照片裡的菜單、招牌。</p>
+    <p>你可以把它想成：以前的 AI 只會「聽你講」，多模態的 AI 還會「用眼睛看」。</p>
+    <div class="info-box">🔎 我們用的 <code>gemini-3.5-flash</code> 就會看圖與 PDF，所以直接把照片丟給它就行，不必自己做文字辨識（OCR）。</div>
+  </div>
+</section>
+
+<!-- 6. 檔案地圖 -->
+<section class="slide cs">
+  <div class="sh"><h2>動工前：這章會改到哪些檔案</h2><div class="k">先知道等一下要打開哪幾個檔</div></div>
+  <table class="tbl body">
+    <tr><th>檔案</th><th>加什麼</th></tr>
+    <tr><td><span class="filechip">providers.py</span></td><td>新增 <code>analyze()</code>：把圖丟給 Gemini，回傳摘要＋翻譯</td></tr>
+    <tr><td><span class="filechip">app.py</span></td><td>新增 <code>/api/vision</code> 端點：收前端送來的照片</td></tr>
+    <tr><td><span class="filechip">templates/index.html</span></td><td>加一顆「📷 拍照翻譯」按鈕</td></tr>
+    <tr><td><span class="filechip">static/js/app.js</span></td><td>按鈕按下後：縮圖 → 送出 → 顯示結果</td></tr>
+  </table>
+  <div class="info-box">📂 就這四個檔。下面每一步都會告訴你「打開哪一個、貼在哪裡」。</div>
+</section>
+
+<!-- 步驟一：後端 analyze() -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：教後端「讀圖」</h2><div class="k">在 providers.py 新增 analyze()</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 1／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個函式 <code>analyze()</code>，收到一張圖，交給 Gemini 看，請它回「摘要＋翻譯」。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">providers.py</span>，把 AI 給你的函式<b>貼在檔案最下面</b>（其他函式的後面）。</p>
+    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請在 providers.py 新增一個 analyze() 函式：
+參數有 api_key、target_name、text、file_bytes、mime_type。
+用 Gemini 的 gemini-3.5-flash 讀圖（file_bytes）或讀文字（text），
+要求它只回 JSON：{"summary": 用 target_name 語言摘要, "translation": 完整翻譯}。
+記得把 thinking 關掉（thinking_budget=0），避免 JSON 被截斷，最後做容錯解析。</pre></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>提示詞</h2><div class="k">要求輸出 JSON：摘要 + 翻譯</div></div>
-  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>幫我做拍照翻譯：後端 analyze() 收到圖片 bytes，
-用 Gemini 多模態讀圖，輸出 JSON {summary, translation}：
-summary=用目標語言摘要重點，translation=完整翻譯。
-關閉 thinking（避免思考 token 吃掉輸出導致 JSON 被截斷），
-並做 JSON 解析容錯。再做 /api/vision 端點收 base64 影像。</pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>後端 analyze()（重點）</h2><div class="k">多模態讀圖 → JSON</div></div>
+  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 providers.py</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># providers.py</span>
-<span class="cm"># text / file_bytes 擇一：圖片與 PDF 用 file_bytes，純文字用 text（CH12 會用到）</span>
+    <pre><span class="cm"># providers.py — 貼在檔案最下面</span>
+<span class="cm"># file_bytes（圖片/PDF）或 text（純文字）擇一給</span>
 def analyze(api_key, target_name, text=None, file_bytes=None, mime_type=None):
     from google import genai
     from google.genai import types
@@ -68,64 +115,190 @@ def analyze(api_key, target_name, text=None, file_bytes=None, mime_type=None):
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>踩過的雷：JSON 被截斷</h2><div class="k">為什麼要關 thinking</div></div>
+  <div class="sh"><h2>步驟一：逐段看懂</h2><div class="k">每一段在做什麼，白話講一遍</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>client = genai.Client(...)</code></td><td>拿你的金鑰，建立跟 Gemini 講話的連線</td></tr>
+    <tr><td><code>system = (...)</code></td><td>給 AI 的指令：讀輸入，用你的語言寫摘要＋翻譯，只准回 JSON</td></tr>
+    <tr><td><code>if file_bytes ...：Part.from_bytes</code></td><td>把「圖片」包成 Gemini 看得懂的格式</td></tr>
+    <tr><td><code>if text：parts.append(text)</code></td><td>如果是純文字（CH12 會用到），就直接放文字</td></tr>
+    <tr><td><code>thinking_budget=0</code></td><td>叫 AI「別想太多、直接答」——這行很關鍵，下一張說明</td></tr>
+    <tr><td><code>parse_json(resp.text)</code></td><td>把 AI 回的文字解析成 <code>{summary, translation}</code></td></tr>
+  </table>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟一 · 踩過的雷：JSON 被截斷</h2><div class="k">為什麼一定要關 thinking</div></div>
   <div class="body">
-    <p>Gemini 3.x flash 預設會「思考」，思考 token 會占用輸出額度。長內容時，答案的 JSON 會被<b>截斷</b>（少了結尾大括號），解析失敗。</p>
-    <div class="ok-box">✅ 解法：<code>thinking_budget=0</code> 關閉思考（OCR/翻譯不需推理），輸出穩定又更快。再加「容錯解析」救回被截斷的內容。</div>
+    <p>Gemini 3.x flash 預設會先「思考」，思考會<b>吃掉輸出額度</b>。內容一長，答案的 JSON 就被<b>切一半</b>（少了結尾的 <code>}</code>），程式一解析就壞。</p>
+    <div class="ok-box">✅ <b>解法</b>：<code>thinking_budget=0</code> 關掉思考（讀圖翻譯本來就不用推理），輸出更穩也更快；再加「容錯解析」把被切斷的內容救回來。</div>
+    <div class="warn-box">🔧 <b>卡住了？</b>　若結果常常是「（無摘要）」或報 JSON 錯誤 → 十之八九就是沒關 thinking，或 <code>max_output_tokens</code> 太小。</div>
+  </div>
+</section>
+
+<!-- 步驟二：/api/vision -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：開一個「收照片」的門</h2><div class="k">在 app.py 新增 /api/vision</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 2／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/vision</code>，讓前端能把照片送進來，後端收下後叫剛剛的 <code>analyze()</code> 去讀。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把端點<b>貼在其他 <code>@app.route</code> 的旁邊</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請在 app.py 新增一個 /api/vision 端點（POST）：
+從 JSON 收 image（dataURL 格式的照片）和 target（目標語言）。
+把 dataURL 前綴去掉、base64 解碼成圖片 bytes，
+呼叫 providers.analyze(金鑰, target, file_bytes=圖, mime_type=圖的類型)，
+最後把 {summary, translation} 回傳成 JSON。</pre></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>後端 /api/vision</h2><div class="k">收 base64 影像</div></div>
+  <div class="sh"><h2>步驟二：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
     <pre><span class="cm"># app.py</span>
 import base64
 @app.route('/api/vision', methods=['POST'])
 def api_vision():
     data = request.get_json(force=True) or {}
-    img = data.get('image','')            <span class="cm"># dataURL</span>
+    img = data.get('image','')            <span class="cm"># 前端送來的 dataURL</span>
     target = data.get('target','Traditional Chinese (Taiwan)')
     mime='image/jpeg'
     if img.startswith('data:'):
         head,img = img.split(',',1); mime = head.split(':')[1].split(';')[0]
-    raw = base64.b64decode(img)
+    raw = base64.b64decode(img)           <span class="cm"># 還原成圖片 bytes</span>
     key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
     res = providers.analyze(key, target, file_bytes=raw, mime_type=mime)
     return jsonify({'ok':True, **res})</pre></div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>前端：開相機</h2><div class="k">一個 input 就能叫出後鏡頭</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">&lt;!-- 手機會直接開後鏡頭 --&gt;</span>
+  <div class="sh"><h2>步驟二：逐段看懂</h2><div class="k">「收照片的門」怎麼運作</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>@app.route('/api/vision', ...)</code></td><td>宣告一個網址，前端就是打這個位址送照片</td></tr>
+    <tr><td><code>data.get('image')</code></td><td>拿出前端送來的照片（dataURL 文字）</td></tr>
+    <tr><td><code>img.split(',',1)</code></td><td>dataURL 長得像 <code>data:image/jpeg;base64,xxxx</code>，這裡把「前綴」和「真正的資料」切開</td></tr>
+    <tr><td><code>base64.b64decode(img)</code></td><td>把文字還原成真正的圖片 bytes</td></tr>
+    <tr><td><code>providers.analyze(...)</code></td><td>叫步驟一寫好的函式去讀圖</td></tr>
+    <tr><td><code>jsonify({'ok':True, **res})</code></td><td>把摘要＋翻譯回傳給前端</td></tr>
+  </table>
+</section>
+
+<!-- 步驟三：前端相機按鈕 -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：加一顆「拍照」按鈕</h2><div class="k">在畫面上放按鈕，按了會開相機</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 3／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：在畫面加一顆「📷 拍照翻譯」，手機按了直接開後鏡頭。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把按鈕<b>放在麥克風按鈕下方的功能區</b>。</p>
+    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">&lt;!-- 手機會直接開後鏡頭 --&gt;</span>
 &lt;input type="file" id="cam" accept="image/*" capture="environment" hidden&gt;
 &lt;button onclick="cam.click()"&gt;📷 拍照翻譯&lt;/button&gt;</pre></div>
-  <p class="note body">秘訣：<code>capture="environment"</code> 讓手機直接開後鏡頭；電腦則開檔案選擇。不需相機權限 API。</p>
+  </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>前端：縮圖 + 送出</h2><div class="k">先縮小省流量，再打 /api/vision</div></div>
+  <div class="sh"><h2>步驟三：逐段看懂 + 預期</h2><div class="k">為什麼一個 input 就夠</div></div>
+  <div class="body">
+    <p>🔍 <code>accept="image/*"</code> 只收圖片；<code>capture="environment"</code> 是關鍵——手機看到它會<b>直接開後鏡頭</b>；電腦沒相機就變成「選檔案」。<code>hidden</code> 把醜醜的檔案框藏起來，改用我們自己的漂亮按鈕點它。</p>
+    <div class="ok-box">✅ <b>預期</b>：畫面下方多一顆「📷 拍照翻譯」，手機按下去會跳出相機。</div>
+    <div class="mockrow">
+      <div class="mock">
+        <div class="m-top"><span>15:57</span><b>5G ▲</b></div>
+        <div class="m-title">🌐 亮言 · 即時翻譯</div>
+        <div class="m-card m-muted">翻譯結果會顯示在這裡…</div>
+        <div class="m-btn">🎙️ 點一下開始說話</div>
+        <div class="m-row"><span class="m-pill">📷 拍照翻譯</span><span class="m-pill">📎 上傳檔案</span></div>
+      </div>
+    </div>
+    <div class="mock-cap">模擬畫面：多出「📷 拍照翻譯」按鈕（示意，非真實截圖）</div>
+  </div>
+</section>
+
+<!-- 步驟四：縮圖 + 送出（使用者點名的那張） -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：拍完 → 縮圖 → 送出 → 顯示</h2><div class="k">整章最關鍵的一段前端邏輯</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 4／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：拍完照後，前端先把照片縮小，送到 <code>/api/vision</code>，拿回摘要＋翻譯後顯示出來。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段<b>接在「開相機」那段的下面</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>照片選好後，先用 canvas 把它縮到最長邊 1568 像素（省流量、變快），
+再用 fetch POST 到 /api/vision，body 帶 image（縮好的 dataURL）和 target（目標語言）。
+拿到回應後，把 summary 和 translation 顯示在畫面上。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
     <pre>cam.onchange = async (e)=&gt;{
   const file = e.target.files[0]; if(!file) return;
-  const dataURL = await downscale(file, 1568);   <span class="cm">// canvas 縮到最長邊 1568</span>
+  const dataURL = await downscale(file, 1568);   <span class="cm">// 縮到最長邊 1568</span>
   const res = await fetch('/api/vision', {method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ image:dataURL, target:'Traditional Chinese (Taiwan)' })});
   const d = await res.json();
-  showResult(d.summary, d.translation);   <span class="cm">// 顯示摘要 + 翻譯</span>
+  showResult(d.summary, d.translation);          <span class="cm">// 顯示摘要 + 翻譯</span>
 };</pre></div>
+  <p class="note body">💡 <code>downscale()</code> 和 <code>showResult()</code> 是兩個小幫手函式（下一張說明），AI 會一起幫你生出來。實際專案裡它們叫 <code>fileToDownscaledDataURL()</code> 與 <code>renderVision()</code>，作用一樣。</p>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>實測</h2><div class="k">拍一張外文的東西</div></div>
+  <div class="sh"><h2>步驟四：逐段看懂</h2><div class="k">這段每一行在幹嘛</div></div>
+  <table class="tbl body">
+    <tr><th>這一行</th><th>在做什麼</th></tr>
+    <tr><td><code>const file = e.target.files[0]</code></td><td>拿到使用者剛拍/選的那張照片</td></tr>
+    <tr><td><code>await downscale(file, 1568)</code></td><td>小幫手①：用 canvas 把照片縮到最長邊 1568，變成 dataURL 文字</td></tr>
+    <tr><td><code>await fetch('/api/vision', ...)</code></td><td>把縮好的照片送到步驟二做的那道門</td></tr>
+    <tr><td><code>await res.json()</code></td><td>把後端回來的結果讀成物件 <code>d</code></td></tr>
+    <tr><td><code>showResult(d.summary, d.translation)</code></td><td>小幫手②：把摘要與翻譯塞進畫面顯示</td></tr>
+  </table>
+  <div class="info-box">🧰 <b>兩個小幫手</b>：<code>downscale()</code>＝把大圖變小圖；<code>showResult()</code>＝把文字放進結果彈窗。你只要對 AI 說「幫我補上 downscale 和 showResult」即可。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>為什麼一定要先縮圖？</h2><div class="k">不縮圖會又慢又失敗</div></div>
   <div class="body">
-    <p>找一張日文/英文菜單或包裝，按「📷 拍照翻譯」拍下。幾秒後跳出「摘要」+「翻譯」。</p>
-    <div class="shot"><span class="cam">📸</span>請截圖：拍照後顯示摘要 + 翻譯的結果</div>
-    <div class="warn-box">⚠️ 手機照片很大，一定要先在瀏覽器縮圖再上傳，否則慢又可能失敗。</div>
+    <p>手機拍的照片動輒 <b>4000×3000、好幾 MB</b>。直接上傳會：傳很久、吃流量、還可能因為太大被伺服器擋下來。</p>
+    <p>縮到最長邊 1568 像素，文字還是看得清楚，但檔案小很多，<b>又快又穩</b>。</p>
+    <div class="ok-box">✅ 這就是「工程上的小聰明」——在送出前先處理好，體驗差很多。</div>
   </div>
 </section>
 
+<!-- 預期畫面（真實截圖） -->
+<section class="slide cs">
+  <div class="sh"><h2>實測：拍一張外文的東西</h2><div class="k">成功長這樣</div></div>
+  <div class="body">
+    <p>找一張日文/英文菜單或告示，按「📷 拍照翻譯」拍下。幾秒後會跳出「摘要」＋「翻譯」。</p>
+    <div class="img-box"><img src="assets/shots/shot-camera.jpg" alt="拍照翻譯實拍"><div class="hint">實拍：拍下日文場館告示牌，App 幾秒後給出「摘要 + 翻譯」</div></div>
+    <div class="ok-box">✅ <b>預期</b>：上方「📌 摘要」用你的語言講重點，下方「🌐 翻譯」是完整翻譯，還能按「🔊 朗讀」念出來。</div>
+  </div>
+</section>
+
+<!-- 除錯集 -->
+<section class="slide cs">
+  <div class="sh"><h2>🔧 卡住了？本章常見的三個坑</h2><div class="k">對症下藥</div></div>
+  <div class="body">
+    <div class="warn-box">① <b>拍完很久沒反應／失敗</b>：多半是沒縮圖直接傳大圖。確認 <code>downscale()</code> 有先跑。</div>
+    <div class="warn-box">② <b>跳出「（無摘要）」或 JSON 錯誤</b>：沒關 thinking。回步驟一確認 <code>thinking_budget=0</code>。</div>
+    <div class="warn-box">③ <b>回 429／額度</b>：Gemini 免費額度到上限了，等一下再試，或換一把金鑰。</div>
+  </div>
+</section>
+
+<!-- 動手練習 -->
+<section class="slide cs">
+  <div class="sh"><h2>動手練習</h2><div class="k">改一點點，感受差異</div></div>
+  <ul class="sl body">
+    <li>把送出時的 <code>target</code> 從 <code>'Traditional Chinese (Taiwan)'</code> 改成 <code>'English'</code>，再拍一次中文招牌，看它翻成英文。</li>
+    <li>把 <code>downscale(file, 1568)</code> 的 1568 改成 <code>512</code>，拍一張密密麻麻的菜單，看看字太小會不會翻不準——體會「解析度 vs 速度」的取捨。</li>
+  </ul>
+</section>
+
+<!-- 生成器（保留） -->
 <section class="slide cs">
   <div class="sh"><h2>🎁 Vision 指令生成器</h2><div class="k">選目標語言，產生讀圖 system 指令</div></div>
   <div class="gen body">
@@ -139,16 +312,18 @@ def api_vision():
   </div>
 </section>
 
+<!-- 驗收 -->
 <section class="slide cs">
   <div class="sh"><h2>本章驗收</h2><div class="k">會看照片的 App</div></div>
   <ul class="goals body">
-    <li>providers.analyze() 能讀圖回 JSON（含關 thinking、容錯解析）。</li>
-    <li>/api/vision 收 base64 影像。</li>
-    <li>前端拍照 → 縮圖 → 顯示摘要 + 翻譯。</li>
+    <li>providers.py 的 <code>analyze()</code> 能讀圖回 JSON（有關 thinking、容錯解析）。</li>
+    <li>app.py 的 <code>/api/vision</code> 能收 base64 影像。</li>
+    <li>前端能：拍照 → 縮圖 → 送出 → 顯示摘要 + 翻譯。</li>
   </ul>
   <div class="milestone body"><div class="mh">🎁 你現在有：會看照片的 App</div><p>拍照翻譯上線！下一章用同一套多模態能力，做「上傳檔案翻譯」——支援圖片、PDF、文字檔。</p></div>
 </section>
 
+<!-- 下一章 -->
 <section class="slide cs">
   <div class="sh"><h2>下一章 · CH12</h2><div class="k">上傳檔案翻譯</div></div>
   <div class="body">

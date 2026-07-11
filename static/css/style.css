@@ -12,6 +12,34 @@
     --ok: #5bd18a;
 }
 
+/* ===== 背景風格主題（設定面板可切換；套用在 <body data-theme="..."> 上覆蓋變數） ===== */
+body[data-theme="ocean"] {   /* 海洋藍 */
+    --bg1: #0a1e33; --bg2: #12304f; --bg3: #1a4a70;
+    --gold: #4fc3f7; --gold-soft: #9fdcff; --card-border: rgba(79,195,247,.28);
+}
+body[data-theme="forest"] {  /* 森林綠 */
+    --bg1: #0d1f16; --bg2: #163524; --bg3: #1f4a30;
+    --gold: #5bd18a; --gold-soft: #9fe6b8; --card-border: rgba(91,209,138,.28);
+}
+body[data-theme="sunset"] {  /* 夕陽橙 */
+    --bg1: #2a1410; --bg2: #4a2418; --bg3: #6a2f1a;
+    --gold: #ff9d5c; --gold-soft: #ffc79f; --card-border: rgba(255,157,92,.30);
+}
+body[data-theme="rose"] {    /* 玫瑰粉 */
+    --bg1: #2a0f1e; --bg2: #3f1a2c; --bg3: #55223c;
+    --gold: #ff8fb0; --gold-soft: #ffc0d3; --card-border: rgba(255,143,176,.30);
+}
+body[data-theme="mono"] {    /* 暗夜黑（OLED 省電） */
+    --bg1: #000000; --bg2: #0e0e14; --bg3: #1a1a24;
+    --gold: #d4af57; --gold-soft: #ecd9a0; --card-border: rgba(212,175,87,.28);
+}
+body[data-theme="light"] {   /* 日光淺色（深色文字） */
+    --bg1: #eef0f6; --bg2: #e3e7f1; --bg3: #d6dcec;
+    --gold: #c8811f; --gold-soft: #e0a94a;
+    --text: #2a2440; --muted: #6a6480;
+    --card: rgba(0,0,0,.05); --card-border: rgba(200,129,31,.30);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 html, body {

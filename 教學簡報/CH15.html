@@ -15,91 +15,403 @@
   <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
 </section>
 
+<!-- 2. 先回顧 -->
+<section class="slide cs">
+  <div class="sh"><h2>先回顧：我們現在有什麼</h2><div class="k">站在前面章節的成果上，再加最後一塊工具</div></div>
+  <div class="body">
+    <p>到上一章為止，你的 App 已經會：<b>打字翻譯、語音翻譯、即時口譯、面對面對話、拍照翻譯、上傳檔案翻譯、匯率換算、天氣查詢</b>。</p>
+    <p>這些工具都很實用，但它們都是「查<b>固定資料</b>」。這一章我們加一個更聰明的——<b>會上網、又會自己整理答案</b>的旅遊問答助手。</p>
+    <div class="info-box">🧩 本章只加一塊：一個「打字發問 → 上網查 → AI 整理成答案」的問答框。其他功能都不動。</div>
+  </div>
+</section>
+
+<!-- 3. 這一章要做什麼 -->
 <section class="slide cs">
   <div class="sh"><h2>這一章要做出什麼</h2><div class="k">會上網查的旅遊小幫手</div></div>
   <div class="body">
-    <p>打「沖繩 12 月適合玩水嗎？」——助手先用 <b>Tavily 上網搜尋</b>最新資訊，再讓 AI 整理成答案，附上來源連結。</p>
-    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個會查資料的旅遊問答框，行程外的問題都能問。</p></div>
+    <p>打「淺草附近有什麼好吃的？」——助手先用 <b>Tavily 上網搜尋</b>最新資訊，再讓 AI 把搜到的東西整理成一段好懂的答案，最後<b>附上來源連結</b>讓你點進去確認。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個會查資料的旅遊問答框：行程外、臨時想到的問題都能問，答案還附出處。</p></div>
   </div>
 </section>
 
+<!-- 4. 完成後的操作流程（先看全貌） -->
+<section class="slide cs">
+  <div class="sh"><h2>先看全貌：問一句話，中間發生什麼事</h2><div class="k">看懂這條路，後面每一步就知道自己在做哪一段</div></div>
+  <ol class="sl body">
+    <li>使用者在問答框打問題，按「送出」</li>
+    <li>前端把問題送到後端的 <span class="filechip">/api/ask</span>（順便帶上你的 Tavily 金鑰、要用什麼語言回答）</li>
+    <li>後端<b>若有 Tavily 金鑰</b>，先呼叫 Tavily 上網搜尋，拿回一堆結果當「參考資料」</li>
+    <li>後端把「問題 + 參考資料」一起丟給 AI（走你設定的供應商），請它整理成答案</li>
+    <li>後端回傳 <code>{answer, sources, searched}</code>（答案、來源清單、有沒有真的搜到）</li>
+    <li>前端把答案顯示出來，附上來源連結；若有搜尋就標「🌐 已參考即時搜尋」</li>
+  </ol>
+  <div class="info-box">👉 這一章就是照著這條路，把後端的 <code>/api/ask</code> 和前端的問答框做出來。</div>
+</section>
+
+<!-- 5. 觀念一：為什麼要上網查 -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念：AI 為什麼需要「上網查」</h2><div class="k">AI 的知識有「保存期限」</div></div>
+  <div class="body">
+    <p>AI（像 Gemini）的知識是「訓練那一刻」定格的，好比一本<b>印好的百科全書</b>——內容很多，但<b>不知道最近發生的事</b>：新開的店、這個月的活動、臨時的公告，它可能都不知道，甚至會「憑印象亂講」。</p>
+    <p>所以我們讓它先<b>上網查最新資料</b>，再根據查到的東西回答。這樣答案又新又有憑有據。</p>
+    <div class="info-box">💡 這個技巧有個名字叫「檢索增強生成（RAG）」——先「檢索」資料，再讓 AI「生成」答案。名詞記不記得都沒關係，會用就好。</div>
+  </div>
+</section>
+
+<!-- 6. 觀念二：Tavily 是什麼 -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念：Tavily 是什麼</h2><div class="k">專門「餵給 AI 吃」的搜尋引擎</div></div>
+  <div class="tc body">
+    <div>
+      <p><b>Tavily</b> 是一個「給程式用的搜尋引擎」。你丟一個問題給它，它回你幾筆網路上的搜尋結果（標題、網址、內容摘要），整理得乾乾淨淨，剛好可以直接餵給 AI。</p>
+      <p>它跟 Google 不同：Google 是給「人用眼睛看」的，Tavily 是給「程式拿去用」的。</p>
+    </div>
+    <div class="cc"><div class="ico">🔍</div><h3>選填即可</h3><p>Tavily 金鑰<b>可填可不填</b>。沒填就退回用 AI 既有知識回答，功能照樣能動。</p></div>
+  </div>
+</section>
+
+<!-- 7. 設計重點：沒金鑰也能用 -->
 <section class="slide cs">
   <div class="sh"><h2>設計重點：沒金鑰也能用</h2><div class="k">優雅退回，不會壞</div></div>
   <div class="body">
-    <p>有 Tavily 金鑰 → 先上網查、再回答（即時）。沒有金鑰或額度爆掉 → <b>自動退回</b>用 AI 既有知識回答，附註說明。</p>
-    <div class="ok-box">✅ 這種「有就更好、沒有也能動」的設計，讓功能更耐用、對使用者更友善。</div>
+    <p>我們把 Tavily 設計成「<b>有就更好、沒有也能動</b>」：</p>
+    <table class="tbl">
+      <tr><th>情況</th><th>App 的反應</th></tr>
+      <tr><td>有填 Tavily 金鑰</td><td>先上網查最新資訊 → AI 綜合回答 → 附來源</td></tr>
+      <tr><td>沒填金鑰</td><td>直接用 AI 既有知識回答（不上網）</td></tr>
+      <tr><td>有填、但搜尋失敗（額度爆、斷網）</td><td><b>自動退回</b>用 AI 知識回答，並加註說明</td></tr>
+    </table>
+    <div class="ok-box">✅ 這種「壞了也不會整個垮」的設計，讓功能更耐用、對使用者更友善。</div>
+  </div>
+</section>
+
+<!-- 8. 檔案地圖 -->
+<section class="slide cs">
+  <div class="sh"><h2>動工前：這章會改到哪些檔案</h2><div class="k">先知道等一下要打開哪幾個檔</div></div>
+  <table class="tbl body">
+    <tr><th>檔案</th><th>加什麼</th></tr>
+    <tr><td><span class="filechip">app.py</span></td><td>新增 <code>_tavily_search()</code> 小函式 ＋ <code>/api/ask</code> 端點</td></tr>
+    <tr><td><span class="filechip">providers.py</span></td><td>已有的 <code>generate()</code> 直接沿用（不用改），負責把問題交給 AI 回答</td></tr>
+    <tr><td><span class="filechip">templates/index.html</span></td><td>加一個問答框（輸入格、送出鈕、答案區、來源區）</td></tr>
+    <tr><td><span class="filechip">static/js/app.js</span></td><td>寫 <code>doAsk()</code>：把問題送出、拿回答案顯示</td></tr>
+  </table>
+  <div class="info-box">📂 就這幾個檔。下面每一步都會告訴你「打開哪一個、貼在哪裡」。</div>
+</section>
+
+<!-- ===== 步驟一：Tavily 搜尋小函式 ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：做一個「上網搜尋」的小函式</h2><div class="k">在 app.py 新增 _tavily_search()</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 1／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個小函式，把「金鑰＋問題」丟給 Tavily，拿回搜尋結果。它只負責「查」，不管「答」。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把這個函式<b>貼在其他路由（<code>@app.route</code>）的上面、跟其他函式放一起</b>。</p>
+    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請在 app.py 新增一個小函式 _tavily_search(key, query)：
+用 requests.post 打 Tavily 的 https://api.tavily.com/search，
+帶上 api_key、query、max_results=5、include_answer=True、
+search_depth="basic"，逾時設 20 秒。
+成功就回傳它的 JSON（含 answer 與 results）。我是新手，請附完整程式碼。</pre></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>提示詞</h2><div class="k">Tavily 選填 + LLM 回答</div></div>
-  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>做 /api/ask：收 question。若有 Tavily 金鑰就先呼叫
-Tavily search 拿搜尋結果當上下文，餵給 LLM 回答（用我的語言）；
-若沒有金鑰或搜尋失敗，就直接用 AI 知識回答並加註。
-回傳 {answer, sources, searched}。前端做問答框顯示答案與來源。</pre></div>
+  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py — 旅遊問答：可選 Tavily 上網搜尋</span>
+def _tavily_search(key, query, max_results=5):
+    r = requests.post("https://api.tavily.com/search", json={
+        "api_key": key, "query": query, "max_results": max_results,
+        "include_answer": True, "search_depth": "basic",
+    }, timeout=20)
+    r.raise_for_status()          <span class="cm"># 狀態碼不是 200 就丟例外</span>
+    return r.json()               <span class="cm"># 含 answer 與 results[title,url,content]</span></pre></div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>Tavily 搜尋</h2><div class="k">一個 POST 就有搜尋結果</div></div>
+  <div class="sh"><h2>步驟一：逐段看懂</h2><div class="k">每一段在做什麼，白話講一遍</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>requests.post("https://api.tavily.com/search", ...)</code></td><td>用 POST 向 Tavily 送出一次搜尋請求</td></tr>
+    <tr><td><code>"api_key": key</code></td><td>你的 Tavily 金鑰，證明「是你在查」</td></tr>
+    <tr><td><code>"query": query</code></td><td>要查的問題本身</td></tr>
+    <tr><td><code>"max_results": 5</code></td><td>最多回 5 筆結果就夠了（太多反而拖慢、貴）</td></tr>
+    <tr><td><code>"include_answer": True</code></td><td>請 Tavily 順便給一句「整體摘要」</td></tr>
+    <tr><td><code>timeout=20</code></td><td>最多等 20 秒，避免卡死</td></tr>
+    <tr><td><code>r.raise_for_status()</code></td><td>如果 Tavily 回錯誤（如額度爆掉），就丟出例外——等一下我們會接住它</td></tr>
+    <tr><td><code>return r.json()</code></td><td>把結果轉成 Python 資料回傳</td></tr>
+  </table>
+</section>
+
+<!-- ===== 步驟二：/api/ask 端點 ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：開一個「問答」的門</h2><div class="k">在 app.py 新增 /api/ask</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 2／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/ask</code>，收下問題，該搜尋就搜尋，再交給 AI 回答，最後把答案＋來源送回前端。這是本章的核心。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把端點<b>貼在剛剛那個 <code>_tavily_search</code> 的下面</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請在 app.py 新增 /api/ask 端點（POST）：
+從 JSON 收 question、target（回答語言）、tavily_key（選填）。
+若有 tavily_key（或環境變數 TAVILY_API_KEY）就先呼叫 _tavily_search，
+把 answer 和每筆 results 整理成「參考資料」文字，同時收集來源清單；
+searched 只有「真的有搜到東西」才算 True。
+接著組 system 指令（用 target 語言、有參考資料就優先採用），
+用 providers.generate() 交給 AI 回答（沿用我設定的供應商）。
+最後回傳 {ok, answer, sources, searched}。搜尋失敗要能自動退回純 AI。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：AI 會給你這段（1／2 · 上網查）</h2><div class="k">貼進 app.py</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
     <pre><span class="cm"># app.py</span>
-def tavily_search(key, query):
-    r = requests.post('https://api.tavily.com/search', json={
-        'api_key':key, 'query':query, 'max_results':5,
-        'include_answer':True}, timeout=20)
-    r.raise_for_status()
-    return r.json()   <span class="cm"># 含 answer 與 results[title,url,content]</span></pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>後端 /api/ask</h2><div class="k">搜尋 → 餵給 AI → 回答</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>@app.route('/api/ask', methods=['POST'])
+@app.route('/api/ask', methods=['POST'])
 def api_ask():
-    d = request.get_json(force=True) or {}
-    q = (d.get('question') or '').strip()
-    tv = d.get('tavily_key') or os.getenv('TAVILY_API_KEY') or ''
-    ctx, sources, searched = '', [], False
-    if tv:
+    data = request.get_json(force=True, silent=True) or {}
+    question = (data.get('question') or '').strip()
+    if not question:
+        return jsonify({"ok": False, "error": "請輸入問題"}), 400
+    target = data.get('target') or 'Traditional Chinese (Taiwan)'
+    pc = _provider_cfg(data)                      <span class="cm"># 沿用你設定的供應商</span>
+    tavily_key = (data.get('tavily_key') or os.getenv('TAVILY_API_KEY') or '').strip()
+
+    <span class="cm"># 1) 有 Tavily 金鑰才上網查；失敗就略過，改用 AI 自身知識</span>
+    context, sources, searched, search_note = "", [], False, ""
+    if tavily_key:
         try:
-            res = tavily_search(tv, q)
-            for it in res.get('results', []):
-                ctx += f"- {it['title']}: {it['content']}\n"
-                sources.append({'title':it['title'],'url':it['url']})
-            searched = True
-        except Exception: pass   <span class="cm"># 失敗就退回純 AI</span>
-    key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
-    system = f"You are a travel assistant. Answer in Traditional Chinese. Use the web context if provided."
-    user = q if not ctx else f"Question: {q}\n\nWeb context:\n{ctx}"
-    answer = providers.generate('gemini', key, '', '', system, user)   <span class="cm"># 沿用 CH06 的供應商</span>
-    return jsonify({'ok':True,'answer':answer,'sources':sources,'searched':searched})</pre></div>
+            d = _tavily_search(tavily_key, question)
+            results = d.get("results") or []
+            if d.get("answer"):
+                context += f"Web summary: {d['answer']}\n"
+            for it in results:
+                context += f"- {it.get('title','')}: {it.get('content','')}\n"
+                sources.append({"title": it.get("title",""), "url": it.get("url","")})
+            searched = bool(results or d.get("answer"))   <span class="cm"># 真的有搜到才算已搜尋</span>
+        except Exception as e:
+            logger.warning(f"tavily failed: {e}")
+            search_note = "（即時搜尋暫時無法使用，改用 AI 既有知識回答）"</pre></div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>前端：問答框</h2><div class="k">問題 → 答案 + 來源</div></div>
+  <div class="sh"><h2>步驟二：AI 會給你這段（2／2 · 交給 AI 答）</h2><div class="k">接在上一段下面</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>async function ask(){
-  const q = askInput.value.trim(); if(!q) return;
-  askAnswer.textContent = '思考中…';
-  const res = await fetch('/api/ask', {method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ question:q, tavily_key: cfg.tavilykey || '' })});
-  const d = await res.json();
-  askAnswer.textContent = d.answer;
-  askSources.innerHTML = d.sources.map(s=&gt;`&lt;a href="${s.url}" target="_blank"&gt;${s.title}&lt;/a&gt;`).join('');
-}</pre></div>
+    <pre>    <span class="cm"># 2) 交給 LLM 回答（走設定的供應商）</span>
+    system = (
+        "You are a helpful, concise travel assistant. "
+        f"Answer the user's question in {target}. "
+        "If web search context is provided, prefer those up-to-date facts and be specific; "
+        "otherwise answer from your own knowledge and flag uncertainty for time-sensitive details."
+    )
+    user = question if not context else f"Question: {question}\n\nWeb search context:\n{context}"
+    try:
+        if pc['provider'] == 'openai':
+            answer = providers.generate('openai', pc['api_key'], pc['model'], pc['base_url'], system, user)
+        else:
+            key = pc['api_key'] or API_KEY
+            answer = providers.generate('gemini', key, pc['model'], '', system, user)
+    except Exception as e:
+        logger.error(f"ask error: {e}")
+        return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 400
+
+    return jsonify({"ok": True,
+        "answer": (answer or "") + (("\n\n" + search_note) if search_note else ""),
+        "sources": sources, "searched": searched})</pre></div>
+  <p class="note body">💡 這裡把原始碼略作精簡（省略幾個防呆判斷），核心流程完全一樣：查 → 組指令 → 呼叫 <code>generate()</code> → 回傳。</p>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>實測</h2><div class="k">問個旅遊問題</div></div>
+  <div class="sh"><h2>步驟二：逐段看懂（上網查那半段）</h2><div class="k">「搜尋」到底做了什麼</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>if not question: ...400</code></td><td>沒問題就回錯誤，不白跑一趟</td></tr>
+    <tr><td><code>tavily_key = data.get('tavily_key') or os.getenv(...)</code></td><td>金鑰兩個來源：前端設定送來的、或伺服器 <code>.env</code>。<b>兩個都沒有就不上網</b></td></tr>
+    <tr><td><code>if tavily_key:</code></td><td>有金鑰才進去搜尋（沒金鑰整段跳過）</td></tr>
+    <tr><td><code>context += ...</code></td><td>把搜到的標題、內容一條一條拼成「參考資料」文字，等下餵給 AI</td></tr>
+    <tr><td><code>sources.append(...)</code></td><td>順手收集「來源清單」，最後給前端做連結</td></tr>
+    <tr><td><code>searched = bool(results or d.get("answer"))</code></td><td><b>真的有搜到東西</b>才算「已搜尋」——空手而回不算，畫面才不會亂標</td></tr>
+    <tr><td><code>except Exception: ... search_note=...</code></td><td>搜尋出錯（額度爆、斷網）不當掉，記一句提醒、繼續往下用 AI 回答</td></tr>
+  </table>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：逐段看懂（交給 AI 那半段）</h2><div class="k">「回答」到底做了什麼</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>system = (...)</code></td><td>給 AI 的角色與規則：當旅遊助手、用你的語言回答、<b>有參考資料就優先採用</b>，沒有就用自己的知識並標明不確定</td></tr>
+    <tr><td><code>user = question if not context else ...</code></td><td>沒搜到 → 只把問題丟給 AI；有搜到 → 把「問題＋參考資料」一起丟</td></tr>
+    <tr><td><code>providers.generate(...)</code></td><td>呼叫上一篇（CH06）就寫好的通用生成函式，把 system＋user 交給 AI，拿回一段文字答案</td></tr>
+    <tr><td><code>pc['provider'] == 'openai' / else</code></td><td>看你在設定選了哪家供應商，走對應的分支（Gemini 或 OpenAI 相容）</td></tr>
+    <tr><td><code>answer + search_note</code></td><td>若剛剛搜尋失敗過，在答案後補一句「改用 AI 既有知識」的提醒</td></tr>
+    <tr><td><code>jsonify({... searched ...})</code></td><td>把答案、來源、有沒有搜尋，一起回傳給前端</td></tr>
+  </table>
+  <div class="info-box">🔌 注意 <code>generate()</code> 是 CH06 就有的函式，這章<b>不用改 providers.py</b>——這就是當初做「供應商抽象層」的回報。</div>
+</section>
+
+<!-- ===== 步驟三：前端問答框 ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：加一個「問答框」</h2><div class="k">在畫面上放輸入格、送出鈕、答案區</div></div>
   <div class="body">
-    <p>打「那霸機場到國際通怎麼去？」按送出。有 Tavily 金鑰會顯示「🌐 已參考即時搜尋」+ 來源；沒金鑰則用 AI 知識回答。</p>
-    <div class="shot"><span class="cam">📸</span>請截圖：旅遊助手回答 + 來源連結</div>
-    <div class="warn-box">⚠️ 別用網路上撿到的公開 Tavily 金鑰（多半已用爆，回 429 額度錯誤）。自己申請一把（CH02 教過）。</div>
+    <span class="step-tag">步驟 3／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：在畫面加一個小視窗，有「輸入問題的格子」「送出鈕」「顯示答案的地方」「顯示來源的地方」。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把這段<b>放進旅遊助手的彈窗（Modal）裡</b>。</p>
+    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">&lt;!-- 旅遊問答框 --&gt;</span>
+&lt;textarea id="ask_q" placeholder="想問什麼旅遊問題？例如：淺草附近有什麼好吃的"&gt;&lt;/textarea&gt;
+&lt;button id="ask_go"&gt;送出&lt;/button&gt;
+&lt;div id="ask_status"&gt;&lt;/div&gt;              <span class="cm">&lt;!-- 顯示「思考中…」或「🌐 已參考即時搜尋」 --&gt;</span>
+&lt;div id="ask_answer" class="hidden"&gt;&lt;/div&gt; <span class="cm">&lt;!-- 答案顯示在這 --&gt;</span>
+&lt;div id="ask_sources"&gt;&lt;/div&gt;             <span class="cm">&lt;!-- 來源連結顯示在這 --&gt;</span></pre></div>
   </div>
 </section>
 
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：逐段看懂 + 預期</h2><div class="k">四個小方塊各司其職</div></div>
+  <div class="body">
+    <p>🔍 <code>ask_q</code> 是輸入格；<code>ask_go</code> 是送出鈕；<code>ask_status</code> 顯示狀態（思考中／已搜尋）；<code>ask_answer</code> 放答案；<code>ask_sources</code> 放來源連結。<code>class="hidden"</code> 讓答案區一開始<b>先藏起來</b>，有答案才顯示。</p>
+    <div class="ok-box">✅ <b>預期</b>：打開旅遊助手，看到一個能打字、有「送出」的問答框。</div>
+    <div class="mockrow">
+      <div class="mock">
+        <div class="m-top"><span>15:57</span><b>5G ▲</b></div>
+        <div class="m-row"><div class="m-title">🧭 旅遊助手</div><span class="m-pill">✕</span></div>
+        <div class="m-card m-muted">淺草附近有什麼好吃的？</div>
+        <div class="m-btn">送出</div>
+        <div class="m-card m-muted">答案會顯示在這裡…</div>
+      </div>
+    </div>
+    <div class="mock-cap">模擬畫面：旅遊助手問答框（示意，非真實截圖）</div>
+  </div>
+</section>
+
+<!-- ===== 步驟四：前端 doAsk ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：送出問題 → 顯示答案</h2><div class="k">整章最關鍵的一段前端邏輯</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 4／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：按下送出後，把問題（連同金鑰、語言）POST 到 <code>/api/ask</code>，拿回答案後顯示，並把來源做成可點的連結。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段<b>接在其他問答相關程式的區塊</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>寫一個 doAsk()：讀輸入框的問題，先顯示「思考中…」，
+用 fetch POST 到 /api/ask，body 帶 question、target（回答語言）、
+tavily_key（從設定 cfg.tavilykey）和供應商設定。
+拿到回應後：若 d.searched 就在狀態列標「🌐 已參考即時搜尋」，
+把 d.answer 顯示出來，並把 d.sources 每一筆做成可點的來源連結。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// static/js/app.js</span>
+async function doAsk() {
+  const q = $('ask_q').value.trim();
+  if (!q) { $('ask_status').textContent = '請輸入問題'; return; }
+  $('ask_answer').classList.add('hidden');
+  $('ask_status').textContent = (cfg.tavilykey ? '上網查詢並' : 'AI ') + '思考中…';
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: q,
+        target: byId(cfg.s_langA).name,   <span class="cm">// 用你的語言回答</span>
+        tavily_key: cfg.tavilykey || '',  <span class="cm">// 選填的 Tavily 金鑰</span>
+        ...providerBody(),                <span class="cm">// 帶上供應商設定</span>
+      }),
+    });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || '查詢失敗');
+    $('ask_status').textContent = d.searched ? '🌐 已參考即時搜尋' : '';
+    $('ask_answer').textContent = d.answer || '（無回覆）';
+    $('ask_answer').classList.remove('hidden');
+    if (Array.isArray(d.sources) &amp;&amp; d.sources.length) {
+      $('ask_sources').innerHTML = '&lt;div class="src-title"&gt;來源&lt;/div&gt;' +
+        d.sources.map(s =&gt; `&lt;a href="${s.url}" target="_blank"&gt;${s.title || s.url}&lt;/a&gt;`).join('');
+    }
+  } catch (e) { $('ask_status').textContent = '❌ ' + e.message; }
+}
+$('ask_go').addEventListener('click', doAsk);</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：逐段看懂</h2><div class="k">這段每一行在幹嘛</div></div>
+  <table class="tbl body">
+    <tr><th>這一行</th><th>在做什麼</th></tr>
+    <tr><td><code>$('ask_q').value.trim()</code></td><td>拿到使用者打的問題，去掉頭尾空白</td></tr>
+    <tr><td><code>cfg.tavilykey ? '上網查詢並' : 'AI '</code></td><td>有金鑰就顯示「上網查詢並思考中…」，沒有就「AI 思考中…」——貼心地讓使用者知道會不會上網</td></tr>
+    <tr><td><code>tavily_key: cfg.tavilykey</code></td><td>把設定裡填的 Tavily 金鑰一起送過去（沒填就送空字串）</td></tr>
+    <tr><td><code>...providerBody()</code></td><td>把「用哪家 AI、哪個模型」的設定一起帶上</td></tr>
+    <tr><td><code>d.searched ? '🌐 已參考即時搜尋' : ''</code></td><td>後端說有搜到，就標出來讓使用者安心</td></tr>
+    <tr><td><code>d.sources.map(...)</code></td><td>把每筆來源做成一個可點的連結，塞進來源區</td></tr>
+  </table>
+  <div class="info-box">🧰 <code>$()</code>、<code>byId()</code>、<code>providerBody()</code> 都是專案前面章節就有的小幫手，這章直接沿用。</div>
+</section>
+
+<!-- 金鑰填哪裡 -->
+<section class="slide cs">
+  <div class="sh"><h2>金鑰填哪裡：App 設定面板</h2><div class="k">不用碰程式碼，填進設定就好</div></div>
+  <div class="body">
+    <p>Tavily 金鑰<b>選填</b>。要用的話，不必改程式——打開 App 右上角「⚙️ 設定」，找到「Tavily 金鑰」欄位貼上去、儲存即可。程式會自動用 <code>cfg.tavilykey</code> 帶著它。</p>
+    <div class="mockrow">
+      <div class="mock">
+        <div class="m-top"><span>15:58</span><b>5G ▲</b></div>
+        <div class="m-row"><div class="m-title">⚙️ 設定</div><span class="m-pill">✕</span></div>
+        <div class="m-card m-muted">Gemini 金鑰：AIza…你的金鑰</div>
+        <div class="m-card m-muted">Tavily 金鑰：tvly-…你的金鑰（選填）</div>
+        <div class="m-btn">儲存</div>
+      </div>
+    </div>
+    <div class="mock-cap">模擬畫面：設定面板裡的 Tavily 金鑰欄位（示意，非真實截圖）</div>
+    <div class="info-box">🔑 沒有 Tavily 金鑰？留空就好，助手照樣能答，只是不上網查最新資訊。要申請可到 Tavily 官網免費領一把。</div>
+  </div>
+</section>
+
+<!-- 實測 -->
+<section class="slide cs">
+  <div class="sh"><h2>實測：問一個旅遊問題</h2><div class="k">成功長這樣</div></div>
+  <div class="body">
+    <p>打開旅遊助手，輸入「淺草附近有什麼好吃的」按送出。<b>有 Tavily 金鑰</b>會顯示「🌐 已參考即時搜尋」＋一串來源連結；<b>沒金鑰</b>則直接用 AI 知識回答（狀態列不標搜尋）。</p>
+    <div class="mockrow">
+      <div class="mock">
+        <div class="m-top"><span>16:01</span><b>5G ▲</b></div>
+        <div class="m-row"><div class="m-title">🧭 旅遊助手</div><span class="m-pill">🌐 已參考即時搜尋</span></div>
+        <div class="m-card">淺草寺周邊推薦：仲見世通的人形燒與雷門前的天丼老店，步行都在 5 分鐘內…</div>
+        <div class="m-card m-muted">來源　🔗 淺草美食導覽　🔗 雷門周邊食記</div>
+      </div>
+      <div class="mock">
+        <div class="m-top"><span>16:01</span><b>5G ▲</b></div>
+        <div class="m-row"><div class="m-title">🧭 旅遊助手</div><span class="m-pill m-muted"> </span></div>
+        <div class="m-card">淺草一帶以傳統小吃聞名，如人形燒、天婦羅蓋飯…（未上網，資訊可能非最新）</div>
+        <div class="m-card m-muted">（無來源：本次以 AI 既有知識回答）</div>
+      </div>
+    </div>
+    <div class="mock-cap">左：有 Tavily 金鑰（附來源）　右：沒金鑰（純 AI 回答）——皆為示意，非真實截圖</div>
+  </div>
+</section>
+
+<!-- 除錯集 -->
+<section class="slide cs">
+  <div class="sh"><h2>🔧 卡住了？本章常見的坑</h2><div class="k">對症下藥</div></div>
+  <div class="body">
+    <div class="warn-box">① <b>回 429／額度錯誤</b>：Tavily 或 AI 金鑰額度用完了。別用網路上撿到的公開 Tavily 金鑰（多半早就用爆）——自己去 Tavily 官網免費申請一把。或直接留空，退回純 AI 回答。</div>
+    <div class="warn-box">② <b>永遠不顯示「🌐 已參考即時搜尋」</b>：多半是沒填 Tavily 金鑰，或填錯。到「⚙️ 設定」確認 Tavily 金鑰有貼上、按了儲存。沒金鑰是正常的，只是不上網而已。</div>
+    <div class="warn-box">③ <b>按送出沒反應</b>：按 <code>F12</code> 看 Console。若是 <code>404</code>，代表 app.py 的 <code>/api/ask</code> 沒加對或沒重啟；若報「找不到 Gemini API Key」，去設定填 Gemini 金鑰。</div>
+    <div class="warn-box">④ <b>答案有了但沒來源連結</b>：正常。沒上網（沒 Tavily 金鑰）本來就沒來源；有搜尋但 <code>sources</code> 為空時前端也不會硬擠連結。</div>
+  </div>
+</section>
+
+<!-- 動手練習 -->
+<section class="slide cs">
+  <div class="sh"><h2>動手練習</h2><div class="k">改一點點，感受差異</div></div>
+  <ul class="sl body">
+    <li>問同一個問題兩次：一次<b>填 Tavily 金鑰</b>、一次<b>清空金鑰</b>，比較答案的「新鮮度」與有沒有來源。</li>
+    <li>把 <code>_tavily_search</code> 的 <code>max_results=5</code> 改成 <code>2</code>，再問一次——參考資料變少，答案會不會變短、變粗略？體會「查越多 vs 越快越省」的取捨。</li>
+    <li>把送出時的 <code>target</code>（回答語言）改成 <code>'English'</code>，同一個問題看它改用英文回答。</li>
+  </ul>
+</section>
+
+<!-- 生成器（保留原本） -->
 <section class="slide cs">
   <div class="sh"><h2>🎁 助手指令生成器</h2><div class="k">設定助手的角色與語言</div></div>
   <div class="gen body">
@@ -113,19 +425,24 @@ def api_ask():
       <button class="alt" onclick="cp(this)">📋 複製</button>
     </div>
     <div class="out" id="k_out">填好後按產生，這裡會出現助手的 system 指令…</div>
+    <div class="hint">把產生的字串當成 /api/ask 裡的 system 指令，就能調整助手的口吻與語言。</div>
   </div>
 </section>
 
+<!-- 驗收 -->
 <section class="slide cs">
   <div class="sh"><h2>本章驗收</h2><div class="k">會查資料的助手</div></div>
   <ul class="goals body">
-    <li>/api/ask 有 Tavily 就上網查、沒有就退回 AI 知識。</li>
-    <li>回答附上來源連結。</li>
-    <li>前端問答框能問能答。</li>
+    <li>app.py 有 <code>_tavily_search()</code> 與 <code>/api/ask</code>：有 Tavily 就上網查、沒有就退回 AI 知識。</li>
+    <li><code>searched</code> 只在「真的搜到」時為 True；搜尋失敗會自動退回並加註。</li>
+    <li>沿用 <code>providers.generate()</code>，沒改到 providers.py。</li>
+    <li>前端問答框能問能答，答案附上來源連結。</li>
+    <li>Tavily 金鑰是選填，填在 App 設定面板即可。</li>
   </ul>
-  <div class="milestone body"><div class="mh">🎁 第二篇完成！旅遊神器成形</div><p>翻譯 + 拍照 + 檔案 + 匯率 + 天氣 + 助手，全部到齊！剩下讓它變成能安裝的手機 App 並上線，走到哪都能用。</p></div>
+  <div class="milestone body"><div class="mh">🎁 第二篇完成！旅遊神器成形</div><p>翻譯 + 拍照 + 檔案 + 匯率 + 天氣 + 上網問答，全部到齊！剩下讓它變成能安裝的手機 App 並上線，走到哪都能用。</p></div>
 </section>
 
+<!-- 下一章 -->
 <section class="slide cs">
   <div class="sh"><h2>下一章 · CH16</h2><div class="k">PWA 手機安裝（Part 4 開始）</div></div>
   <div class="body">

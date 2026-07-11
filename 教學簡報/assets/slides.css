@@ -91,7 +91,30 @@ code{background:rgba(0,0,0,.08);padding:1px 7px;border-radius:6px;font-family:'F
 /* 螢幕截圖佔位 */
 .shot{width:100%;max-width:900px;border:2px dashed var(--gold);background:#fff8e1;border-radius:12px;padding:26px;text-align:center;color:#8a6d00;font-size:17px;margin:8px 0}
 .shot .cam{font-size:32px;display:block;margin-bottom:6px}
+.img-box{text-align:center}
 .img-box img{max-width:100%;max-height:340px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.img-box .hint{font-size:14px;color:var(--muted);margin-top:6px}
+
+/* 步驟鷹架：每一步都要說清楚「做什麼／哪個檔案／對 AI 說什麼／貼哪裡／預期／除錯」 */
+.step-tag{display:inline-block;background:var(--p);color:#fff;font-weight:900;font-size:16px;padding:5px 16px;border-radius:20px;margin-bottom:6px}
+.filechip{display:inline-block;background:#111827;color:#7ee787;font-family:'Fira Code',Consolas,monospace;font-size:15px;padding:3px 10px;border-radius:8px}
+.prompt .lbl,.term .lbl{margin-bottom:8px}
+
+/* 手機模擬截圖（無真實截圖時用；模擬 App 深紫金畫面） */
+.mockrow{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;align-items:flex-start;width:100%;max-width:1120px}
+.mock{width:290px;max-width:86vw;margin:12px auto;background:linear-gradient(160deg,#1a1030,#2a1a4a 55%,#3a2560);
+  border:9px solid #0c0a1a;border-radius:30px;padding:16px 14px 20px;box-shadow:0 10px 34px rgba(0,0,0,.45);color:#f3eefb}
+.mock .m-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#b9a9d6;margin-bottom:10px}
+.mock .m-top b{color:#f5c451}
+.mock .m-title{color:#f5c451;font-weight:800;font-size:15px;margin:2px 0 8px}
+.mock .m-card{background:rgba(255,255,255,.08);border:1px solid rgba(245,196,81,.25);border-radius:12px;padding:11px 12px;margin:8px 0;font-size:14px;text-align:left;line-height:1.5}
+.mock .m-btn{background:linear-gradient(135deg,#f5c451,#f7d98a);color:#2a1a4a;border-radius:12px;padding:11px;text-align:center;font-weight:800;font-size:15px;margin:9px 0}
+.mock .m-btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.3);color:#f3eefb}
+.mock .m-pill{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:5px 12px;font-size:13px;margin:2px}
+.mock .m-muted{color:#b9a9d6;font-size:13px}
+.mock .m-row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.mock-cap{text-align:center;font-size:14px;color:var(--muted);margin-top:2px;width:100%}
+body.bg-10 .cs .mock{border-color:#000}
 
 /* 表格 / 目標 */
 .tbl{width:100%;max-width:1120px;border-collapse:collapse;font-size:19px}

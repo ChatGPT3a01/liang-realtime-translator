@@ -15,122 +15,496 @@
   <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
 </section>
 
+<!-- 2. 先回顧 -->
 <section class="slide cs">
-  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">輸入地名 → 即時天氣 + 建議</div></div>
+  <div class="sh"><h2>先回顧：我們現在有什麼</h2><div class="k">站在前面章節的成果上，再加一塊旅遊工具</div></div>
   <div class="body">
-    <p>輸入「那霸」「東京」，回傳目前溫度、天氣狀況，並依降雨機率給<b>帶傘/防曬/保暖</b>建議。用<b>免金鑰</b>的 Open-Meteo。</p>
-    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>出發前查目的地天氣，行李帶什麼一目了然。</p></div>
+    <p>到上一章為止，你的 App 已經會：<b>打字翻譯、語音翻譯、即時口譯、拍照翻譯、上傳檔案翻譯、匯率換算</b>。</p>
+    <p>出國旅遊除了語言和錢，還有一件天天要看的事——<b>天氣</b>。這一章我們幫 App 加上「查天氣」的能力。</p>
+    <div class="info-box">🧩 本章只加一塊：讓後端會「查天氣」，前端多一顆「🌤️ 天氣」按鈕。其他功能都不動。</div>
   </div>
 </section>
 
+<!-- 3. 這一章要做什麼 -->
 <section class="slide cs">
-  <div class="sh"><h2>兩步驟：地名 → 座標 → 天氣</h2><div class="k">天氣 API 只吃經緯度</div></div>
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">輸入地名 → 即時天氣 + 帶傘建議</div></div>
+  <div class="body">
+    <p>輸入「那霸」「東京」，App 回傳目前<b>溫度、天氣狀況、體感、濕度</b>，並依降雨機率給你<b>帶傘／防曬／保暖</b>的貼心建議。全部用<b>免金鑰</b>的 Open-Meteo，不用申請任何帳號。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>出發前查目的地天氣，行李要帶傘還是防曬，一目了然。</p></div>
+  </div>
+</section>
+
+<!-- 4. 完成後的操作流程（先看全貌） -->
+<section class="slide cs">
+  <div class="sh"><h2>先看全貌：查一個地名，中間發生什麼事</h2><div class="k">看懂這條路，後面每一步就知道自己在做哪一段</div></div>
+  <ol class="sl body">
+    <li>使用者按「🌤️ 天氣」，打上地名（例如「那霸」）按「查詢」</li>
+    <li>前端把地名送到後端的 <span class="filechip">/api/weather</span></li>
+    <li>後端先<b>地理編碼</b>：把地名換成經緯度（天氣 API 只吃座標）</li>
+    <li>後端拿座標去問 <b>Open-Meteo</b>，拿到溫度、天氣代碼、降雨機率</li>
+    <li>後端把天氣代碼翻成中文、算出「帶傘建議」，一起回傳</li>
+    <li>前端把地名、溫度、天氣、建議<b>顯示在畫面上</b></li>
+  </ol>
+  <div class="info-box">👉 這一章就是照著這 6 步，一段一段做出來。</div>
+</section>
+
+<!-- 5. 觀念一：兩段式查詢 -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念：為什麼要查「兩次」</h2><div class="k">地名 → 座標 → 天氣</div></div>
   <div class="term body"><pre><span class="out">「那霸」
-   ↓ 地理編碼（geocoding）
-緯度 26.21, 經度 127.68
-   ↓ Open-Meteo forecast
+   ↓ 第一次查：地理編碼（geocoding）
+緯度 26.21、經度 127.68
+   ↓ 第二次查：Open-Meteo forecast（吃座標）
 溫度 29.9°C、晴天、降雨 10%
    ↓ 判斷
 「👍 天氣舒適，玩得開心」</span></pre></div>
+  <div class="info-box body">💡 天氣 API<b>看不懂地名</b>，只認得經緯度。所以要先把「那霸」翻成座標，這個動作叫「地理編碼（geocoding）」。</div>
 </section>
 
+<!-- 6. 觀念二：免金鑰 -->
 <section class="slide cs">
-  <div class="sh"><h2>踩過的雷：中文地名查不到</h2><div class="k">最重要的一課</div></div>
+  <div class="sh"><h2>白話觀念：什麼是「免金鑰」API</h2><div class="k">不用申請帳號就能用</div></div>
+  <div class="tc body">
+    <div>
+      <p>前面的翻譯要用 Gemini <b>金鑰</b>。但天氣不一樣——<b>Open-Meteo</b> 是免費、免申請、免金鑰的公開服務，直接打它的網址就有資料。</p>
+      <p>本章預設走 Open-Meteo。程式裡另外留了一個「選填」的 OpenWeatherMap 備援（要金鑰），沒填也完全不影響。</p>
+    </div>
+    <div class="cc"><div class="ico">🆓</div><h3>免金鑰</h3><p>Open-Meteo 直接查就好，很適合教學與小專案。</p></div>
+  </div>
+</section>
+
+<!-- 7. 檔案地圖 -->
+<section class="slide cs">
+  <div class="sh"><h2>動工前：這章會改到哪些檔案</h2><div class="k">先知道等一下要打開哪幾個檔</div></div>
+  <table class="tbl body">
+    <tr><th>檔案</th><th>加什麼</th></tr>
+    <tr><td><span class="filechip">app.py</span></td><td>加天氣代碼表 <code>WMO_CODES</code>、常見地點表 <code>COMMON_PLACES</code>、地理編碼 <code>_geocode()</code>、建議 <code>_weather_advice()</code>、端點 <code>/api/weather</code></td></tr>
+    <tr><td><span class="filechip">templates/index.html</span></td><td>加一顆「🌤️ 天氣」按鈕與一個天氣視窗</td></tr>
+    <tr><td><span class="filechip">static/js/app.js</span></td><td>按鈕按下後：送地名 → 收結果 → 顯示</td></tr>
+  </table>
+  <div class="info-box">📂 就這三個檔。下面每一步都會告訴你「打開哪一個、貼在哪裡」。</div>
+</section>
+
+<!-- ============ 步驟一：地名對照表 + 地理編碼 ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：把地名換成經緯度</h2><div class="k">在 app.py 新增地理編碼</div></div>
   <div class="body">
-    <p>Open-Meteo 的地理編碼<b>對中文地名很不準</b>：那霸、台北、大阪常常查不到！對台灣使用者是大問題。</p>
-    <div class="ok-box">✅ 解法：三段式地理編碼 —— ①內建熱門地點字典（保證那霸=沖繩正確）→ ②Nominatim（OpenStreetMap，中文佳）→ ③Open-Meteo（最後備援）。</div>
+    <span class="step-tag">步驟 1／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個 <code>_geocode()</code>，收到一個地名，回傳它的 <b>(緯度, 經度, 顯示名)</b>。先查內建的常見地點表，查不到再上網問。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把 AI 給你的表格與函式<b>貼在其他函式的上面（靠近檔案設定區）</b>。</p>
+    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請在 app.py 新增一個 _geocode(place) 函式，把中文地名換成 (緯度, 經度, 顯示名)：
+先查一個內建的常見旅遊地點字典 COMMON_PLACES（那霸、台北、東京…先命中）；
+查不到再打 OpenStreetMap 的 Nominatim（免金鑰、中文佳，記得帶 User-Agent）；
+還是查不到就用 Open-Meteo 的 geocoding 當最後備援；三者都查無就回 None。
+我是新手，請附完整程式碼與逐段說明。</pre></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>三段式地理編碼</h2><div class="k">內建字典 → Nominatim → Open-Meteo</div></div>
+  <div class="sh"><h2>步驟一：AI 會給你這段（1／2 常見地點表）</h2><div class="k">貼進 app.py</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># providers/app：地名 → (lat, lon, 顯示名)</span>
-COMMON = {'那霸':(26.21,127.68,'那霸，日本'),'台北':(25.03,121.57,'台北，台灣'),
-          '東京':(35.69,139.69,'東京，日本'), ...}   <span class="cm"># 熱門地點先命中</span>
-
-def geocode(place):
-    if place in COMMON: return COMMON[place]
-    # Nominatim（要帶 User-Agent，中文支援佳）
-    r = requests.get('https://nominatim.openstreetmap.org/search',
-        params={'q':place,'format':'json','limit':1,'accept-language':'zh-TW'},
-        headers={'User-Agent':'liang-translator/1.0'}, timeout=10).json()
-    if r: return float(r[0]['lat']), float(r[0]['lon']), r[0]['display_name'].split(',')[0]
-    # 最後備援：Open-Meteo geocoding
-    ...</pre></div>
+    <pre><span class="cm"># app.py — 常見旅遊地點（中文名 → 座標＋顯示名）</span>
+<span class="cm"># 熱門地點先命中，保證精準，避免地理編碼誤配</span>
+COMMON_PLACES = {
+    "台北": (25.033, 121.565, "台北，台灣"),
+    "台中": (24.147, 120.673, "台中，台灣"),
+    "高雄": (22.627, 120.301, "高雄，台灣"),
+    "那霸": (26.212, 127.681, "那霸，日本"),
+    "沖繩": (26.212, 127.681, "沖繩，日本"),
+    "東京": (35.690, 139.692, "東京，日本"),
+    "大阪": (34.694, 135.502, "大阪，日本"),
+    "首爾": (37.567, 126.978, "首爾，韓國"),
+    "曼谷": (13.756, 100.502, "曼谷，泰國"),
+    <span class="cm"># … 其餘城市同理，可用本章最後的生成器補</span>
+}</pre></div>
+  <p class="note body">💡 這張表就是「白名單」：常去的城市直接寫死座標，最準也最快。</p>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>取天氣 + 帶傘建議</h2><div class="k">Open-Meteo forecast</div></div>
+  <div class="sh"><h2>步驟一：AI 會給你這段（2／2 地理編碼函式）</h2><div class="k">貼進 app.py</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>w = requests.get('https://api.open-meteo.com/v1/forecast', params={
-    'latitude':lat, 'longitude':lon,
-    'current':'temperature_2m,relative_humidity_2m,weather_code,precipitation',
-    'daily':'precipitation_probability_max', 'timezone':'auto','forecast_days':1}).json()
-
-def advice(code, temp, pop):
-    if code in RAIN_CODES or (pop and pop&gt;=50): return '☂️ 建議帶傘'
-    if temp&gt;=30: return '🧴 高溫，注意防曬補水'
-    if temp&lt;=12: return '🧥 偏冷，記得保暖'
-    return '👍 天氣舒適，玩得開心'</pre></div>
+    <pre><span class="cm"># app.py — 內建字典 → Nominatim → Open-Meteo；查無回 None</span>
+def _geocode(place):
+    key = place.strip()
+    if key in COMMON_PLACES:                     <span class="cm"># ① 先查白名單</span>
+        return COMMON_PLACES[key]
+    try:                                         <span class="cm"># ② Nominatim（中文佳，須帶 User-Agent）</span>
+        r = requests.get("https://nominatim.openstreetmap.org/search",
+            params={"q": place, "format": "json", "limit": 1, "accept-language": "zh-TW"},
+            headers={"User-Agent": "liang-translator/1.0 (travel weather)"}, timeout=10)
+        d = r.json()
+        if d:
+            item = d[0]
+            disp = item.get("display_name", place).split(",")
+            name = disp[0].strip() + (("，" + disp[-1].strip()) if len(disp) &gt; 1 else "")
+            return float(item["lat"]), float(item["lon"]), name
+    except Exception as e:
+        logger.warning(f"nominatim failed: {e}")
+    try:                                         <span class="cm"># ③ Open-Meteo geocoding（最後備援）</span>
+        g = requests.get("https://geocoding-api.open-meteo.com/v1/search",
+            params={"name": place, "count": 1, "language": "zh"}, timeout=8).json()
+        results = g.get("results") or []
+        if results:
+            loc = results[0]
+            name = loc.get("name", place) + (("，" + loc["country"]) if loc.get("country") else "")
+            return loc["latitude"], loc["longitude"], name
+    except Exception as e:
+        logger.warning(f"open-meteo geocode failed: {e}")
+    return None</pre></div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>WMO 天氣代碼</h2><div class="k">數字 → 中文 + emoji</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>WMO = {0:'晴天 ☀️', 1:'大致晴朗 🌤️', 2:'部分多雲 ⛅', 3:'陰天 ☁️',
-       61:'小雨 🌧️', 63:'中雨 🌧️', 65:'大雨 🌧️',
-       80:'陣雨 🌦️', 95:'雷陣雨 ⛈️'}   <span class="cm"># 把代碼翻成看得懂的字</span></pre></div>
+  <div class="sh"><h2>步驟一：逐段看懂</h2><div class="k">三層備援，一層比一層兜底</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>if key in COMMON_PLACES</code></td><td>先查內建白名單。命中就直接回座標，最準、最快、零網路</td></tr>
+    <tr><td><code>requests.get("…/nominatim…")</code></td><td>白名單沒有 → 問 OpenStreetMap 的 Nominatim，它<b>中文地名支援好</b></td></tr>
+    <tr><td><code>headers={"User-Agent": …}</code></td><td>Nominatim 規定一定要帶「你是誰」的標頭，不帶會被擋</td></tr>
+    <tr><td><code>display_name.split(",")</code></td><td>把「那霸市, 沖繩縣, 日本」切一切，組出乾淨的顯示名</td></tr>
+    <tr><td><code>geocoding-api.open-meteo…</code></td><td>前兩個都失敗 → Open-Meteo 官方地理編碼當最後救援</td></tr>
+    <tr><td><code>return None</code></td><td>三層都查不到，回 None，等一下端點會回「找不到地點」</td></tr>
+  </table>
+  <div class="info-box">🧱 這叫「多層備援（fallback）」：一條路不通就換下一條，讓查詢盡量成功。</div>
+</section>
+
+<!-- ★ 本章核心坑：中文地名查不到 -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟一 · 一定要教的坑：中文地名查不到</h2><div class="k">為什麼要做三層備援</div></div>
+  <div class="body">
+    <p>如果只用 Open-Meteo 一家的地理編碼，你會踩到一個很常見的雷：它<b>對中文地名很不準</b>——「那霸」「墾丁」「峴港」常常查<b>不到</b>，對台灣使用者是大問題。</p>
+    <div class="ok-box">✅ <b>解法就是這三層</b>：① 內建字典保證熱門地點精準 → ② Nominatim 中文支援最好 → ③ Open-Meteo 兜底。所以「那霸」一定查得到。</div>
+    <div class="warn-box">🔧 <b>卡住了？</b> 若某個地名還是查不到 → <b>改用英文地名或加上國家</b>，例如把「峴港」改成 <code>Da Nang</code>、把「首爾」改成 <code>Seoul, South Korea</code>。這是最實用的除錯招數，下面除錯集會再示範。</div>
+  </div>
+</section>
+
+<!-- ============ 步驟二：天氣代碼表 + 建議 + 端點 ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：天氣代碼表 + 帶傘建議</h2><div class="k">在 app.py 新增兩張小工具</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 2／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：Open-Meteo 回的是一個<b>數字代碼</b>（例如 0＝晴天）。做一張對照表把數字翻成中文，再寫一個 <code>_weather_advice()</code> 依天氣給建議。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把兩張表<b>貼在 <code>_geocode()</code> 的上面／下面都可以</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請在 app.py 新增：
+一個 WMO_CODES 字典，把 Open-Meteo 的 weather_code 數字翻成「中文＋emoji」；
+一個 _weather_advice(code, temp, pop) 函式：
+下雨代碼或降雨機率≥50% 就提醒帶傘，溫度≥30 提醒防曬補水，≤12 提醒保暖，
+其餘回「天氣舒適」。可同時給多條建議，用「，」串起來。</pre></div>
+  </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>前端：查詢 + 定位</h2><div class="k">打地名，或用目前位置</div></div>
+  <div class="sh"><h2>步驟二：AI 會給你這段（1／2 代碼表）</h2><div class="k">貼進 app.py</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// 打地名查</span>
-async function getWeather(place){
-  const res = await fetch('/api/weather', {method:'POST',
-    headers:{'Content-Type':'application/json'}, body:JSON.stringify({place})});
-  const d = await res.json();
-  show(`${d.place} ${Math.round(d.temp)}°C ${d.desc}｜${d.advice}`);
+    <pre><span class="cm"># app.py — WMO 天氣代碼 → 中文 + emoji</span>
+WMO_CODES = {
+    0: "晴天 ☀️", 1: "大致晴朗 🌤️", 2: "部分多雲 ⛅", 3: "陰天 ☁️",
+    45: "有霧 🌫️", 48: "凍霧 🌫️",
+    51: "毛毛雨 🌦️", 53: "毛毛雨 🌦️", 55: "毛毛雨 🌦️",
+    61: "小雨 🌧️", 63: "中雨 🌧️", 65: "大雨 🌧️",
+    71: "小雪 🌨️", 73: "中雪 🌨️", 75: "大雪 🌨️",
+    80: "陣雨 🌦️", 81: "陣雨 🌧️", 82: "強陣雨 ⛈️",
+    95: "雷陣雨 ⛈️", 96: "雷雨伴冰雹 ⛈️", 99: "強雷雨冰雹 ⛈️",
+}   <span class="cm"># 把冷冰冰的數字翻成看得懂的字</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：AI 會給你這段（2／2 帶傘建議）</h2><div class="k">貼進 app.py</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py — 依天氣代碼、溫度、降雨機率給建議</span>
+def _weather_advice(code, temp, pop):
+    tips = []
+    rainy = code in (51, 53, 55, 56, 57, 61, 63, 65, 66, 67,
+                     80, 81, 82, 95, 96, 99) or (pop is not None and pop &gt;= 50)
+    if rainy:
+        tips.append("☂️ 建議帶傘")           <span class="cm"># 下雨代碼 或 降雨機率≥50%</span>
+    if temp is not None:
+        if temp &gt;= 30:
+            tips.append("🧴 高溫，注意防曬補水")
+        elif temp &lt;= 12:
+            tips.append("🧥 偏冷，記得保暖")
+    if not tips:
+        tips.append("👍 天氣舒適，玩得開心")
+    return "，".join(tips)                    <span class="cm"># 多條建議用「，」串起來</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：逐段看懂「要不要帶傘」</h2><div class="k">判斷邏輯白話講一遍</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>rainy = code in (…) or pop &gt;= 50</code></td><td>兩種情況算「會下雨」：天氣代碼本身是雨／雷雨，<b>或</b>今日降雨機率 ≥ 50%</td></tr>
+    <tr><td><code>if rainy: 建議帶傘</code></td><td>會下雨 → 提醒帶傘 ☂️</td></tr>
+    <tr><td><code>temp &gt;= 30</code></td><td>很熱 → 提醒防曬補水 🧴</td></tr>
+    <tr><td><code>temp &lt;= 12</code></td><td>偏冷 → 提醒保暖 🧥</td></tr>
+    <tr><td><code>if not tips: 天氣舒適</code></td><td>以上都沒中 → 給一句「天氣舒適，玩得開心」</td></tr>
+    <tr><td><code>"，".join(tips)</code></td><td>可能同時「又下雨又熱」，就把多條建議用逗號串成一句</td></tr>
+  </table>
+  <div class="info-box">🎯 這就是本章的靈魂：把數字變成「人看得懂、用得上」的一句提醒。</div>
+</section>
+
+<!-- ============ 步驟三：/api/weather 端點 ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：開一個「查天氣」的門</h2><div class="k">在 app.py 新增 /api/weather</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 3／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/weather</code>。前端送地名（或經緯度）進來，後端地理編碼 → 問 Open-Meteo → 組好結果回傳。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把端點<b>貼在其他 <code>@app.route</code> 的旁邊</b>。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>請在 app.py 新增 /api/weather 端點（POST）：
+從 JSON 收 place（地名）或 lat/lon（目前位置）。
+有地名就先 _geocode() 轉座標，查無就回「找不到地點」。
+拿座標打 Open-Meteo forecast，取目前溫度、體感、濕度、weather_code、
+今日降雨機率與高低溫。用 WMO_CODES 翻成中文，用 _weather_advice() 算建議，
+最後回 JSON：place、temp、feels、humidity、desc、pop、hi、lo、advice。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py（省略選填的 OWM 備援）</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py</span>
+@app.route('/api/weather', methods=['POST'])
+def api_weather():
+    data = request.get_json(force=True, silent=True) or {}
+    place = (data.get('place') or '').strip()
+    lat, lon = data.get('lat'), data.get('lon')
+    name = place or "目前位置"
+    try:
+        if place:                              <span class="cm"># 有地名先地理編碼</span>
+            geo = _geocode(place)
+            if not geo:
+                return jsonify({"ok": False, "error": f"找不到地點「{place}」"}), 400
+            lat, lon, name = geo
+        if lat is None or lon is None:
+            return jsonify({"ok": False, "error": "缺少地點或座標"}), 400
+
+        w = requests.get("https://api.open-meteo.com/v1/forecast", params={
+            "latitude": lat, "longitude": lon,
+            "current": "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,precipitation",
+            "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max",
+            "timezone": "auto", "forecast_days": 1,
+        }, timeout=8).json()
+        cur, daily = w.get("current") or {}, w.get("daily") or {}
+        code = cur.get("weather_code")
+        temp = cur.get("temperature_2m")
+        pop = (daily.get("precipitation_probability_max") or [None])[0]
+        return jsonify({
+            "ok": True, "place": name, "temp": temp,
+            "feels": cur.get("apparent_temperature"),
+            "humidity": cur.get("relative_humidity_2m"),
+            "desc": WMO_CODES.get(code, "—"), "pop": pop,
+            "hi": (daily.get("temperature_2m_max") or [None])[0],
+            "lo": (daily.get("temperature_2m_min") or [None])[0],
+            "advice": _weather_advice(code, temp, pop),
+        })
+    except Exception as e:
+        logger.error(f"weather error: {e}")
+        return jsonify({"ok": False, "error": f"天氣查詢失敗：{type(e).__name__}"}), 400</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：逐段看懂</h2><div class="k">「查天氣的門」怎麼運作</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>place / lat / lon</code></td><td>兩種進來的方式：打地名，或前端用瀏覽器定位傳來的經緯度</td></tr>
+    <tr><td><code>geo = _geocode(place)</code></td><td>有地名就先轉座標；查無就回「找不到地點」（400 錯誤）</td></tr>
+    <tr><td><code>requests.get("…/forecast", params=…)</code></td><td>拿座標問 Open-Meteo，一次要「目前天氣」＋「今日高低溫與降雨機率」</td></tr>
+    <tr><td><code>WMO_CODES.get(code, "—")</code></td><td>把回來的數字代碼翻成中文（查不到就顯示「—」）</td></tr>
+    <tr><td><code>_weather_advice(code, temp, pop)</code></td><td>叫步驟二的建議函式，算出「要不要帶傘」那句話</td></tr>
+    <tr><td><code>jsonify({...})</code></td><td>把地名、溫度、體感、濕度、天氣、建議一起回傳前端</td></tr>
+  </table>
+  <div class="info-box">💡 程式裡還有一段「選填的 OpenWeatherMap 備援」：如果你在設定填了 OWM 金鑰，後端會改用它；沒填就走這條免金鑰的 Open-Meteo，本章不需要它。</div>
+</section>
+
+<!-- ============ 步驟四：前端按鈕 + 查詢 ============ -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：加「🌤️ 天氣」按鈕與視窗</h2><div class="k">在畫面上放入口</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 4／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：在功能區加一顆「🌤️ 天氣」按鈕，按了跳出一個小視窗，裡面有輸入框、「查詢」與「用目前位置」。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，按鈕放<b>在拍照／檔案那排功能區</b>，視窗放<b>在其他 modal 旁邊</b>。</p>
+    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">&lt;!-- 功能區加一顆按鈕 --&gt;</span>
+&lt;button id="s_weather" class="tool-btn"&gt;🌤️ 天氣&lt;/button&gt;
+
+<span class="cm">&lt;!-- 天氣視窗 --&gt;</span>
+&lt;div class="modal hidden" id="weatherModal"&gt;
+  &lt;input type="text" id="wx_place" placeholder="例如：那霸、東京、台北…"&gt;
+  &lt;button class="primary" id="wx_go"&gt;查詢&lt;/button&gt;
+  &lt;button class="ghost" id="wx_geo"&gt;📍 用目前位置&lt;/button&gt;
+  &lt;div id="wx_result" class="wx-result hidden"&gt;&lt;/div&gt;
+  &lt;div id="wx_status" class="hint"&gt;&lt;/div&gt;
+&lt;/div&gt;</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：前端查詢邏輯（貼進 app.js）</h2><div class="k">送地名 → 收結果 → 顯示</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// static/js/app.js — 送 payload 給後端，畫出結果</span>
+async function fetchWeather(payload) {
+  $('wx_status').textContent = '查詢中…';
+  try {
+    const res = await fetch('/api/weather', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, owm_key: cfg.owmkey || '' }),
+    });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || '查詢失敗');
+    $('wx_result').innerHTML =
+      `&lt;div class="wx-place"&gt;${d.place}&lt;/div&gt;` +
+      `&lt;div class="wx-temp"&gt;${Math.round(d.temp)}°C　${d.desc}&lt;/div&gt;` +
+      `&lt;div class="wx-advice"&gt;${d.advice}&lt;/div&gt;`;
+    $('wx_result').classList.remove('hidden');
+    $('wx_status').textContent = '';
+  } catch (e) { $('wx_status').textContent = '❌ ' + e.message; }
 }
-<span class="cm">// 用目前位置（瀏覽器定位）</span>
-navigator.geolocation.getCurrentPosition(p=&gt;
-  fetch('/api/weather',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({lat:p.coords.latitude, lon:p.coords.longitude})}));</pre></div>
+<span class="cm">// 按「查詢」→ 用地名查</span>
+$('wx_go').addEventListener('click', () =&gt; {
+  const p = $('wx_place').value.trim();
+  if (!p) { $('wx_status').textContent = '請輸入地點'; return; }
+  fetchWeather({ place: p });
+});
+<span class="cm">// 按「用目前位置」→ 瀏覽器定位，傳經緯度</span>
+$('wx_geo').addEventListener('click', () =&gt; {
+  navigator.geolocation.getCurrentPosition(
+    (pos) =&gt; fetchWeather({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+    () =&gt; { $('wx_status').textContent = '無法取得位置（請允許定位權限）'; });
+});</pre></div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>實測</h2><div class="k">查那霸、台北</div></div>
+  <div class="sh"><h2>步驟四：逐段看懂 + 預期畫面</h2><div class="k">前端這段每一塊在幹嘛</div></div>
   <div class="body">
-    <p>輸入「那霸」→ 顯示「那霸，日本 29.9°C 晴天 ☀️｜👍 天氣舒適」。試試台北、東京、首爾、曼谷都要正確。</p>
-    <div class="shot"><span class="cam">📸</span>請截圖：天氣查詢結果（含建議）</div>
+    <p>🔍 <code>fetchWeather(payload)</code>：把 <code>payload</code>（地名或經緯度）POST 給 <code>/api/weather</code>，回來的結果塞進畫面。<code>{ ...payload, owm_key }</code> 順手帶上選填金鑰（沒填就是空字串）。</p>
+    <p>🔍 <code>wx_go</code> 綁「查詢」：拿輸入框的地名去查。<code>wx_geo</code> 綁「用目前位置」：叫瀏覽器定位，把經緯度送過去（不必打地名）。</p>
+    <div class="ok-box">✅ <b>預期</b>：功能區多一顆「🌤️ 天氣」，按下跳出視窗；打「那霸」按查詢，幾秒後出現溫度、天氣與帶傘建議。</div>
+    <div class="mockrow">
+      <div class="mock">
+        <div class="m-top"><span>15:57</span><b>5G ▲</b></div>
+        <div class="m-row"><div class="m-title">🌤️ 天氣查詢</div><span class="m-pill">✕</span></div>
+        <div class="m-card">那霸　<b style="color:#ffd479">🔎</b>　<span class="m-pill">查詢</span></div>
+        <div class="m-btn ghost">📍 用目前位置</div>
+      </div>
+      <div class="mock">
+        <div class="m-top"><span>15:57</span><b>5G ▲</b></div>
+        <div class="m-title">那霸，日本</div>
+        <div class="m-card"><b style="font-size:22px">29°C　晴天 ☀️</b></div>
+        <div class="m-card m-muted">體感 32°C · 濕度 74% · 降雨 10%</div>
+        <div class="m-card" style="color:#ffd479">👍 天氣舒適，玩得開心</div>
+      </div>
+    </div>
+    <div class="mock-cap">模擬畫面：左＝輸入地名查詢，右＝查詢結果含帶傘建議（示意，非真實截圖）</div>
   </div>
 </section>
 
+<!-- 存檔重啟 -->
+<section class="slide cs">
+  <div class="sh"><h2>存檔、重啟伺服器</h2><div class="k">改了後端要重啟才生效</div></div>
+  <ol class="sl body">
+    <li>所有檔案存檔（Ctrl/Cmd + S）。</li>
+    <li>回終端機，若伺服器還開著，按 <code>Ctrl + C</code> 停掉。</li>
+    <li>重新 <code>python app.py</code> 啟動。</li>
+    <li>瀏覽器重新整理頁面（前端改動才會載入新版）。</li>
+  </ol>
+  <div class="note body">app.py 改了要<b>重啟</b>；index.html／app.js 改了只要<b>重整頁面</b>。</div>
+</section>
+
+<!-- 實測 -->
+<section class="slide cs">
+  <div class="sh"><h2>實測：查那霸、台北、東京</h2><div class="k">成功長這樣</div></div>
+  <div class="body">
+    <p>按「🌤️ 天氣」，打「那霸」按查詢 → 顯示「那霸，日本　29°C　晴天 ☀️｜👍 天氣舒適」。再試台北、東京、首爾、曼谷，都要正確。</p>
+    <div class="mockrow">
+      <div class="mock">
+        <div class="m-top"><span>08:12</span><b>5G ▲</b></div>
+        <div class="m-title">台北，台灣</div>
+        <div class="m-card"><b style="font-size:22px">23°C　小雨 🌧️</b></div>
+        <div class="m-card m-muted">體感 24°C · 濕度 88% · 降雨 70%</div>
+        <div class="m-card" style="color:#ffd479">☂️ 建議帶傘</div>
+      </div>
+      <div class="mock">
+        <div class="m-top"><span>08:12</span><b>5G ▲</b></div>
+        <div class="m-title">曼谷，泰國</div>
+        <div class="m-card"><b style="font-size:22px">34°C　部分多雲 ⛅</b></div>
+        <div class="m-card m-muted">體感 41°C · 濕度 66% · 降雨 20%</div>
+        <div class="m-card" style="color:#ffd479">🧴 高溫，注意防曬補水</div>
+      </div>
+    </div>
+    <div class="mock-cap">模擬畫面：下雨會提醒帶傘、高溫會提醒防曬（示意，非真實截圖）</div>
+  </div>
+</section>
+
+<!-- 除錯集 -->
+<section class="slide cs">
+  <div class="sh"><h2>🔧 卡住了？本章常見的坑</h2><div class="k">對症下藥</div></div>
+  <div class="body">
+    <div class="warn-box">① <b>中文地名查不到（最常見）</b>：某個地名回「找不到地點」→ 先確認有沒有在 <code>COMMON_PLACES</code>；沒有就<b>改用英文地名或加國家</b>，例如「峴港」→ <code>Da Nang</code>、「清邁」→ <code>Chiang Mai, Thailand</code>。</div>
+    <div class="warn-box">② <b>Nominatim 一直失敗</b>：多半是<b>沒帶 User-Agent</b>，或短時間查太多次被限流。確認 <code>headers={"User-Agent": …}</code> 有加、查詢別太密集。</div>
+    <div class="warn-box">③ <b>「用目前位置」沒反應</b>：定位要在 <code>https</code> 或 <code>localhost</code> 才能用，且瀏覽器要<b>允許定位權限</b>。被拒就會顯示「無法取得位置」。</div>
+    <div class="warn-box">④ <b>溫度顯示 NaN／—</b>：多半是網路擋掉了 Open-Meteo，或座標怪怪的。先在瀏覽器直接開 <code>api.open-meteo.com</code> 網址測試連得到嗎。</div>
+  </div>
+</section>
+
+<!-- 進一步：改用英文地名 示範 -->
+<section class="slide cs">
+  <div class="sh"><h2>除錯實戰：中文查不到就換英文</h2><div class="k">一個很實用的排錯步驟</div></div>
+  <div class="body">
+    <p>假設你查「峴港」回「找不到地點」。別急著改程式，先<b>換一種寫法</b>再查一次：</p>
+    <table class="tbl">
+      <tr><th>查不到（中文）</th><th>改這樣查（英文／加國家）</th></tr>
+      <tr><td>峴港</td><td><code>Da Nang</code></td></tr>
+      <tr><td>清邁</td><td><code>Chiang Mai, Thailand</code></td></tr>
+      <tr><td>宿霧</td><td><code>Cebu, Philippines</code></td></tr>
+    </table>
+    <div class="ok-box">✅ 若換英文就查到了 → 代表是地理編碼「認不得中文」，不是你程式壞了。想一勞永逸，就把這個城市加進 <code>COMMON_PLACES</code>（用最後的生成器）。</div>
+  </div>
+</section>
+
+<!-- 動手練習 -->
+<section class="slide cs">
+  <div class="sh"><h2>動手練習</h2><div class="k">改一點點，感受差異</div></div>
+  <ul class="sl body">
+    <li>把 <code>_weather_advice</code> 裡的高溫門檻 <code>temp &gt;= 30</code> 改成 <code>28</code>，再查曼谷，看提醒是否更早跳出。</li>
+    <li>把降雨帶傘門檻 <code>pop &gt;= 50</code> 改成 <code>30</code>，體會「靈敏 vs 誤報」的取捨。</li>
+    <li>故意查一個奇怪地名（如「阿亮村」），確認會<b>優雅地</b>回「找不到地點」而不是整個當掉。</li>
+    <li>用最後的生成器，把你下次要去的城市加進 <code>COMMON_PLACES</code>。</li>
+  </ul>
+</section>
+
+<!-- 生成器（保留原有） -->
 <section class="slide cs">
   <div class="sh"><h2>🎁 熱門地點字典生成器</h2><div class="k">加你要的城市座標</div></div>
   <div class="gen body">
-    <div class="gh">⚙️ 產生 COMMON 地點字典</div>
+    <div class="gh">⚙️ 產生 COMMON_PLACES 地點字典</div>
     <div class="field"><label>城市（逗號分隔，用內建常見城市）</label><input id="w_cities" placeholder="那霸, 台北, 東京, 首爾, 曼谷"></div>
     <div class="btns">
       <button onclick="genW()">⚙️ 產生</button>
       <button class="alt" onclick="cp(this)">📋 複製</button>
     </div>
-    <div class="out" id="w_out">填城市後按產生，這裡會出現 COMMON 座標字典…</div>
+    <div class="out" id="w_out">填城市後按產生，這裡會出現 COMMON_PLACES 座標字典…</div>
     <div class="hint">找不到的城市可 Google「地名 經緯度」自行補上。</div>
   </div>
 </section>
 
+<!-- 驗收 -->
 <section class="slide cs">
   <div class="sh"><h2>本章驗收</h2><div class="k">會查天氣的 App</div></div>
   <ul class="goals body">
-    <li>三段式地理編碼，中文地名（那霸/台北）都正確。</li>
-    <li>回傳溫度、天氣描述、帶傘建議。</li>
-    <li>支援打地名與「用目前位置」。</li>
+    <li>app.py 有三層地理編碼（內建字典 → Nominatim → Open-Meteo），中文地名（那霸／台北）都正確。</li>
+    <li>會把 WMO 天氣代碼翻成中文，並回傳溫度、體感、濕度、降雨機率。</li>
+    <li><code>_weather_advice()</code> 會依天氣給帶傘／防曬／保暖建議。</li>
+    <li>前端能：打地名查、也能「用目前位置」查。</li>
+    <li>查不到時會回「找不到地點」，而且知道<b>改用英文地名</b>排錯。</li>
   </ul>
-  <div class="milestone body"><div class="mh">🎁 你現在有：會查天氣的 App</div><p>旅遊工具快集滿了！最後一塊是最聰明的——「旅遊助手」，打一句話會上網幫你查。</p></div>
+  <div class="milestone body"><div class="mh">🎁 你現在有：會查天氣的 App</div><p>旅遊工具快集滿了！最後一塊是最聰明的——「旅遊助手」，打一句話就會上網幫你查。</p></div>
 </section>
 
+<!-- 下一章 -->
 <section class="slide cs">
   <div class="sh"><h2>下一章 · CH15</h2><div class="k">旅遊助手（Tavily 上網）</div></div>
   <div class="body">
@@ -157,7 +531,7 @@ function genW(){
     '新加坡':[1.35,103.82,'新加坡'],'香港':[22.32,114.17,'香港']};
   var cities=(document.getElementById('w_cities').value||'那霸, 台北, 東京, 首爾, 曼谷').split(',').map(function(s){return s.trim()}).filter(Boolean);
   var rows=cities.map(function(c){var m=meta[c];return m?("  '"+c+"': ("+m[0]+", "+m[1]+", '"+m[2]+"'),"):("  # '"+c+"': (緯度, 經度, '顯示名'),  # 請自行查座標");});
-  document.getElementById('w_out').textContent="COMMON = {\n"+rows.join("\n")+"\n}";
+  document.getElementById('w_out').textContent="COMMON_PLACES = {\n"+rows.join("\n")+"\n}";
 }
 </script>
 <script>window.SLIDE_CFG={title:'CH14 · 天氣查詢',part:'#8E44AD',next:'CH15.html'}</script>

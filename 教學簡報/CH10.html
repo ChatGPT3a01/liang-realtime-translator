@@ -8,6 +8,7 @@
 </head>
 <body>
 
+<!-- 1. 封面（保留） -->
 <section class="slide cover">
   <div class="tag">第二篇 · Part 2 · 核心翻譯</div>
   <h1>CH10 · <span class="g">面對面模式</span></h1>
@@ -15,108 +16,394 @@
   <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
 </section>
 
+<!-- 2. 先回顧 -->
+<section class="slide cs">
+  <div class="sh"><h2>先回顧：我們現在有什麼</h2><div class="k">站在前面章節的成果上，往上加一層</div></div>
+  <div class="body">
+    <p>到上一章為止，你的 App 已經會：<b>打字翻譯、語音翻譯、即時口譯</b>。這些都是「你一個人拿著手機」在用。</p>
+    <p>但真實出國情境常常是——你和店員、路人<b>面對面</b>，你講中文、他講外文，兩個人要輪流看同一支手機。這一章就把這個場景做出來。</p>
+    <div class="info-box">🧩 本章只加一塊：一個「面對面」畫面（上下對開）＋一顆「切換模式」按鈕。後端完全不動，全部沿用前面寫好的翻譯與語音。</div>
+  </div>
+</section>
+
+<!-- 3. 這一章要做出什麼 -->
 <section class="slide cs">
   <div class="sh"><h2>這一章要做出什麼</h2><div class="k">兩人隔著手機對話</div></div>
   <div class="body">
-    <p>把手機平放桌上，畫面<b>上下對開</b>：對面的人看倒過來的上半、你看正的下半。各自講各自的語言，翻譯顯示在<b>對方那一側</b>。</p>
-    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個真正「面對面」的翻譯機：適合出國問路、店家溝通。</p></div>
+    <p>把手機<b>平放桌上</b>，畫面<b>上下對開</b>：對面的人看倒過來的上半、你看正的下半。各自講各自的語言，翻譯顯示在<b>對方那一側</b>——他就能正著讀你的話。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個真正「面對面」的翻譯機：適合出國問路、店家溝通，一支手機兩個人用。</p></div>
+  </div>
+</section>
+
+<!-- 4. 設計概念圖 -->
+<section class="slide cs">
+  <div class="sh"><h2>設計概念：為什麼上半要翻過來</h2><div class="k">手機平放，兩人各據一邊</div></div>
+  <div class="term body"><pre><span class="out">┌─────────────┐
+│  對面的人看   │  ← 上半，旋轉 180°（給對面的人正著看）
+│ （翻轉的文字）│
+├─────────────┤
+│   你看的     │  ← 下半，正常方向（給你看）
+│（正常的文字）│
+└─────────────┘
+手機平放桌上，你在這邊、對方在那邊</span></pre></div>
+  <p class="note body">關鍵直覺：手機平放時，坐你對面的人是「上下顛倒」看螢幕的。所以上半整塊轉 180°，對他來說就變正的了。</p>
+</section>
+
+<!-- 5. 完成後的操作流程（先看全貌） -->
+<section class="slide cs">
+  <div class="sh"><h2>先看全貌：一次對話中間發生什麼事</h2><div class="k">看懂這條路，後面每一步就知道自己在做哪一段</div></div>
+  <ol class="sl body">
+    <li>你按頂部「👤 單人 / 👥 面對面」鈕 → 切到面對面畫面，手機平放桌上</li>
+    <li>你在<b>下半</b>按「🎤 說話」講中文 → 講完再按一下停止</li>
+    <li>前端把整段中文丟給後端翻成<b>上半的語言</b>（例如英文）</li>
+    <li>翻譯結果顯示在<b>上半</b>那一框（翻轉的，對面的人正著看）＋朗讀出來</li>
+    <li>對面的人在<b>上半</b>按「🎤 說話」講英文 → 翻成中文顯示在<b>下半</b>給你看</li>
+  </ol>
+  <div class="info-box">👉 本章就是照著這條路，把「上下兩塊畫面 + 各自麥克風 + 翻到對側顯示 + 模式切換」做出來。前面章節已經寫好的 <code>translate()</code>、<code>Recognizer</code>、<code>speak()</code> 直接重用。</div>
+</section>
+
+<!-- 6. 白話觀念 -->
+<section class="slide cs">
+  <div class="sh"><h2>白話觀念：兩個關鍵詞</h2><div class="k">rotate(180deg) 與「重用」</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">🔄</div><h3>rotate(180deg)</h3><p>CSS 的一行指令，把一整塊畫面「轉半圈」。不是重寫程式，只是把已經排好的東西「掉頭」給對面的人看。</p></div>
+    <div class="cc"><div class="ico">♻️</div><h3>重用（不重寫）</h3><p>翻譯、語音辨識、朗讀在前面章節都做好了。面對面模式只是把它們「接兩份」——上一份、下一份，各接各的麥克風。</p></div>
+  </div>
+  <div class="info-box">💡 這一章幾乎沒有全新的技術，重點是「怎麼把既有零件排成上下對開、並讓兩邊互相顯示」。看懂結構比背程式碼重要。</div>
+</section>
+
+<!-- 7. 檔案地圖 -->
+<section class="slide cs">
+  <div class="sh"><h2>動工前：這章會改到哪些檔案</h2><div class="k">先知道等一下要打開哪幾個檔</div></div>
+  <table class="tbl body">
+    <tr><th>檔案</th><th>加什麼</th></tr>
+    <tr><td><span class="filechip">templates/index.html</span></td><td>加一個 <code>faceView</code> 區塊（上下兩塊：語言選單＋結果框＋麥克風），頂部加「切換模式」鈕</td></tr>
+    <tr><td><span class="filechip">static/css/style.css</span></td><td>把上半 <code>.face-panel.top</code> 用 <code>transform: rotate(180deg)</code> 翻過來</td></tr>
+    <tr><td><span class="filechip">static/js/app.js</span></td><td>寫 <code>makeFaceSide()</code>（一邊的邏輯）呼叫兩次，再加模式切換</td></tr>
+  </table>
+  <div class="info-box">📂 就這三個檔，<b>後端 app.py / providers.py 完全不用動</b>。下面每一步都會告訴你「打開哪一個、貼在哪裡」。</div>
+</section>
+
+<!-- ===== 步驟一：HTML 上下兩塊 ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟一：做出「上下兩塊」的畫面</h2><div class="k">在 index.html 新增 faceView</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 1／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：在畫面加一個「面對面」區塊，裡面上下各一塊，每塊都有：語言選單、翻譯結果框、麥克風按鈕。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把這段<b>貼在原本單人畫面（<code>singleView</code>）那個區塊的後面</b>，先設成隱藏（<code>hidden</code>），等按了切換鈕才顯示。</p>
+    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>幫我在 index.html 加一個「面對面模式」區塊 &lt;section id="faceView"&gt;，
+先隱藏。裡面分上、下兩塊 face-panel：上塊 id 用 top、下塊用 bottom。
+每一塊都要有：語言選單、翻譯結果框、一顆麥克風「說話」按鈕。
+上塊元素 id 用 f_langTop / f_resultTop / f_micTop，
+下塊用 f_langBottom / f_resultBottom / f_micBottom。
+中間放一條分隔線寫「面對面 · 手機平放桌上」。</pre></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>設計概念</h2><div class="k">上半翻轉 180 度</div></div>
-  <div class="term body"><pre><span class="out">┌─────────────┐
-│  對面的人看   │  ← 上半，旋轉 180°（給對面看）
-│ （翻轉的文字）│
-├─────────────┤
-│   你看的     │  ← 下半，正常方向
-│（正常的文字）│
-└─────────────┘
-手機平放，兩人各據一邊</span></pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>提示詞</h2><div class="k">把版面與行為講清楚</div></div>
-  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>幫我做「面對面模式」：畫面上下兩塊，各有語言選單、
-結果框、麥克風鈕。上半用 CSS 旋轉 180 度給對面的人看。
-下方講話 → 翻成上方語言 → 顯示在上方；反之亦然。
-沿用現有的 translate() 與語音辨識。給我 HTML/CSS/JS。</pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>HTML：上下兩塊</h2><div class="k">結構</div></div>
+  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 templates/index.html</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">&lt;!-- 面對面 --&gt;</span>
-&lt;section id="faceView"&gt;
-  &lt;div class="face top"&gt;
-    &lt;select id="f_langTop"&gt;&lt;/select&gt;
-    &lt;div class="result" id="f_resTop"&gt;&lt;/div&gt;
-    &lt;button id="f_micTop"&gt;🎤 說話&lt;/button&gt;
+    <pre><span class="cm">&lt;!-- ===== 面對面模式 ===== --&gt;</span>
+&lt;section id="faceView" class="view hidden"&gt;
+  <span class="cm">&lt;!-- 上半：翻轉 180°，給對面的人看 --&gt;</span>
+  &lt;div class="face-panel top" id="face_top"&gt;
+    &lt;div class="face-inner"&gt;
+      &lt;select class="lang-select" id="f_langTop"&gt;&lt;/select&gt;
+      &lt;div class="result-box face-result" id="f_resultTop"&gt;
+        &lt;span class="placeholder"&gt;對方語言的翻譯會顯示在這裡…&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;button class="mic-btn face-mic" id="f_micTop"&gt;&lt;span class="mic-ico"&gt;🎤&lt;/span&gt; 說話&lt;/button&gt;
+    &lt;/div&gt;
   &lt;/div&gt;
-  &lt;div class="face bottom"&gt;
-    &lt;select id="f_langBottom"&gt;&lt;/select&gt;
-    &lt;div class="result" id="f_resBottom"&gt;&lt;/div&gt;
-    &lt;button id="f_micBottom"&gt;🎤 說話&lt;/button&gt;
+
+  &lt;div class="face-divider"&gt;&lt;span&gt;面對面 · 手機平放桌上&lt;/span&gt;&lt;/div&gt;
+
+  <span class="cm">&lt;!-- 下半：正常方向，給你看 --&gt;</span>
+  &lt;div class="face-panel bottom" id="face_bottom"&gt;
+    &lt;div class="face-inner"&gt;
+      &lt;select class="lang-select" id="f_langBottom"&gt;&lt;/select&gt;
+      &lt;div class="result-box face-result" id="f_resultBottom"&gt;
+        &lt;span class="placeholder"&gt;你的語言的翻譯會顯示在這裡…&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;button class="mic-btn face-mic" id="f_micBottom"&gt;&lt;span class="mic-ico"&gt;🎤&lt;/span&gt; 說話&lt;/button&gt;
+    &lt;/div&gt;
   &lt;/div&gt;
 &lt;/section&gt;</pre></div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>CSS：把上半翻過來</h2><div class="k">一行 transform 搞定</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>.face{ flex:1; padding:16px; }
-.face.top{ transform: rotate(180deg); }   <span class="cm">/* 給對面的人看 */</span>
-#faceView{ display:flex; flex-direction:column; height:100dvh; }</pre></div>
-  <p class="note body">就這麼簡單——上半整塊轉 180 度，對面的人看就是正的。</p>
+  <div class="sh"><h2>步驟一：逐段看懂</h2><div class="k">每個元素在做什麼，白話講一遍</div></div>
+  <table class="tbl body">
+    <tr><th>這個元素</th><th>在做什麼</th></tr>
+    <tr><td><code>&lt;section id="faceView" class="hidden"&gt;</code></td><td>整個面對面畫面的外框，先隱藏；按切換鈕才拿掉 <code>hidden</code> 顯示</td></tr>
+    <tr><td><code>.face-panel top</code> / <code>bottom</code></td><td>上半、下半兩塊。等一下 CSS 只把 <code>.top</code> 翻過來</td></tr>
+    <tr><td><code>&lt;select id="f_langTop"&gt;</code></td><td>上半的語言選單（對面的人選他的語言）；下半是 <code>f_langBottom</code></td></tr>
+    <tr><td><code>&lt;div id="f_resultTop"&gt;</code></td><td>上半的結果框——<b>下面講的話翻好後會顯示在這</b>（重點！）</td></tr>
+    <tr><td><code>&lt;button id="f_micTop"&gt;</code></td><td>上半自己的麥克風。上下各一顆，互不干擾</td></tr>
+    <tr><td><code>.face-divider</code></td><td>中間那條分隔線，提醒「手機平放桌上」</td></tr>
+  </table>
+  <div class="info-box">🔑 記住這對關係：<b>Top 的框給對面看、Bottom 的框給你看。</b>誰講話、翻譯顯示到哪一框，就是本章最核心的一件事。</div>
 </section>
 
+<!-- ===== 步驟二：CSS 翻轉 ===== -->
 <section class="slide cs">
-  <div class="sh"><h2>邏輯：翻到對側顯示</h2><div class="k">下方說 → 上方看</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// 下方(你)講 → 翻成上方語言 → 顯示在上方框</span>
-function makeSide(langSel, myBox, otherBox, otherLang){
-  const rec = new Recognizer(BCP[langSel.value], async (text)=&gt;{
-    const out = await translate(text, NAME[langSel.value], NAME[otherLang.value]);
-    otherBox.textContent = out;              <span class="cm">// 顯示在對方那側</span>
-    speak(out, BCP[otherLang.value]);
-  });
-  return rec;
-}
-makeSide(f_langBottom, f_resBottom, f_resTop, f_langTop);
-makeSide(f_langTop,    f_resTop,    f_resBottom, f_langBottom);</pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>模式切換</h2><div class="k">單人 ↔ 面對面</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// 頂部一顆按鈕切換兩種畫面</span>
-let mode='single';
-modeBtn.onclick = ()=&gt;{
-  mode = (mode==='single') ? 'face' : 'single';
-  singleView.classList.toggle('hidden', mode!=='single');
-  faceView.classList.toggle('hidden', mode!=='face');
-};</pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>實測</h2><div class="k">找個人對講看看</div></div>
+  <div class="sh"><h2>步驟二：把上半「翻過來」</h2><div class="k">在 style.css 加一行 transform</div></div>
   <div class="body">
-    <p>切到面對面模式，手機平放。你在下半按麥克風講中文 → 上半出現英文（且是翻轉的，對面的人看是正的）。對面按上半麥克風講英文 → 下半出現中文。</p>
-    <div class="shot"><span class="cam">📸</span>請截圖：面對面模式上下對開畫面</div>
+    <span class="step-tag">步驟 2／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：讓畫面上下平分，並把<b>上半整塊轉 180°</b>，這樣坐你對面的人看就是正的。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/css/style.css</span>，把這段<b>貼在檔案裡任何一個樣式區塊後面</b>都可以。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>幫我寫面對面模式的 CSS：
+faceView 用 flex 直向排列、上下兩塊平分高度。
+每一塊 face-panel 裡面內容直向排列（選單、結果框、麥克風）。
+最重要：把上半 .face-panel.top 用 transform: rotate(180deg) 翻過來，
+讓坐我對面的人看是正的。</pre></div>
   </div>
 </section>
 
 <section class="slide cs">
+  <div class="sh"><h2>步驟二：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/css/style.css</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">/* ---------- 面對面模式 ---------- */</span>
+#faceView { padding: 0; }
+.face-panel { flex: 1; display: flex; padding: 16px; overflow: hidden; }
+.face-panel.top {
+  transform: rotate(180deg);              <span class="cm">/* ← 就是這一行：上半掉頭給對面看 */</span>
+  background: rgba(245,196,81,0.04);
+}
+.face-inner { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.face-result { font-size: 1.4rem; }
+.face-mic { padding: 13px; font-size: .95rem; }
+.face-divider {
+  display: flex; align-items: center; justify-content: center;
+  padding: 6px 0; background: rgba(0,0,0,.2);
+}</pre></div>
+  <p class="note body">💡 <code>faceView</code> 本身用 flex 直向排列（沿用畫面的 <code>.view</code> 樣式），所以 <code>.face-panel</code> 的 <code>flex:1</code> 會讓上下兩塊自動平分高度。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：逐段看懂 + 為什麼只轉上半</h2><div class="k">一行 transform 的魔法</div></div>
+  <div class="body">
+    <p><code>.face-panel { flex: 1 }</code>：上下兩塊各佔一半高度，畫面剛好對開。</p>
+    <p><code>.face-panel.top { transform: rotate(180deg) }</code>：<b>只有上半</b>整塊順時針轉半圈。文字、選單、按鈕全部跟著掉頭——對坐你對面、上下顛倒看螢幕的人來說，剛好變正的。</p>
+    <p>下半<b>不轉</b>，因為那是給你（拿手機這邊的人）看的，本來就正的。</p>
+    <div class="ok-box">✅ <b>就這麼簡單</b>：不用做兩套版面、不用鏡像文字，一行 <code>rotate(180deg)</code> 就把「對面視角」解決了。這是 CSS 最漂亮的小技巧之一。</div>
+    <div class="warn-box">🔧 <b>卡住了？</b>　若上半沒翻、或整頁一起翻了 → 確認 <code>rotate(180deg)</code> 是加在 <code>.face-panel.top</code>（只有上半那塊），不是加在 <code>#faceView</code>（整個外框）。</div>
+  </div>
+</section>
+
+<!-- ===== 步驟三：makeFaceSide 邏輯 ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：一邊的邏輯，寫一次、用兩次</h2><div class="k">在 app.js 寫 makeFaceSide()</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 3／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個「幫某一塊裝上麥克風」的小工廠函式 <code>makeFaceSide()</code>——按麥克風→聽你講→翻成對面的語言→顯示在<b>對面那一框</b>並朗讀。上、下各呼叫一次就好。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把它<b>貼在檔案裡「模式切換」那段的前面</b>（也就是即時口譯相關函式的後面）。</p>
+    <p>💬 <b>對 AI 這樣說</b>：</p>
+    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre>幫我寫 makeFaceSide(langSelId, resultBoxId, micBtnId, getTargetId)：
+用現成的 Recognizer 監聽這一塊的麥克風按鈕；
+講完停止後，把整段用 translate() 翻成對面的語言，
+顯示在「對面那一塊」的結果框，再用 speak() 朗讀出來。
+然後呼叫兩次：下塊 f_micBottom 翻到上塊、上塊 f_micTop 翻到下塊。</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// ===== 面對面模式 =====</span>
+function makeFaceSide(langSelId, resultBoxId, micBtnId, getTargetId) {
+  const box = $(resultBoxId), btn = $(micBtnId);
+  const rec = new Recognizer({
+    bcp: byId($(langSelId).value).bcp,
+    onInterim: (t) =&gt; setResult(box, t, true),   <span class="cm">// 邊講邊顯示（暫時的）</span>
+    onDone: async (t) =&gt; {
+      const src = $(langSelId).value, tgt = getTargetId();
+      try {
+        const out = await translate(t, src, tgt);
+        <span class="cm">// 顯示在「對面那一側」的框</span>
+        const otherBox = (resultBoxId === 'f_resultBottom')
+          ? $('f_resultTop') : $('f_resultBottom');
+        setResult(otherBox, out);
+        speak(out, byId(tgt).bcp);            <span class="cm">// 念出來給對面聽</span>
+        pushHistory(t, out);
+      } catch (e) { toast(e.message); }
+    },
+    onState: (on) =&gt; btn.classList.toggle('listening', on),
+  });
+  btn.addEventListener('click', () =&gt; { rec.bcp = byId($(langSelId).value).bcp; rec.start(); });
+  return rec;
+}
+<span class="cm">// 下方(你)講 → 翻成上方語言 → 顯示在上方(翻轉給對面看)</span>
+makeFaceSide('f_langBottom', 'f_resultBottom', 'f_micBottom', () =&gt; $('f_langTop').value);
+<span class="cm">// 上方(對面)講 → 翻成下方語言 → 顯示在下方(給你看)</span>
+makeFaceSide('f_langTop', 'f_resultTop', 'f_micTop', () =&gt; $('f_langBottom').value);</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三：逐段看懂</h2><div class="k">這段每一行在幹嘛</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>new Recognizer({...})</code></td><td>沿用前面章節的語音辨識器，<code>bcp</code> 是這塊選的語言的辨識代碼</td></tr>
+    <tr><td><code>onInterim → setResult(box, t, true)</code></td><td>你還在講的時候，把「暫時的字」先顯示在<b>自己這塊</b>，有回饋感</td></tr>
+    <tr><td><code>onDone: async (t)</code></td><td>你講完按停後才進來，拿到整段話 <code>t</code></td></tr>
+    <tr><td><code>translate(t, src, tgt)</code></td><td>把整段翻成對面的語言（<code>getTargetId()</code> 取的是對面選單的值）</td></tr>
+    <tr><td><code>otherBox = ... ? f_resultTop : f_resultBottom</code></td><td><b>本章靈魂</b>：翻好的字塞進「對面那一框」，不是自己這框</td></tr>
+    <tr><td><code>speak(out, byId(tgt).bcp)</code></td><td>用對面語言的發音把翻譯念出來</td></tr>
+  </table>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三 · 重點拆解：為什麼「翻到對面那一框」</h2><div class="k">整章最容易搞混的地方</div></div>
+  <div class="body">
+    <p>直覺上你會以為「翻譯結果顯示在我這邊」。但面對面情境剛好相反——</p>
+    <ul style="padding-left:26px">
+      <li>你在<b>下半</b>講中文，是要<b>給對面的人看懂</b>，所以英文翻譯要出現在<b>上半</b>（他正著讀的那塊）。</li>
+      <li>對面在<b>上半</b>講英文，是要<b>給你看懂</b>，所以中文翻譯出現在<b>下半</b>。</li>
+    </ul>
+    <div class="info-box">🔁 所以程式碼用 <code>otherBox</code>：講話的是這一塊，結果卻寫到「另一塊」。這一個小反轉，就是面對面模式能運作的關鍵。</div>
+    <div class="ok-box">✅ 順帶好處：<code>onInterim</code> 把「你正在講的暫時字」顯示在自己這塊，翻好的成品送到對面——講者和聽者各看各的，不會打架。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟三 · 巧妙處：一個函式，接兩份麥克風</h2><div class="k">為什麼呼叫兩次就好</div></div>
+  <div class="body">
+    <p><code>makeFaceSide()</code> 把「一邊的完整行為」包成一個函式，只要告訴它<b>四件事</b>：用哪個語言選單、聽哪顆麥克風、結果框是哪個、對面語言去哪拿。</p>
+    <p>於是上下兩邊<b>只差參數不同</b>，同一段程式呼叫兩次就完成：</p>
+    <table class="tbl body">
+      <tr><th>呼叫</th><th>誰講</th><th>翻到哪</th></tr>
+      <tr><td>第一次（bottom）</td><td>你（下半）</td><td>上半，給對面</td></tr>
+      <tr><td>第二次（top）</td><td>對面（上半）</td><td>下半，給你</td></tr>
+    </table>
+    <div class="info-box">💡 這叫「工廠函式」——寫一次邏輯、用參數生出兩個一模一樣但各接各線路的實例。改一次兩邊一起改，不用複製貼上兩份。</div>
+  </div>
+</section>
+
+<!-- ===== 步驟四：模式切換 ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：加一顆「切換模式」按鈕</h2><div class="k">單人 ↔ 面對面</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 4／4</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：頂部放一顆鈕，按一下在「單人畫面」和「面對面畫面」之間切換，同時把另一個藏起來。</div>
+    <p>📂 <b>打開這個檔案</b>：先在 <span class="filechip">templates/index.html</span> 頂部工具列放一顆 <code>id="modeBtn"</code> 的按鈕；切換邏輯寫在 <span class="filechip">static/js/app.js</span>，<b>接在 makeFaceSide 那段後面</b>。</p>
+    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">&lt;!-- index.html 頂部工具列 --&gt;</span>
+&lt;button class="icon-btn" id="modeBtn" title="切換模式"&gt;👤 單人&lt;/button&gt;</pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// ===== 模式切換 =====</span>
+let mode = 'single';
+$('modeBtn').addEventListener('click', () =&gt; {
+  if (liveOn) stopLive();                         <span class="cm">// 若還在即時口譯，先停掉</span>
+  mode = mode === 'single' ? 'face' : 'single';   <span class="cm">// 兩種模式來回切</span>
+  $('singleView').classList.toggle('hidden', mode !== 'single');
+  $('faceView').classList.toggle('hidden', mode !== 'face');
+  $('modeBtn').textContent = mode === 'single' ? '👤 單人' : '👥 面對面';
+});</pre></div>
+  <p class="note body">💡 <code>liveOn</code> / <code>stopLive()</code> 是 CH09 即時口譯留下的東西——切模式前先把它停掉，避免麥克風還開著跑到別的畫面。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟四：逐段看懂</h2><div class="k">「切換」到底切了什麼</div></div>
+  <table class="tbl body">
+    <tr><th>這幾行</th><th>在做什麼</th></tr>
+    <tr><td><code>let mode = 'single'</code></td><td>記住現在是哪個模式，開機預設「單人」</td></tr>
+    <tr><td><code>mode = mode === 'single' ? 'face' : 'single'</code></td><td>按一下就在兩個模式之間對調</td></tr>
+    <tr><td><code>singleView.classList.toggle('hidden', ...)</code></td><td>不是單人模式就把單人畫面藏起來</td></tr>
+    <tr><td><code>faceView.classList.toggle('hidden', ...)</code></td><td>不是面對面模式就把面對面畫面藏起來</td></tr>
+    <tr><td><code>modeBtn.textContent = ...</code></td><td>按鈕文字也跟著換，讓你知道現在在哪個模式</td></tr>
+  </table>
+  <div class="info-box">🎭 兩個畫面其實一直都在網頁裡，只是用 <code>hidden</code> 決定「誰現身、誰躲起來」。切換不是重載頁面，所以又快又順。</div>
+</section>
+
+<!-- 存檔重啟 -->
+<section class="slide cs">
+  <div class="sh"><h2>存檔、重整</h2><div class="k">這章改的都是前端</div></div>
+  <ol class="sl body">
+    <li>三個檔案都存檔（Ctrl/Cmd + S）。</li>
+    <li>因為這章<b>只改前端</b>（html／css／js），後端不用重啟。</li>
+    <li>回瀏覽器<b>重新整理</b>頁面，新的畫面與程式碼才會載入。</li>
+    <li>按頂部「👤 單人」鈕，應該就會切到面對面畫面。</li>
+  </ol>
+  <div class="note body">若你這次順手也動了 app.py（正常不需要），那就得回終端機 <code>Ctrl + C</code> 停掉、再 <code>python app.py</code> 重啟。</div>
+</section>
+
+<!-- 預期畫面（真實截圖） -->
+<section class="slide cs">
+  <div class="sh"><h2>實測：找個人對講看看</h2><div class="k">成功長這樣</div></div>
+  <div class="body">
+    <p>切到面對面模式，手機平放桌上。你在<b>下半</b>按麥克風講中文、講完按停 → <b>上半</b>出現英文（且是翻轉的，對面的人看是正的）並念出來。對面按<b>上半</b>麥克風講英文 → <b>下半</b>出現中文。</p>
+    <div class="img-box" style="text-align:center"><img src="assets/shots/shot-face.jpg" alt="面對面模式實拍"><div class="hint" style="margin-top:6px">實拍：面對面模式，上下對開、上半翻轉 180° 給對面的人正著看</div></div>
+    <div class="ok-box">✅ <b>預期</b>：上半、下半各自運作，你講的翻到上面、對面講的翻到下面，兩邊互不干擾。</div>
+  </div>
+</section>
+
+<!-- 模擬：切換前後 -->
+<section class="slide cs">
+  <div class="sh"><h2>模擬：切換前後對照</h2><div class="k">按一下鈕，畫面換一種</div></div>
+  <div class="mockrow">
+    <div class="mock">
+      <div class="m-top"><span>15:57</span><b>5G ▲</b></div>
+      <div class="m-row"><div class="m-title">🌐 亮言 · 即時翻譯</div><span class="m-pill">👤 單人</span></div>
+      <div class="m-card">CHT-台灣繁體　⇄　English-英文</div>
+      <div class="m-card m-muted">翻譯結果會顯示在這裡…</div>
+      <div class="m-btn">🎙️ 點一下開始說話</div>
+    </div>
+    <div class="mock">
+      <div class="m-top"><span>15:58</span><b>5G ▲</b></div>
+      <div class="m-row"><div class="m-title">🌐 亮言</div><span class="m-pill">👥 面對面</span></div>
+      <div class="m-card m-muted" style="transform:rotate(180deg)">English ▾　·　對面翻譯顯示這（翻轉）</div>
+      <div class="m-btn ghost" style="transform:rotate(180deg)">🎤 說話（對面）</div>
+      <div class="m-card m-muted">繁體中文 ▾　·　你的翻譯顯示這</div>
+      <div class="m-btn">🎤 說話（你）</div>
+    </div>
+  </div>
+  <div class="mock-cap">模擬畫面：左＝單人模式，右＝按「切換」後的面對面（上半翻轉給對面看，示意，非真實截圖）</div>
+</section>
+
+<!-- 除錯集 -->
+<section class="slide cs">
+  <div class="sh"><h2>🔧 卡住了？本章常見的四個坑</h2><div class="k">對症下藥</div></div>
+  <div class="body">
+    <div class="warn-box">① <b>上半沒翻過來 / 整頁一起翻了</b>：<code>rotate(180deg)</code> 要加在 <code>.face-panel.top</code>（只有上半那塊），別加在 <code>#faceView</code> 整個外框。</div>
+    <div class="warn-box">② <b>翻譯顯示在自己這邊、不是對面</b>：<code>otherBox</code> 那段判斷寫反了。下半講→寫到 <code>f_resultTop</code>，上半講→寫到 <code>f_resultBottom</code>。</div>
+    <div class="warn-box">③ <b>按切換鈕沒反應</b>：確認按鈕 <code>id="modeBtn"</code>、兩個畫面 <code>id</code> 是 <code>singleView</code> 與 <code>faceView</code>，且都存在。</div>
+    <div class="warn-box">④ <b>麥克風按了沒聲音辨識</b>：面對面沿用 CH07 的語音辨識，要在 <b>HTTPS 或 localhost</b> 下、且瀏覽器允許麥克風權限。</div>
+  </div>
+</section>
+
+<!-- 動手練習 -->
+<section class="slide cs">
+  <div class="sh"><h2>動手練習</h2><div class="k">改一點點，感受差異</div></div>
+  <ul class="sl body">
+    <li>把 CSS 的 <code>.face-panel.top { transform: rotate(180deg) }</code> 暫時改成 <code>rotate(0deg)</code>，重整頁面，坐對面試讀——體會「為什麼一定要翻」。</li>
+    <li>把上半的預設語言 <code>f_langTop</code> 改成日文，找個朋友當「日本店員」對講，看中↔日互翻。</li>
+    <li>把 <code>.face-result { font-size: 1.4rem }</code> 調大到 <code>2rem</code>，隔著桌子看更清楚——體會「面對面要字大」的體驗設計。</li>
+  </ul>
+</section>
+
+<!-- 驗收 -->
+<section class="slide cs">
   <div class="sh"><h2>本章驗收</h2><div class="k">面對面翻譯機完成</div></div>
   <ul class="goals body">
-    <li>上下兩塊、上半翻轉 180 度。</li>
-    <li>各側講話翻到對側顯示並朗讀。</li>
-    <li>能在單人／面對面模式間切換。</li>
+    <li>index.html 有 <code>faceView</code>，上下兩塊各有選單、結果框、麥克風。</li>
+    <li>CSS 用 <code>rotate(180deg)</code> 把上半翻轉，對面的人看是正的。</li>
+    <li><code>makeFaceSide()</code> 寫一次、呼叫兩次；各側講話翻到<b>對側</b>顯示並朗讀。</li>
+    <li>能用 <code>modeBtn</code> 在單人／面對面模式間切換。</li>
   </ul>
   <div class="milestone body"><div class="mh">🎁 Part 2（核心翻譯）完成！你的 App 已能：</div><p>打字翻、語音翻、即時口譯、面對面對話。核心翻譯功能全到齊！接著 Part 3 加上拍照、檔案、匯率、天氣、旅遊助手，讓它變成真正的旅遊神器。</p></div>
 </section>
 
+<!-- 下一章 -->
 <section class="slide cs">
   <div class="sh"><h2>下一章 · CH11</h2><div class="k">拍照翻譯（Part 3 開始）</div></div>
   <div class="body">
@@ -125,6 +412,7 @@ modeBtn.onclick = ()=&gt;{
   </div>
 </section>
 
+<!-- 版權（保留） -->
 <section class="slide cover">
   <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
   <h1 style="font-size:38px">CH10 完成！<span class="g">面對面翻譯</span></h1>
