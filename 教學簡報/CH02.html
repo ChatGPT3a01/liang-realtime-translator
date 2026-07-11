@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH02 · API 金鑰申請大全</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第一篇 · Part 0 · 課前準備</div>
+  <h1>CH02 · <span class="g">API 金鑰申請大全</span></h1>
+  <h2>一把一把帶你申請，還附上 .env 生成器</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要拿到的鑰匙</h2><div class="k">四個服務、四把（或以上）金鑰</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">✨</div><h3>Gemini（Google AI Studio）</h3><p>翻譯、拍照、朗讀、即時語音的 AI 大腦。<b>必備</b>。</p></div>
+    <div class="cc"><div class="ico">🔎</div><h3>Tavily</h3><p>旅遊助手上網查資料。選填，但很推薦。</p></div>
+    <div class="cc"><div class="ico">🐙</div><h3>GitHub</h3><p>存放程式碼的雲端倉庫，部署要用。</p></div>
+    <div class="cc"><div class="ico">🚀</div><h3>Render</h3><p>讓網站 24 小時上線的平台。</p></div>
+  </div>
+  <div class="info-box body" style="margin-top:16px">💡 天氣、匯率用「免金鑰」的服務，這章不用申請它們，後面章節直接用。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>先搞懂：什麼是 API 金鑰？</h2><div class="k">一句話：你和服務之間的「通行證」</div></div>
+  <div class="body">
+    <p>當我們的 App 要請 Google 幫忙翻譯，Google 得知道「是誰在用、算誰的帳」。<b>API 金鑰</b>就是那張識別身分的通行證——一長串英數字。</p>
+    <p>App 每次呼叫服務，都會附上這把金鑰，服務才會回應，並把用量記到你的帳號上。</p>
+    <div class="ok-box">🔑 所以金鑰 =「你的身分 + 你的帳單」。這也是為什麼下一頁的安全守則超級重要。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>金鑰安全三守則</h2><div class="k">養成好習慣，避免帳單爆掉</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">🙈</div><h3>不外流</h3><p>不要貼到公開的地方、不要寫死在會上傳 GitHub 的程式碼裡。</p></div>
+    <div class="cc"><div class="ico">📦</div><h3>用環境變數</h3><p>存在 .env 檔或平台的環境變數，程式用讀取的方式取得。</p></div>
+    <div class="cc"><div class="ico">♻️</div><h3>外流就重生</h3><p>不小心外流，立刻到後台 Regenerate 一把新的，舊的作廢。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>準備一張「金鑰清單」</h2><div class="k">邊申請邊記，最後用生成器組成 .env</div></div>
+  <div class="body">
+    <p>開一個純文字檔或記事本，申請到一把就貼一把，格式像這樣：</p>
+    <div class="term"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="out">GEMINI_API_KEY = 你的Gemini金鑰
+TAVILY_API_KEY = 你的Tavily金鑰
+（GitHub / Render 用登入的，不是金鑰）</span></pre></div>
+    <p class="note">這張清單只留在你電腦。本章最後有「.env 生成器」，把這些貼進去就會幫你組好設定檔。</p>
+  </div>
+</section>
+
+<!-- ===== Gemini ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>① Gemini · Google AI Studio</h2><div class="k">整個 App 的 AI 大腦</div></div>
+  <div class="body">
+    <p><b>Google AI Studio</b> 是 Google 提供的 Gemini 模型平台，可以免費申請 API 金鑰。我們的翻譯、拍照理解、語音朗讀、即時語音，全靠它。</p>
+    <div class="info-box">🌐 網址：<b>aistudio.google.com</b>　（申請金鑰直達頁：aistudio.google.com/apikey）</div>
+    <p class="note">需要一個 Google 帳號（Gmail 即可）。沒有的話先去 accounts.google.com 註冊一個。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Gemini 步驟 1–2</h2><div class="k">進入網站、登入</div></div>
+  <ol class="sl body">
+    <li>瀏覽器打開 <b>aistudio.google.com</b>。</li>
+    <li>右上角點「Sign in」，用你的 Google 帳號登入，同意服務條款。</li>
+  </ol>
+  <div class="shot"><span class="cam">📸</span>請截圖：Google AI Studio 首頁 + 右上角登入按鈕</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Gemini 步驟 3–4</h2><div class="k">建立 API 金鑰</div></div>
+  <ol class="sl body">
+    <li>左側選單點「<b>Get API key</b>」（或直接開 aistudio.google.com/apikey）。</li>
+    <li>點「<b>Create API key</b>」，若問專案就選/建一個，稍等它產生。</li>
+  </ol>
+  <div class="shot"><span class="cam">📸</span>請截圖：Get API key 頁面的「Create API key」按鈕</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Gemini 步驟 5</h2><div class="k">複製並保存（只會完整顯示這一次）</div></div>
+  <div class="body">
+    <p>金鑰產生後會是一串 <code>AIza...</code> 開頭的字。點「<b>Copy</b>」複製，立刻貼到你的金鑰清單存好。</p>
+    <div class="warn-box">⚠️ 金鑰只在建立當下完整顯示。關掉視窗後只看得到前後幾碼。沒存到就只能重新建一把。</div>
+    <div class="shot"><span class="cam">📸</span>請截圖：產生後的金鑰與 Copy 按鈕（把中間碼打碼再截圖）</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Gemini 免費額度與花費上限</h2><div class="k">怎麼用才不會被扣款</div></div>
+  <div class="body">
+    <p>Google AI Studio 有<b>免費額度</b>，課堂用量完全用不完。若你之後開放很多人使用，才可能需要付費方案。</p>
+    <ul style="padding-left:26px">
+      <li>可在 AI Studio 設定「<b>月支出上限（spending cap）</b>」，避免暴衝的帳單。</li>
+      <li>若某天呼叫回報 <code>429 RESOURCE_EXHAUSTED</code>，多半是額度或上限到了。</li>
+    </ul>
+    <div class="info-box">💡 新手建議：先用免費額度，需要更多再到 ai.studio/spend 調整上限。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Gemini 金鑰 · 驗收</h2><div class="k">確認你手上這把是對的</div></div>
+  <ul class="goals body">
+    <li>金鑰是 <code>AIza</code> 開頭的一長串英數字。</li>
+    <li>已完整複製、貼到你的金鑰清單。</li>
+    <li>知道它會填到 <code>GEMINI_API_KEY</code> 和 <code>GOOGLE_API_KEY</code>。</li>
+  </ul>
+</section>
+
+<!-- ===== Tavily ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>② Tavily · 上網搜尋</h2><div class="k">讓旅遊助手查得到最新資訊</div></div>
+  <div class="body">
+    <p><b>Tavily</b> 是專為 AI 設計的網路搜尋服務。旅遊助手會先用它上網查資料，再讓 AI 整理成答案。</p>
+    <div class="info-box">🌐 網址：<b>tavily.com</b>（後台：app.tavily.com）　·　每月有免費搜尋額度，旅遊用綽綽有餘。</div>
+    <p class="note">沒有它也沒關係——助手會自動退回用 AI 既有知識回答。但有它會更即時。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Tavily 步驟 1–2</h2><div class="k">註冊帳號</div></div>
+  <ol class="sl body">
+    <li>打開 <b>tavily.com</b>，點「Sign up / Get started」。</li>
+    <li>用 Google 帳號或 Email 註冊、登入，進入 Dashboard（後台）。</li>
+  </ol>
+  <div class="shot"><span class="cam">📸</span>請截圖：Tavily 註冊 / 登入頁</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Tavily 步驟 3</h2><div class="k">拿到 API Key</div></div>
+  <div class="body">
+    <p>登入後，Dashboard 首頁就會顯示你的 <b>API Key</b>（<code>tvly-...</code> 開頭）。點旁邊的複製鈕，貼到金鑰清單。</p>
+    <div class="shot"><span class="cam">📸</span>請截圖：Tavily Dashboard 上的 API Key 欄位與複製鈕（中間打碼）</div>
+    <div class="warn-box">⚠️ 別用網路上或教材裡看到的公開金鑰——那些多半已被用爆（回 429 額度錯誤）。一定要自己申請一把。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Tavily 金鑰 · 驗收</h2><div class="k">確認格式正確</div></div>
+  <ul class="goals body">
+    <li>金鑰是 <code>tvly-</code> 開頭的字串。</li>
+    <li>已複製、貼到金鑰清單（填到 <code>TAVILY_API_KEY</code>）。</li>
+    <li>了解沒有它助手仍可用，只是少了即時搜尋。</li>
+  </ul>
+</section>
+
+<!-- ===== GitHub ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>③ GitHub · 程式碼倉庫</h2><div class="k">程式碼的雲端家，部署的起點</div></div>
+  <div class="body">
+    <p><b>GitHub</b> 是全世界最多人用的程式碼託管平台。之後我們把專案上傳到這，Render 再從這裡抓程式碼去執行。</p>
+    <div class="info-box">🌐 網址：<b>github.com</b>　·　個人使用免費。</div>
+    <p class="note">GitHub 不是「金鑰」，是「帳號」。這章先把帳號註冊好，CH18 再建倉庫、上傳。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>GitHub 步驟 1–3</h2><div class="k">註冊帳號</div></div>
+  <ol class="sl body">
+    <li>打開 <b>github.com</b>，點右上「Sign up」。</li>
+    <li>依序輸入 Email、設定密碼、取一個使用者名稱（英數，之後網址會用到）。</li>
+    <li>完成人機驗證，按建立帳號。</li>
+  </ol>
+  <div class="shot"><span class="cam">📸</span>請截圖：GitHub 註冊頁</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>GitHub 步驟 4 · 驗證 Email</h2><div class="k">收信點連結</div></div>
+  <div class="body">
+    <p>GitHub 會寄一封驗證信到你的信箱。打開信件，點「<b>Verify email address</b>」（或輸入信中的驗證碼）即完成。</p>
+    <div class="ok-box">✅ 驗證完就能登入 GitHub 了。帳號到手，這步先到這，倉庫留到部署章。</div>
+    <div class="shot"><span class="cam">📸</span>請截圖：GitHub 驗證信 / 驗證成功畫面</div>
+  </div>
+</section>
+
+<!-- ===== Render ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>④ Render · 讓網站上線</h2><div class="k">把你的 App 掛在雲端 24 小時待命</div></div>
+  <div class="body">
+    <p><b>Render</b> 是一個部署平台。你把程式碼放上 GitHub，Render 就能自動抓下來、跑起來，給你一個公開網址。</p>
+    <div class="info-box">🌐 網址：<b>render.com</b>　·　有免費方案，足夠讓這個 App 上線。</div>
+    <p class="note">最方便的註冊方式：直接用剛剛的 GitHub 帳號登入，之後選專案免設定。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Render 步驟 1–2</h2><div class="k">用 GitHub 登入</div></div>
+  <ol class="sl body">
+    <li>打開 <b>render.com</b>，點「Get Started / Sign up」。</li>
+    <li>選「<b>Sign up with GitHub</b>」，授權 Render 連結你的 GitHub 帳號。</li>
+  </ol>
+  <div class="shot"><span class="cam">📸</span>請截圖：Render 註冊頁（Sign up with GitHub）</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Render 免費方案要知道</h2><div class="k">先了解特性，部署章不踩雷</div></div>
+  <div class="body">
+    <ul style="padding-left:26px">
+      <li>免費方案的服務<b>閒置一段時間會休眠</b>，第一次連線要等 30–60 秒喚醒，屬正常。</li>
+      <li>金鑰不寫進程式碼，改在 Render 儀表板的「<b>Environment</b>」設定環境變數。</li>
+    </ul>
+    <div class="info-box">🚀 這章先有帳號即可。真正建立服務、填環境變數，會在 CH18 部署章一步步做。</div>
+  </div>
+</section>
+
+<!-- ===== 免金鑰 ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>天氣、匯率：免金鑰</h2><div class="k">好消息，這兩個不用申請</div></div>
+  <div class="body">
+    <p>我們刻意選了<b>免金鑰</b>的公開服務：</p>
+    <ul style="padding-left:26px">
+      <li>天氣 → <b>Open-Meteo</b>（免費、免金鑰）。</li>
+      <li>匯率 → <b>ER-API / Frankfurter</b>（免費、免金鑰）。</li>
+    </ul>
+    <div class="ok-box">😀 少申請兩個帳號！這兩個功能到後面章節直接串接就能用。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>（選填）OpenWeatherMap</h2><div class="k">想要另一種天氣來源才需要</div></div>
+  <div class="body">
+    <p>天氣預設用免金鑰的 Open-Meteo 就很好。若你想改用 <b>OpenWeatherMap</b> 當來源，可到 openweathermap.org 免費申請一把 API Key，填到設定即可。</p>
+    <div class="warn-box">⚠️ 新申請的 OpenWeatherMap 金鑰通常要等 10 分鐘～2 小時才生效。不急著用可先跳過。</div>
+  </div>
+</section>
+
+<!-- ===== .env 生成器 ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>🎁 .env 金鑰生成器</h2><div class="k">把你的金鑰填進去，一鍵組成設定檔</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生你的 .env</div>
+    <div class="field"><label>Gemini 金鑰（必填，AIza…）</label><input id="g_gem" placeholder="貼上你的 Gemini 金鑰"></div>
+    <div class="grid2">
+      <div class="field"><label>Tavily 金鑰（選填，tvly-…）</label><input id="g_tav" placeholder="沒有可留空"></div>
+      <div class="field"><label>OpenWeatherMap（選填）</label><input id="g_owm" placeholder="沒有可留空"></div>
+    </div>
+    <div class="btns">
+      <button onclick="genEnv()">⚙️ 產生 .env</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+      <button class="alt" onclick="dlEnv()">⬇ 下載 .env</button>
+    </div>
+    <div class="out" id="g_out">按「產生 .env」，這裡會出現你的 .env 內容…</div>
+    <div class="hint">存成專案根目錄的 <b>.env</b> 檔。此檔<b>不要</b>上傳 GitHub（CH18 會把它加進 .gitignore）。金鑰只留在你電腦。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>.env 是什麼？怎麼用？</h2><div class="k">存金鑰的專用小檔案</div></div>
+  <div class="body">
+    <p><b>.env</b> 是一個純文字檔，一行一個「名稱=值」，專門放金鑰這類機密設定。程式啟動時會讀它，取得金鑰。</p>
+    <p>因為它含機密，所以<b>絕不上傳 GitHub</b>；雲端部署時改用平台的環境變數（CH18 教）。</p>
+    <div class="ok-box">✅ 剛剛生成器產生的內容，存成 <code>.env</code> 放專案根目錄，本機執行就會自動讀到。</div>
+  </div>
+</section>
+
+<!-- ===== 整理 / 收尾 ===== -->
+<section class="slide cs">
+  <div class="sh"><h2>金鑰之後放哪裡？</h2><div class="k">三個位置，各有用途</div></div>
+  <table class="tbl body">
+    <tr><th>位置</th><th>用途</th><th>章節</th></tr>
+    <tr><td>.env 檔（本機）</td><td>自己電腦上執行、測試</td><td>本章生成器</td></tr>
+    <tr><td>App 設定面板</td><td>使用者在網頁填自己的金鑰</td><td>CH17</td></tr>
+    <tr><td>Render 環境變數</td><td>上線後全裝置共用</td><td>CH18</td></tr>
+  </table>
+  <p class="note body" style="margin-top:12px">重點一致：金鑰永遠不寫死在會公開的程式碼裡。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>常見申請問題 FAQ</h2><div class="k">卡住先看這頁</div></div>
+  <div class="tc body">
+    <div>
+      <p><b>Q：金鑰不見了怎麼辦？</b></p>
+      <p class="note">A：回後台重新產生（Regenerate）一把新的，把程式裡的換掉即可。</p>
+      <p><b>Q：一定要信用卡嗎？</b></p>
+      <p class="note">A：本課用到的免費額度／方案都不需要綁卡。</p>
+    </div>
+    <div>
+      <p><b>Q：Tavily 一定要申請嗎？</b></p>
+      <p class="note">A：不一定。沒有它助手改用 AI 知識回答，仍可運作。</p>
+      <p><b>Q：回 429 錯誤？</b></p>
+      <p class="note">A：額度或上限到了。調高上限，或換一把自己的金鑰。</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收清單</h2><div class="k">打勾才進 Part 1</div></div>
+  <ul class="goals body">
+    <li>拿到 Gemini 金鑰（<code>AIza…</code>）並存好。</li>
+    <li>（選）拿到自己的 Tavily 金鑰（<code>tvly-…</code>）。</li>
+    <li>註冊好 GitHub 帳號並驗證 Email。</li>
+    <li>用 GitHub 登入 Render，有了 Render 帳號。</li>
+    <li>用生成器產生 <code>.env</code> 並存到專案資料夾。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 這一章的小成品</div><p>你有了一整串「鑰匙」和一個組好的 <b>.env</b> 檔——App 的所有 AI 能力都準備好可以啟動了。下一章開始真正寫程式！</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH03</h2><div class="k">Vibe Coding 心法</div></div>
+  <div class="body">
+    <p>鑰匙齊了，環境好了。下一章進入 Part 1，正式學 <b>Vibe Coding</b>：怎麼寫出好提示詞、讓 AI 幫你把第一段程式生出來。</p>
+    <div class="info-box">🚀 從下一章起，我們每一章都會產出一個「可用的小成品」。CH03 見！</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH02 完成！<span class="g">鑰匙到手</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH03.html">→ 下一章 CH03</a>
+  </div>
+</section>
+
+<script>
+function genEnv(){
+  var g=(document.getElementById('g_gem').value||'').trim();
+  var t=(document.getElementById('g_tav').value||'').trim();
+  var o=(document.getElementById('g_owm').value||'').trim();
+  var L=[];
+  L.push('GEMINI_API_KEY='+(g||'貼上你的Gemini金鑰'));
+  L.push('GOOGLE_API_KEY='+(g||'貼上你的Gemini金鑰'));
+  if(t) L.push('TAVILY_API_KEY='+t);
+  if(o) L.push('# OpenWeatherMap 金鑰請改填在 App 的「⚙ 設定」面板（選填備援；天氣預設用免金鑰的 Open-Meteo，不必放 .env）');
+  document.getElementById('g_out').textContent=L.join('\n');
+}
+function dlEnv(){genEnv();downloadText('.env',document.getElementById('g_out').textContent);}
+</script>
+<script>window.SLIDE_CFG={title:'CH02 · API 金鑰申請大全',part:'#4A90D9',next:'CH03.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

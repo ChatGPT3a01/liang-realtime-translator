@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH03 · Vibe Coding 心法</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第一篇 · Part 1 · Vibe Coding 與骨架</div>
+  <h1>CH03 · <span class="g">Vibe Coding 心法</span></h1>
+  <h2>學會「怎麼開口」，AI 才幫你做對事</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章的目標</h2><div class="k">把「下提示詞」這件事練成習慣</div></div>
+  <ul class="goals body">
+    <li>知道一個「好提示詞」該有哪些元素。</li>
+    <li>學會三個心法：講清楚、小步快跑、看結果修正。</li>
+    <li>會用「提示詞公式」把需求組起來。</li>
+    <li>做出你自己的「提示詞生成器」小工具。</li>
+  </ul>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>先回顧：Vibe Coding</h2><div class="k">你出需求，AI 出程式碼</div></div>
+  <div class="body">
+    <p>Vibe Coding 的核心，是你用<b>自然語言</b>把想要的東西描述清楚，讓 AI 產生程式碼。你不必記語法，但要會「把話講到位」。</p>
+    <p>同一個需求，講得好不好，結果天差地遠。所以「下提示詞」本身，就是一門值得練的功夫。</p>
+    <div class="ok-box">🎯 這一章沒有太多程式，重點是把「怎麼講」練起來，後面每一章都用得到。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>好提示詞的四要素</h2><div class="k">缺一個，AI 就容易猜錯</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">🎯</div><h3>任務</h3><p>你到底要它做什麼？越具體越好。</p></div>
+    <div class="cc"><div class="ico">📥</div><h3>輸入 / 輸出</h3><p>給它什麼、你要拿回什麼（檔案？程式碼？步驟？）。</p></div>
+    <div class="cc"><div class="ico">🚧</div><h3>限制</h3><p>用什麼技術、不要用什麼、格式要求。</p></div>
+    <div class="cc"><div class="ico">🙋</div><h3>我的程度</h3><p>「我是新手，請一步一步」——AI 會調整說明深淺。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>心法一 · 講清楚要什麼</h2><div class="k">含糊的需求 = 含糊的結果</div></div>
+  <div class="tc body">
+    <div>
+      <p>❌ 不好：「幫我做個翻譯功能。」</p>
+      <p>✅ 好：「用 Python Flask 做一個 <code>/api/translate</code> 端點，收到 JSON 的 text 與 target 語言，回傳翻譯後文字，串接 Gemini。」</p>
+    </div>
+    <div class="cc"><div class="ico">💡</div><h3>把腦中的畫面說出來</h3><p>你想像中「做好是什麼樣子」，盡量描述出來，AI 就能對準。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>心法二 · 小步快跑</h2><div class="k">一次一個功能，別一次要一大包</div></div>
+  <div class="body">
+    <p>不要說「幫我做一個完整的翻譯 App」——那會得到一坨你看不懂、也難除錯的程式碼。</p>
+    <p>改成一步一步：先做「文字翻譯」，跑起來；再加「語音辨識」，跑起來；再加「朗讀」…每一步都能驗證。</p>
+    <div class="ok-box">🧱 這正是本課「功能疊加、每章一個小成品」的精神。小步，才穩。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>心法三 · 看結果修正</h2><div class="k">跑跑看，用對話把它磨好</div></div>
+  <ol class="sl body">
+    <li>把 AI 給的程式碼拿去跑。</li>
+    <li>對了 → 進下一步；錯了 → 把<b>完整錯誤訊息</b>貼回去。</li>
+    <li>告訴 AI 你觀察到什麼：「我按了沒反應」「畫面空白」。</li>
+    <li>讓它修，再跑。反覆幾次，就磨出能動的版本。</li>
+  </ol>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>提示詞公式</h2><div class="k">記這個順序，就能組出好提示詞</div></div>
+  <div class="prompt body">
+    <div class="lbl">🧩 公式</div>
+    <button class="copy" onclick="cp(this)">複製</button>
+    <pre>【角色】你是一位專業的 ___ 工程師。
+【任務】請幫我 ___（要做什麼）。
+【技術】用 ___（語言/框架/服務）。
+【輸出】我要 ___（完整程式碼／檔案／步驟）。
+【限制】___（格式、不要用什麼、注意事項）。
+【程度】我是新手，請一步一步說明，附可複製的完整程式碼。</pre>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>對比：模糊 vs 清楚</h2><div class="k">同一件事，兩種問法</div></div>
+  <div class="tc body">
+    <div class="prompt"><div class="lbl">❌ 模糊</div><pre>幫我加一個查天氣的功能。</pre></div>
+    <div class="prompt"><div class="lbl">✅ 清楚</div><pre>用 Flask 加一個 /api/weather：
+收到地名，回傳目前溫度與天氣描述，
+用免金鑰的 Open-Meteo。
+我是新手，請附完整程式碼與執行方式。</pre></div>
+  </div>
+  <p class="note body" style="margin-top:10px">右邊這種，AI 幾乎一次就給你能用的東西。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>給 AI 足夠的「脈絡」</h2><div class="k">它看不到你的螢幕，你要餵資訊</div></div>
+  <div class="body">
+    <p>當你要改既有的東西，把<b>相關的程式碼一起貼給它</b>，並說明「這是我現在的 app.py，請在裡面加 X」。</p>
+    <p>遇到錯誤，把<b>完整錯誤訊息</b>連同相關程式碼貼上，別只說「壞了」。</p>
+    <div class="info-box">📎 脈絡越足，AI 越不會亂猜。這是新手最容易忽略、卻最有效的技巧。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>除錯提示詞範本</h2><div class="k">卡關時直接套</div></div>
+  <div class="prompt body">
+    <div class="lbl">🐞 除錯範本</div>
+    <button class="copy" onclick="cp(this)">複製</button>
+    <pre>我在執行時遇到這個錯誤，請幫我找原因並修正：
+
+【我做的操作】___
+【完整錯誤訊息】
+（把終端機/瀏覽器 Console 的錯誤整段貼上）
+
+【相關程式碼】
+（貼上出錯的檔案內容）
+
+請說明原因，並給我修正後的完整程式碼。</pre>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 提示詞生成器</h2><div class="k">填幾個欄位，幫你組好一段專業提示詞</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生你的提示詞</div>
+    <div class="field"><label>你想做什麼？（任務）</label><input id="p_task" placeholder="例如：做一個查匯率的功能"></div>
+    <div class="grid2">
+      <div class="field"><label>用什麼技術？（選填）</label><input id="p_tech" placeholder="例如：Python Flask、免金鑰 API"></div>
+      <div class="field"><label>你要的產出？</label><input id="p_out" placeholder="例如：完整程式碼 + 執行方式"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>特別要求 / 限制（選填）</label><input id="p_limit" placeholder="例如：不要用付費服務"></div>
+      <div class="field"><label>你的程度</label>
+        <select id="p_level"><option>完全新手，請一步一步</option><option>會一點基礎</option><option>有一些經驗</option></select></div>
+    </div>
+    <div class="btns">
+      <button onclick="genPrompt()">⚙️ 產生提示詞</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+      <button class="alt" onclick="dlPrompt()">⬇ 下載</button>
+    </div>
+    <div class="out" id="p_result">填好上面欄位，按「產生提示詞」，這裡會出現可直接貼給 AI 的提示詞…</div>
+    <div class="hint">把產生的提示詞貼進 Claude／ChatGPT，就能得到對應的程式碼。這招整堂課都適用。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>拿到程式碼，先做三件事</h2><div class="k">別盲貼盲跑</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">👀</div><h3>看懂大概</h3><p>它在做什麼？不必懂每一行，但要抓到重點。</p></div>
+    <div class="cc"><div class="ico">📍</div><h3>放對位置</h3><p>它說放哪個檔、哪一段，就照著放。</p></div>
+    <div class="cc"><div class="ico">▶️</div><h3>跑跑看</h3><p>執行、對照預期結果，錯了就回饋給 AI。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>安全提醒</h2><div class="k">AI 給的指令，看懂再執行</div></div>
+  <div class="body">
+    <p>AI 給的多數程式碼是安全的，但養成習慣：<b>看不懂的「刪除／清空／系統」指令，先問清楚再執行</b>。</p>
+    <ul style="padding-left:26px">
+      <li>不確定的指令，反問 AI：「這行會做什麼？有風險嗎？」</li>
+      <li>不要把真實金鑰貼進不信任的網站或工具。</li>
+    </ul>
+    <div class="warn-box">⚠️ 你是駕駛，AI 是副駕。方向盤在你手上，執行前你負責確認。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">帶著這些進 CH04</div></div>
+  <ul class="goals body">
+    <li>能說出好提示詞的四要素。</li>
+    <li>記得三心法：講清楚、小步快跑、看結果修正。</li>
+    <li>會用提示詞公式與除錯範本。</li>
+    <li>用過提示詞生成器，產出一段自己的提示詞。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 這一章的小成品</div><p>你有了一套「提示詞工具箱」：公式、除錯範本、還有一個提示詞生成器。從下一章起，你就用它來「叫 AI 幫你把 App 蓋出來」。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH04</h2><div class="k">Flask 後端骨架</div></div>
+  <div class="body">
+    <p>心法練好了，該真的動手了！下一章我們用一段提示詞，讓 AI 生出第一個能跑的 Flask 網站——你會親眼看到瀏覽器打開自己的網頁。</p>
+    <div class="info-box">🚀 第一個「能跑的小成品」就在 CH04 誕生。走吧！</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH03 完成！<span class="g">會下提示詞了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH04.html">→ 下一章 CH04</a>
+  </div>
+</section>
+
+<script>
+function genPrompt(){
+  var task=(document.getElementById('p_task').value||'').trim();
+  var tech=(document.getElementById('p_tech').value||'').trim();
+  var out=(document.getElementById('p_out').value||'').trim();
+  var lim=(document.getElementById('p_limit').value||'').trim();
+  var lv=document.getElementById('p_level').value;
+  if(!task){document.getElementById('p_result').textContent='請至少填「你想做什麼？」';return;}
+  var L=[];
+  L.push('你是一位專業的軟體工程師。');
+  L.push('請幫我：'+task+'。');
+  if(tech) L.push('技術：'+tech+'。');
+  L.push('我要的產出：'+(out||'完整、可直接複製的程式碼，以及如何執行的步驟')+'。');
+  if(lim) L.push('限制／要求：'+lim+'。');
+  L.push('我的程度：'+lv+'，請一步一步說明，把完整程式碼寫出來，不要省略。');
+  document.getElementById('p_result').textContent=L.join('\n');
+}
+function dlPrompt(){genPrompt();var t=document.getElementById('p_result').textContent;if(t.indexOf('請至少')!==0)downloadText('prompt.txt',t);}
+</script>
+<script>window.SLIDE_CFG={title:'CH03 · Vibe Coding 心法',part:'#27AE60',next:'CH04.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

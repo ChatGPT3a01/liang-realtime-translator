@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH10 · 面對面模式</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第二篇 · Part 2 · 核心翻譯</div>
+  <h1>CH10 · <span class="g">面對面模式</span></h1>
+  <h2>手機平放桌上，兩個人各看各的語言</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">兩人隔著手機對話</div></div>
+  <div class="body">
+    <p>把手機平放桌上，畫面<b>上下對開</b>：對面的人看倒過來的上半、你看正的下半。各自講各自的語言，翻譯顯示在<b>對方那一側</b>。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個真正「面對面」的翻譯機：適合出國問路、店家溝通。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>設計概念</h2><div class="k">上半翻轉 180 度</div></div>
+  <div class="term body"><pre><span class="out">┌─────────────┐
+│  對面的人看   │  ← 上半，旋轉 180°（給對面看）
+│ （翻轉的文字）│
+├─────────────┤
+│   你看的     │  ← 下半，正常方向
+│（正常的文字）│
+└─────────────┘
+手機平放，兩人各據一邊</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>提示詞</h2><div class="k">把版面與行為講清楚</div></div>
+  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>幫我做「面對面模式」：畫面上下兩塊，各有語言選單、
+結果框、麥克風鈕。上半用 CSS 旋轉 180 度給對面的人看。
+下方講話 → 翻成上方語言 → 顯示在上方；反之亦然。
+沿用現有的 translate() 與語音辨識。給我 HTML/CSS/JS。</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>HTML：上下兩塊</h2><div class="k">結構</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">&lt;!-- 面對面 --&gt;</span>
+&lt;section id="faceView"&gt;
+  &lt;div class="face top"&gt;
+    &lt;select id="f_langTop"&gt;&lt;/select&gt;
+    &lt;div class="result" id="f_resTop"&gt;&lt;/div&gt;
+    &lt;button id="f_micTop"&gt;🎤 說話&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="face bottom"&gt;
+    &lt;select id="f_langBottom"&gt;&lt;/select&gt;
+    &lt;div class="result" id="f_resBottom"&gt;&lt;/div&gt;
+    &lt;button id="f_micBottom"&gt;🎤 說話&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/section&gt;</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>CSS：把上半翻過來</h2><div class="k">一行 transform 搞定</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>.face{ flex:1; padding:16px; }
+.face.top{ transform: rotate(180deg); }   <span class="cm">/* 給對面的人看 */</span>
+#faceView{ display:flex; flex-direction:column; height:100dvh; }</pre></div>
+  <p class="note body">就這麼簡單——上半整塊轉 180 度，對面的人看就是正的。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>邏輯：翻到對側顯示</h2><div class="k">下方說 → 上方看</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 下方(你)講 → 翻成上方語言 → 顯示在上方框</span>
+function makeSide(langSel, myBox, otherBox, otherLang){
+  const rec = new Recognizer(BCP[langSel.value], async (text)=&gt;{
+    const out = await translate(text, NAME[langSel.value], NAME[otherLang.value]);
+    otherBox.textContent = out;              <span class="cm">// 顯示在對方那側</span>
+    speak(out, BCP[otherLang.value]);
+  });
+  return rec;
+}
+makeSide(f_langBottom, f_resBottom, f_resTop, f_langTop);
+makeSide(f_langTop,    f_resTop,    f_resBottom, f_langBottom);</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>模式切換</h2><div class="k">單人 ↔ 面對面</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 頂部一顆按鈕切換兩種畫面</span>
+let mode='single';
+modeBtn.onclick = ()=&gt;{
+  mode = (mode==='single') ? 'face' : 'single';
+  singleView.classList.toggle('hidden', mode!=='single');
+  faceView.classList.toggle('hidden', mode!=='face');
+};</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測</h2><div class="k">找個人對講看看</div></div>
+  <div class="body">
+    <p>切到面對面模式，手機平放。你在下半按麥克風講中文 → 上半出現英文（且是翻轉的，對面的人看是正的）。對面按上半麥克風講英文 → 下半出現中文。</p>
+    <div class="shot"><span class="cam">📸</span>請截圖：面對面模式上下對開畫面</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">面對面翻譯機完成</div></div>
+  <ul class="goals body">
+    <li>上下兩塊、上半翻轉 180 度。</li>
+    <li>各側講話翻到對側顯示並朗讀。</li>
+    <li>能在單人／面對面模式間切換。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 Part 2（核心翻譯）完成！你的 App 已能：</div><p>打字翻、語音翻、即時口譯、面對面對話。核心翻譯功能全到齊！接著 Part 3 加上拍照、檔案、匯率、天氣、旅遊助手，讓它變成真正的旅遊神器。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH11</h2><div class="k">拍照翻譯（Part 3 開始）</div></div>
+  <div class="body">
+    <p>進入 Part 3！下一章做<b>拍照翻譯</b>：對著菜單、看板拍一張，Gemini 幫你看懂、摘要、翻譯。會用到「多模態」——AI 同時理解圖片與文字。</p>
+    <div class="info-box">📷 CH11 讓 App 長出眼睛。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH10 完成！<span class="g">面對面翻譯</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH11.html">→ 下一章 CH11</a>
+  </div>
+</section>
+
+<script>window.SLIDE_CFG={title:'CH10 · 面對面模式',part:'#E67E22',next:'CH11.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

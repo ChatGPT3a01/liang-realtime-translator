@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH05 · 前端骨架與 UI</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第一篇 · Part 1 · Vibe Coding 與骨架</div>
+  <h1>CH05 · <span class="g">前端骨架與 UI</span></h1>
+  <h2>讓 App 長出好看、好按的畫面</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章的目標</h2><div class="k">從「純文字」到「有介面」</div></div>
+  <div class="body">
+    <p>上一章後端會回文字了，但畫面很陽春。這章我們做出真正的<b>使用者介面</b>：語言下拉選單、翻譯結果框、麥克風按鈕、文字輸入框。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個手機優先、深紫金色的翻譯介面骨架。雖然按鈕還沒接功能，但「App 的樣子」出來了。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>先回顧：我們現在有什麼</h2><div class="k">站在 CH04 的成果上</div></div>
+  <div class="body">
+    <p>到上一章，你有一個能跑的 Flask 後端：首頁回文字、<code>/api/health</code> 回 JSON。但打開瀏覽器只有一行字，還不像 App。</p>
+    <p>這章把「臉」做出來。之後 CH06 再讓按鈕真的會翻譯——一層一層疊。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端三兄弟</h2><div class="k">畫面是這三個一起做出來的</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">🧱</div><h3>HTML</h3><p>結構：有哪些元素（選單、按鈕、框）。像房子的「隔間」。</p></div>
+    <div class="cc"><div class="ico">🎨</div><h3>CSS</h3><p>樣式：顏色、大小、圓角、排版。像房子的「裝潢」。</p></div>
+    <div class="cc"><div class="ico">⚡</div><h3>JavaScript</h3><p>行為：按了會發生什麼事。像房子的「電路」。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Flask 怎麼給前端？</h2><div class="k">templates 放頁面、static 放樣式與腳本</div></div>
+  <div class="term body"><div class="lbl">📁 資料夾結構（要建這些）</div>
+    <pre><span class="out">專案/
+├─ app.py
+├─ templates/
+│   └─ index.html    ← 主頁面
+└─ static/
+    ├─ css/style.css  ← 樣式
+    └─ js/app.js      ← 前端邏輯</span></pre></div>
+  <p class="note body">Flask 有約定：<b>templates</b> 放 HTML 頁面、<b>static</b> 放 css/js/圖片。照這個結構放，Flask 自動找得到。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>先把資料夾建好</h2><div class="k">在 VS Code 左側新增</div></div>
+  <ol class="sl body">
+    <li>在專案下建 <code>templates</code> 資料夾，裡面新增 <code>index.html</code>。</li>
+    <li>建 <code>static</code> 資料夾，裡面再建 <code>css</code> 與 <code>js</code> 兩個子資料夾。</li>
+    <li>在 css 建 <code>style.css</code>、在 js 建 <code>app.js</code>。</li>
+  </ol>
+  <div class="info-box body">💡 VS Code 左側檔案總管：對資料夾按右鍵 → New File / New Folder。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>提示詞：生出前端骨架</h2><div class="k">把畫面需求講清楚</div></div>
+  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>請幫我的 Flask 專案做前端骨架（手機優先、深紫金色系）：
+1. templates/index.html：頂部標題列；語言 A、對調鈕、語言 B；
+   翻譯結果框；麥克風按鈕；文字輸入框 + 翻譯鈕。
+2. static/css/style.css：深紫漸層背景、金色重點、圓角卡片。
+3. static/js/app.js：先做一個函式，載入時呼叫 /api/health 印在 console。
+4. 更新 app.py 用 render_template 提供 index.html。
+我是新手，請附完整程式碼、放置位置與逐段說明。</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>index.html（骨架）</h2><div class="k">建立檔案、貼上</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">&lt;!-- templates/index.html --&gt;</span>
+&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-TW"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;亮言 · 即時翻譯&lt;/title&gt;
+  &lt;link rel="stylesheet" href="/static/css/style.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header class="topbar"&gt;&lt;h1&gt;亮言 · 即時翻譯&lt;/h1&gt;&lt;/header&gt;
+  &lt;div class="lang-bar"&gt;
+    &lt;select id="langA"&gt;&lt;/select&gt;
+    &lt;button id="swap"&gt;⇄&lt;/button&gt;
+    &lt;select id="langB"&gt;&lt;/select&gt;
+  &lt;/div&gt;
+  &lt;div class="result" id="result"&gt;翻譯結果會顯示在這裡…&lt;/div&gt;
+  &lt;button id="mic" class="mic-btn"&gt;🎤 點一下說話&lt;/button&gt;
+  &lt;div class="text-row"&gt;
+    &lt;textarea id="text" placeholder="或輸入文字…"&gt;&lt;/textarea&gt;
+    &lt;button id="send"&gt;翻譯 ➤&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;script src="/static/js/app.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 (1)：head</h2><div class="k">頁面的「設定區」</div></div>
+  <div class="body">
+    <p><code>&lt;meta charset="UTF-8"&gt;</code>：用萬國碼，中文才不會變亂碼。</p>
+    <p><code>&lt;meta name="viewport" ...&gt;</code>：手機上正確縮放，這是「手機優先」的關鍵一行。</p>
+    <p><code>&lt;link rel="stylesheet" href="/static/css/style.css"&gt;</code>：載入我們的樣式檔（Flask 會從 static 提供）。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 (2)：語言列與結果框</h2><div class="k">body 的上半</div></div>
+  <div class="body">
+    <p><code>&lt;select id="langA"&gt;</code> / <code>langB</code>：兩個語言下拉選單，中間 <code>swap</code> 鈕用來對調。<b>選項先留空</b>，等等用 JS 動態填。</p>
+    <p><code>&lt;div class="result" id="result"&gt;</code>：翻譯結果要顯示的框。<code>id</code> 是給 JS 抓取用的「名牌」。</p>
+    <div class="info-box">🏷️ 記住這些 <code>id</code>（langA、langB、result、mic、text、send）——CH06 的 JS 就是靠它們找到元素。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 (3)：麥克風與輸入框</h2><div class="k">body 的下半</div></div>
+  <div class="body">
+    <p><code>&lt;button id="mic"&gt;</code>：麥克風按鈕，CH07 會接語音辨識。</p>
+    <p><code>&lt;textarea id="text"&gt;</code>：讓使用者打字的輸入框；<code>&lt;button id="send"&gt;</code> 是翻譯鈕。</p>
+    <p><code>&lt;script src="/static/js/app.js"&gt;</code>：放在 body 最後，載入前端邏輯（放最後是為了確保上面元素都存在了）。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>style.css（重點）</h2><div class="k">深紫漸層 + 金色重點</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">/* static/css/style.css */</span>
+:root{ --bg1:#1a1030; --bg2:#2a1a4a; --gold:#f5c451; --text:#f3eefb; }
+*{ box-sizing:border-box; margin:0; }
+body{ font-family:'Noto Sans TC',sans-serif; color:var(--text);
+  background:linear-gradient(160deg,var(--bg1),var(--bg2)); min-height:100vh; padding:16px; }
+.topbar h1{ color:var(--gold); font-size:1.2rem; }
+.lang-bar{ display:flex; gap:10px; margin:14px 0; }
+select{ flex:1; padding:12px; border-radius:12px; }
+.result{ background:rgba(255,255,255,.07); border-radius:16px; padding:20px;
+  min-height:120px; font-size:1.4rem; margin-bottom:14px; }
+.mic-btn{ width:100%; padding:16px; border:none; border-radius:14px;
+  background:var(--gold); font-size:1.1rem; font-weight:900; }
+.text-row{ display:flex; gap:8px; }
+.text-row textarea{ flex:1; border-radius:12px; padding:10px; }</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 CSS (1)</h2><div class="k">變數與背景</div></div>
+  <div class="body">
+    <p><code>:root{ --gold:#f5c451; ... }</code>：定義「顏色變數」。之後 <code>var(--gold)</code> 就能重複用，改一次全站生效。</p>
+    <p><code>* { box-sizing:border-box; }</code>：讓寬高計算含邊框，排版比較不會爆版。</p>
+    <p><code>background:linear-gradient(...)</code>：深紫漸層背景，就是這行讓畫面有質感。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 CSS (2)</h2><div class="k">卡片與按鈕</div></div>
+  <div class="body">
+    <p><code>.result{ background:rgba(255,255,255,.07); border-radius:16px; }</code>：半透明白 + 圓角，做出「毛玻璃卡片」感。</p>
+    <p><code>.mic-btn{ background:var(--gold); ... }</code>：金色大按鈕，好按、醒目。</p>
+    <p><code>display:flex; gap:10px;</code>：讓語言列、輸入列的元素<b>橫向並排</b>並留間距。flex 是排版最常用的工具。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>CSS 變數的威力</h2><div class="k">改一個色，全站換裝</div></div>
+  <div class="body">
+    <p>試著把 <code>--gold:#f5c451</code> 改成 <code>--gold:#4ac0ff</code>（藍），存檔、重整——所有金色的地方（標題、按鈕）<b>一次全變藍</b>。</p>
+    <div class="ok-box">🎨 這就是為什麼我們把顏色抽成變數：想換品牌色，改一行就好。CH19 的主題生成器也是靠這個。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>app.js（起步）</h2><div class="k">先確認前後端有連上</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// static/js/app.js</span>
+async function checkHealth(){
+  const res = await fetch('/api/health');
+  const data = await res.json();
+  console.log('後端狀態：', data);   <span class="cm">// 應印出 {ok: true}</span>
+}
+checkHealth();</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 app.js</h2><div class="k">前端跟後端「握手」</div></div>
+  <div class="body">
+    <p><code>fetch('/api/health')</code>：向後端要健康狀態。</p>
+    <p><code>await res.json()</code>：等回覆並解析成物件。</p>
+    <p><code>console.log(...)</code>：印到瀏覽器 Console（開發用，使用者看不到）。</p>
+    <p><code>checkHealth()</code>：頁面一載入就執行，馬上驗證前後端通不通。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>怎麼看 Console？</h2><div class="k">F12 是你的好朋友</div></div>
+  <ol class="sl body">
+    <li>在瀏覽器按 <code>F12</code>（或右鍵 → 檢查）。</li>
+    <li>切到「Console」分頁。</li>
+    <li>重整頁面，看有沒有印出 <code>後端狀態： {ok: true}</code>。</li>
+  </ol>
+  <div class="info-box body">🔍 之後任何前端問題，第一步都是打開 Console 看紅字。這是除錯的起點。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>更新 app.py 提供頁面</h2><div class="k">用 render_template 回傳 index.html</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># 把首頁改成回傳 index.html</span>
+from flask import Flask, jsonify, render_template
+
+@app.route('/')
+def index():
+    return render_template('index.html')</pre></div>
+  <p class="note body">記得把最上面的 import 補上 <code>render_template</code>；否則會報「render_template is not defined」。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>存檔、重啟、重整</h2><div class="k">讓改動生效</div></div>
+  <ol class="sl body">
+    <li>所有檔案存檔（Ctrl/Cmd + S）。</li>
+    <li>後端有改（app.py）→ 終端機 Ctrl+C 停掉，重新 <code>python app.py</code>。</li>
+    <li>瀏覽器開 <code>http://127.0.0.1:5001</code>，重整。</li>
+  </ol>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>預期畫面：介面骨架完成</h2><div class="k">你的 App 有臉了</div></div>
+  <div class="body">
+    <div class="ok-box">✅ 你會看到：深紫漸層背景、金色「亮言 · 即時翻譯」標題、兩個語言選單與對調鈕、一個大結果框、金色麥克風按鈕、下方輸入框與翻譯鈕。Console 印出 {ok: true}。</div>
+    <div class="shot"><span class="cam">📸</span>請截圖：翻譯 App 的介面骨架完整畫面</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>把語言選單填起來</h2><div class="k">用 JS 動態產生選項</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// app.js — 語言清單</span>
+const LANGS = [
+  {id:'zh-TW', label:'繁體中文'}, {id:'en', label:'English'},
+  {id:'ja', label:'日本語'}, {id:'ko', label:'한국어'},
+];
+function fill(sel, val){
+  sel.innerHTML = LANGS.map(l =&gt; `&lt;option value="${l.id}"&gt;${l.label}&lt;/option&gt;`).join('');
+  sel.value = val;
+}
+fill(document.getElementById('langA'),'zh-TW');
+fill(document.getElementById('langB'),'en');</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 fill()</h2><div class="k">動態塞選項</div></div>
+  <div class="body">
+    <p><code>LANGS.map(l =&gt; ...)</code>：把每個語言變成一段 <code>&lt;option&gt;</code>。</p>
+    <p><code>sel.innerHTML = ...</code>：把這些選項塞進選單。</p>
+    <p><code>sel.value = val</code>：設定預設選哪個。</p>
+    <div class="info-box">💡 之後要加語言，只要在 LANGS 陣列多加一行，兩個選單自動都有。這叫「單一資料來源」。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>綁定按鈕（先佔位）</h2><div class="k">按鈕會有反應，功能下一 Part 接</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 對調語言</span>
+document.getElementById('swap').onclick = () =&gt; {
+  const a = langA.value; langA.value = langB.value; langB.value = a;
+};
+<span class="cm">// 翻譯鈕（先示意，CH06 接真正翻譯）</span>
+document.getElementById('send').onclick = () =&gt; {
+  result.textContent = '（這裡之後會顯示翻譯結果）';
+};</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測互動</h2><div class="k">畫面有反應了</div></div>
+  <ol class="sl body">
+    <li>重整頁面，語言選單應該有選項了。</li>
+    <li>按對調鈕 ⇄，兩個選單的值互換。</li>
+    <li>按翻譯鈕，結果框出現「（這裡之後會顯示翻譯結果）」。</li>
+  </ol>
+  <div class="ok-box body">✅ 按鈕會回應了！雖然還沒真的翻譯，但互動骨架完成，CH06 接上引擎就活了。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>除錯 1：畫面沒有樣式</h2><div class="k">背景是白的、很陽春</div></div>
+  <div class="body">
+    <p><b>症狀</b>：畫面出現但沒有深紫背景、沒有圓角，像純文字。</p>
+    <p><b>原因</b>：CSS 沒被載入。檢查：</p>
+    <ul style="padding-left:26px">
+      <li>style.css 是否在 <code>static/css/</code> 下？</li>
+      <li>index.html 的 link 路徑是否 <code>/static/css/style.css</code>？</li>
+      <li>F12 → Network 看 style.css 是不是 404。</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>除錯 2：Console 紅字</h2><div class="k">JS 出錯</div></div>
+  <div class="tc body">
+    <div>
+      <p><b>langA is not defined</b></p>
+      <p class="note">元素還沒載入就用它。確認 script 放在 body 最後。</p>
+      <p><b>Failed to fetch /api/health</b></p>
+      <p class="note">後端沒開或路由不對，確認 app.py 有 health 路由、伺服器在跑。</p>
+    </div>
+    <div>
+      <p><b>選單沒有選項</b></p>
+      <p class="note">fill() 沒跑到，確認 id 是 langA/langB、程式碼有貼進 app.js。</p>
+      <p><b>404 index.html</b></p>
+      <p class="note">確認 app.py 改用 render_template，且檔案在 templates/。</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>手機優先設計</h2><div class="k">為什麼一切都「直向、大顆」</div></div>
+  <div class="body">
+    <p>我們的按鈕都做很大、元素都直向排列——因為這是<b>手機拿在手上用</b>的 App。大按鈕好按、直向適合單手滑。</p>
+    <div class="info-box">📱「手機優先」不只是縮小電腦版，而是一開始就為小螢幕、手指操作而設計。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 UI 主題生成器</h2><div class="k">填 App 名稱與主色，產生你的樣式變數</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生 UI 主題</div>
+    <div class="grid2">
+      <div class="field"><label>App 名稱</label><input id="u_name" placeholder="亮言 · 即時翻譯"></div>
+      <div class="field"><label>主色（金色重點）</label><input id="u_gold" type="color" value="#f5c451" style="height:44px;padding:4px"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>背景深色 1</label><input id="u_bg1" type="color" value="#1a1030" style="height:44px;padding:4px"></div>
+      <div class="field"><label>背景深色 2</label><input id="u_bg2" type="color" value="#2a1a4a" style="height:44px;padding:4px"></div>
+    </div>
+    <div class="btns">
+      <button onclick="genTheme()">⚙️ 產生主題 CSS</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+      <button class="alt" onclick="dlTheme()">⬇ 下載</button>
+    </div>
+    <div class="out" id="u_out">按「產生主題 CSS」，這裡會出現你的配色變數，貼到 style.css 最上面…</div>
+    <div class="hint">把產生的 <code>:root</code> 貼到 style.css 開頭，全站配色就換成你的主題了。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>動手練習</h2><div class="k">加深印象</div></div>
+  <ul class="sl body">
+    <li>用主題生成器換一組配色，貼進 style.css 看變化。</li>
+    <li>在 LANGS 加一個「泰語 th / ไทย」，看兩個選單是否都出現。</li>
+    <li>把結果框的字級 <code>font-size:1.4rem</code> 改大，感覺差異。</li>
+  </ul>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">介面骨架完成</div></div>
+  <ul class="goals body">
+    <li>建好 templates/index.html、static/css/style.css、static/js/app.js。</li>
+    <li>app.py 改用 render_template 提供頁面。</li>
+    <li>瀏覽器看到完整介面，語言選單有選項、對調鈕會動。</li>
+    <li>Console 看到 <code>{ok: true}</code>，前後端已連通。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：一個有介面的 App 骨架</div><p>畫面、選單、按鈕都到位。Part 1 結束——地基與外觀都好了，Part 2 開始把「翻譯」真的接上去！</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH06</h2><div class="k">文字翻譯（Part 2 開始）</div></div>
+  <div class="body">
+    <p>畫面有了，該讓它真的會翻譯了！下一章我們做 <code>providers.py</code> 與 <code>/api/translate</code>，把文字送給 Gemini，回傳翻譯——你輸入的字，第一次真的被翻出來。</p>
+    <div class="info-box">🎙️ 進入第二篇 · Part 2 核心翻譯。走吧！</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH05 完成！<span class="g">畫面長出來了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH06.html">→ 下一章 CH06</a>
+  </div>
+</section>
+
+<script>
+function genTheme(){
+  var name=(document.getElementById('u_name').value||'亮言 · 即時翻譯');
+  var gold=document.getElementById('u_gold').value;
+  var b1=document.getElementById('u_bg1').value, b2=document.getElementById('u_bg2').value;
+  var css=
+"/* "+name+" 主題配色 — 貼到 style.css 最上面 */\n"+
+":root{\n"+
+"  --bg1:"+b1+";\n"+
+"  --bg2:"+b2+";\n"+
+"  --gold:"+gold+";\n"+
+"  --text:#f3eefb;\n"+
+"}\n";
+  document.getElementById('u_out').textContent=css;
+}
+function dlTheme(){genTheme();downloadText('theme.css',document.getElementById('u_out').textContent);}
+</script>
+<script>window.SLIDE_CFG={title:'CH05 · 前端骨架與 UI',part:'#27AE60',next:'CH06.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

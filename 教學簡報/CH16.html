@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH16 · PWA 手機安裝與離線</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第三篇 · Part 4 · 上線與加值</div>
+  <h1>CH16 · <span class="g">PWA 手機安裝與離線</span></h1>
+  <h2>把網頁變成能「加到主畫面」的 App</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">讓網站能像 App 一樣裝進手機</div></div>
+  <div class="body">
+    <p>加兩個東西：<b>manifest</b>（App 的名稱、圖示）和 <b>Service Worker</b>（背景腳本、快取），網站就能「加到主畫面」、全螢幕開、支援離線。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>手機打開你的網站，選單出現「加到主畫面」，裝起來像原生 App。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>什麼是 PWA？</h2><div class="k">Progressive Web App</div></div>
+  <div class="body">
+    <p><b>PWA</b> 是「可安裝的網頁」。不用上架 App Store，使用者用瀏覽器開你的網址，就能把它加到主畫面，之後點圖示全螢幕開啟。</p>
+    <div class="cg"><div class="cc"><div class="ico">📇</div><h3>manifest</h3><p>告訴手機：App 叫什麼、用什麼圖示、什麼顏色。</p></div>
+      <div class="cc"><div class="ico">⚙️</div><h3>Service Worker</h3><p>背景腳本，負責快取，讓 App 開得快、能離線。</p></div></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>提示詞</h2><div class="k">加 manifest + service worker</div></div>
+  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>幫我的 Flask 網站加上 PWA：
+1. static/manifest.json：名稱「亮言 · 即時翻譯」、圖示、深紫主題色、standalone。
+2. static/sw.js：Service Worker，網路優先、離線用快取。
+3. 在 index.html 連結 manifest、註冊 sw.js。
+4. app.py 用根路徑提供 manifest.json 與 sw.js。
+給我完整程式碼與放置位置。</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>manifest.json</h2><div class="k">App 的身分證</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// static/manifest.json</span>
+{
+  "name": "亮言 · 即時翻譯",
+  "short_name": "亮言翻譯",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1030",
+  "theme_color": "#2a1a4a",
+  "icons": [
+    { "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Service Worker（網路優先）</h2><div class="k">線上拿最新、離線用快取</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// static/sw.js</span>
+const CACHE = 'liang-v1';
+self.addEventListener('install', e =&gt; self.skipWaiting());
+self.addEventListener('activate', e =&gt; self.clients.claim());
+self.addEventListener('fetch', e =&gt; {
+  const url = new URL(e.request.url);
+  if(url.pathname.startsWith('/api/')) return;   <span class="cm">// API 不快取</span>
+  e.respondWith(
+    fetch(e.request).then(res =&gt; {                <span class="cm">// 網路優先</span>
+      const copy = res.clone();
+      caches.open(CACHE).then(c =&gt; c.put(e.request, copy));
+      return res;
+    }).catch(() =&gt; caches.match(e.request))         <span class="cm">// 沒網路用快取</span>
+  );
+});</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>為什麼「網路優先」？</h2><div class="k">避免更新被舊快取卡住</div></div>
+  <div class="body">
+    <p>如果「快取優先」，你改了程式重新部署，使用者卻一直看到舊版（被快取黏住）。所以我們用<b>網路優先</b>：有網路就拿最新、順便更新快取；沒網路才用快取。</p>
+    <div class="ok-box">✅ 每次改版把 sw.js 的 CACHE 版本號 +1（v1→v2），能更確實地讓使用者換到新版。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>連結 + 註冊</h2><div class="k">在 index.html 與 app.py</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">&lt;!-- index.html &lt;head&gt; --&gt;</span>
+&lt;link rel="manifest" href="/manifest.json"&gt;
+&lt;meta name="theme-color" content="#2a1a4a"&gt;
+<span class="cm">&lt;!-- 頁尾 --&gt;</span>
+&lt;script&gt; if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); &lt;/script&gt;</pre></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py：從根路徑提供</span>
+from flask import send_from_directory
+@app.route('/manifest.json')
+def manifest(): return send_from_directory('static','manifest.json')
+@app.route('/sw.js')
+def sw():
+    r = send_from_directory('static','sw.js')
+    r.headers['Service-Worker-Allowed'] = '/'
+    return r</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測安裝</h2><div class="k">手機加到主畫面</div></div>
+  <ol class="sl body">
+    <li>手機瀏覽器開你的網站（本機測需同網段；上線後用網址最準）。</li>
+    <li>瀏覽器選單 → 「加到主畫面 / Add to Home Screen」。</li>
+    <li>回主畫面，點圖示，App 全螢幕開啟。</li>
+  </ol>
+  <div class="shot"><span class="cam">📸</span>請截圖：加到主畫面的選項 / 主畫面上的 App 圖示</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 manifest 生成器</h2><div class="k">填名稱與顏色，產生 manifest.json</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生 manifest.json</div>
+    <div class="grid2">
+      <div class="field"><label>App 名稱</label><input id="m_name" placeholder="亮言 · 即時翻譯"></div>
+      <div class="field"><label>短名稱</label><input id="m_short" placeholder="亮言翻譯"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>主題色</label><input id="m_theme" type="color" value="#2a1a4a" style="height:44px;padding:4px"></div>
+      <div class="field"><label>背景色</label><input id="m_bg" type="color" value="#1a1030" style="height:44px;padding:4px"></div>
+    </div>
+    <div class="btns">
+      <button onclick="genMan()">⚙️ 產生</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+      <button class="alt" onclick="dlMan()">⬇ 下載</button>
+    </div>
+    <div class="out" id="m_out">填好後按產生，這裡會出現 manifest.json…</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">可安裝的 App</div></div>
+  <ul class="goals body">
+    <li>有 manifest.json 與 sw.js，且從根路徑提供。</li>
+    <li>index.html 連結 manifest、註冊 Service Worker。</li>
+    <li>手機能「加到主畫面」，全螢幕開啟。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：可安裝的 App</div><p>網站變 App 了！下一章做「密碼閘門 + 金鑰集中設定」，讓使用者能填自己的金鑰、也擋一下隨意存取。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH17</h2><div class="k">密碼閘門與金鑰設定</div></div>
+  <div class="body">
+    <p>下一章加一個<b>設定面板</b>集中管理 API 金鑰（Gemini／Tavily，也支援 OpenAI 相容服務），再加一道<b>密碼閘門</b>做基本的存取阻擋。</p>
+    <div class="info-box">🔐 CH17 加上設定與門禁。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH16 完成！<span class="g">裝得進手機了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH17.html">→ 下一章 CH17</a>
+  </div>
+</section>
+
+<script>
+function genMan(){
+  var n=(document.getElementById('m_name').value||'亮言 · 即時翻譯');
+  var s=(document.getElementById('m_short').value||'亮言翻譯');
+  var th=document.getElementById('m_theme').value, bg=document.getElementById('m_bg').value;
+  var j={name:n,short_name:s,start_url:'/',display:'standalone',background_color:bg,theme_color:th,
+    icons:[{src:'/static/icon-192.png',sizes:'192x192',type:'image/png'},
+           {src:'/static/icon-512.png',sizes:'512x512',type:'image/png'}]};
+  document.getElementById('m_out').textContent=JSON.stringify(j,null,2);
+}
+function dlMan(){genMan();downloadText('manifest.json',document.getElementById('m_out').textContent);}
+</script>
+<script>window.SLIDE_CFG={title:'CH16 · PWA 手機安裝與離線',part:'#E74C3C',next:'CH17.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

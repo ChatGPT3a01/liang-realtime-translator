@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH08 · 語音朗讀 TTS</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第二篇 · Part 2 · 核心翻譯</div>
+  <h1>CH08 · <span class="g">語音朗讀 TTS</span></h1>
+  <h2>讓 App 用語音念出翻譯結果</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">翻好 → 自動念出來</div></div>
+  <div class="body">
+    <p>翻譯完，App 用語音把結果念出來。出國問路、點餐時，直接播給對方聽。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>會「說話」的翻譯 App：翻完自動朗讀，還能中途按停。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>兩條朗讀路線</h2><div class="k">雲端優先，瀏覽器後備</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">☁️</div><h3>Gemini 雲端 TTS</h3><p>任何語言都有聲音、發音自然，不依賴手機語音包。<b>優先用。</b></p></div>
+    <div class="cc"><div class="ico">🖥️</div><h3>瀏覽器 speechSynthesis</h3><p>免費、即時，但依賴裝置語音包。當雲端失敗時的<b>後備</b>。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>後端 /api/tts</h2><div class="k">用 Gemini 產生語音（含重試）</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py — 雲端 TTS</span>
+from flask import Response
+TTS_MODEL = 'gemini-3.1-flash-tts-preview'
+
+@app.route('/api/tts', methods=['POST'])
+def api_tts():
+    from google.genai import types
+    data = request.get_json(force=True, silent=True) or {}
+    text = (data.get('text') or '').strip()
+    if not text: return ('', 204)
+    key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
+    client = genai.Client(api_key=key)
+    cfg = types.GenerateContentConfig(response_modalities=['AUDIO'],
+        speech_config=types.SpeechConfig(voice_config=types.VoiceConfig(
+            prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name='Kore'))))
+    for _ in range(3):   <span class="cm"># 預覽模型偶爾吐文字 → 重試</span>
+        try:
+            r = client.models.generate_content(model=TTS_MODEL, contents=text, config=cfg)
+            for p in r.candidates[0].content.parts:
+                if getattr(p,'inline_data',None) and p.inline_data.data:
+                    return Response(p.inline_data.data, mimetype='application/octet-stream')
+        except Exception as e: last=str(e)
+    return jsonify({'error':'tts failed'}), 400</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端 speak()</h2><div class="k">拿到語音、播放；失敗用瀏覽器</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// app.js</span>
+async function speak(text, bcp){
+  try{
+    const res = await fetch('/api/tts', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify({text})});
+    if(res.ok){ const buf = await res.arrayBuffer();
+      if(buf.byteLength &gt; 44){ playPCM(buf); return; } }
+  }catch(e){}
+  browserSpeak(text, bcp);   <span class="cm">// 後備</span>
+}
+function browserSpeak(text, bcp){
+  const u = new SpeechSynthesisUtterance(text); u.lang = bcp;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>播放雲端語音（Web Audio）</h2><div class="k">Gemini 回的是 24kHz PCM</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 播放 16-bit PCM</span>
+let playCtx=null, sources=[];
+function playPCM(buf){
+  if(!playCtx) playCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:24000});
+  if(playCtx.state==='suspended') playCtx.resume();   <span class="cm">// 手機要解鎖</span>
+  const i16=new Int16Array(buf), f32=new Float32Array(i16.length);
+  for(let i=0;i&lt;i16.length;i++) f32[i]=i16[i]/32768;
+  const b=playCtx.createBuffer(1,f32.length,24000); b.getChannelData(0).set(f32);
+  const s=playCtx.createBufferSource(); s.buffer=b; s.connect(playCtx.destination);
+  s.start(); sources.push(s);
+}
+function stopSpeak(){ sources.forEach(s=&gt;{try{s.stop()}catch(e){}}); sources=[]; speechSynthesis.cancel(); }</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>手機的坑：音訊要「手勢解鎖」</h2><div class="k">iOS 特別嚴</div></div>
+  <div class="body">
+    <p>手機（尤其 iPhone）要求音訊必須由「使用者點擊」啟動。因為 speak() 先 <code>await</code> 抓語音，等抓完手勢就過期了，可能靜音。</p>
+    <div class="ok-box">✅ 解法：在點擊當下先 <code>playCtx.resume()</code> 解鎖，並在 playPCM 裡也 resume。這樣手機才會出聲。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>接上：翻完自動朗讀</h2><div class="k">在翻譯成功後呼叫 speak</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 翻譯成功後加一行</span>
+const out = await translate(text, NAME[langA.value], NAME[langB.value]);
+result.textContent = out;
+speak(out, BCP[langB.value]);   <span class="cm">// ← 用目標語言朗讀</span></pre></div>
+  <p class="note body">要「停止」時呼叫 stopSpeak()。可加一顆停止鈕，或朗讀鈕做成切換。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測</h2><div class="k">翻完會念、能停</div></div>
+  <div class="body">
+    <p>翻一句話，聽聽看 App 念出翻譯。再測「念到一半按停」是否能立刻靜音。</p>
+    <div class="shot"><span class="cam">📸</span>請截圖：翻譯結果 + 朗讀/停止按鈕</div>
+    <div class="warn-box">⚠️ 若雲端 TTS 回 429，代表 Gemini 額度/上限到了，會自動退回瀏覽器朗讀（可能少數語言沒聲音）。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 TTS 語音設定生成器</h2><div class="k">選聲音，產生 speech_config</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生 TTS 設定</div>
+    <div class="field"><label>選擇聲音（Gemini 預建語音）</label>
+      <select id="v_name"><option>Kore（沉穩）</option><option>Puck（活潑）</option><option>Charon（低沉）</option><option>Aoede（明亮）</option></select></div>
+    <div class="btns">
+      <button onclick="genTts()">⚙️ 產生設定</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+    </div>
+    <div class="out" id="v_out">選聲音後按產生，這裡會出現可放進 /api/tts 的 speech_config…</div>
+    <div class="hint">換 voice_name 就能換朗讀的聲音個性。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">會說話的 App</div></div>
+  <ul class="goals body">
+    <li>後端 /api/tts 能回傳語音（含重試）。</li>
+    <li>前端翻完自動朗讀，雲端失敗會退回瀏覽器。</li>
+    <li>能中途停止朗讀；手機也出得了聲。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：能聽、能翻、能說的 App</div><p>逐句模式完整了！下一章挑戰更進階的「即時」模式——低延遲的 Gemini Live 原生語音對話。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH09</h2><div class="k">Gemini Live 即時語音</div></div>
+  <div class="body">
+    <p>逐句模式要「說完按停」。下一章我們接 <b>Gemini Live</b>：邊說邊翻、低延遲，像真的口譯員。會用到 WebSocket 即時串流。</p>
+    <div class="info-box">⚡ CH09 進入即時模式。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH08 完成！<span class="g">會說話了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH09.html">→ 下一章 CH09</a>
+  </div>
+</section>
+
+<script>
+function genTts(){
+  var v=(document.getElementById('v_name').value||'Kore').split('（')[0];
+  var code=
+"speech_config=types.SpeechConfig(\n"+
+"    voice_config=types.VoiceConfig(\n"+
+"        prebuilt_voice_config=types.PrebuiltVoiceConfig(\n"+
+"            voice_name='"+v+"')))";
+  document.getElementById('v_out').textContent=code;
+}
+</script>
+<script>window.SLIDE_CFG={title:'CH08 · 語音朗讀 TTS',part:'#E67E22',next:'CH09.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH04 · Flask 後端骨架</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第一篇 · Part 1 · Vibe Coding 與骨架</div>
+  <h1>CH04 · <span class="g">Flask 後端骨架</span></h1>
+  <h2>動手做出第一個「能在瀏覽器打開」的網站</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">第一個能跑的小成品</div></div>
+  <div class="body">
+    <p>我們要用 Flask 做出一個最小的網站：<b>啟動後，用瀏覽器打開會看到「Hello 亮言」</b>，還有一個回報狀態的 <code>/api/health</code>。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個能在你電腦跑起來、瀏覽器打得開的網站。這就是整個 App 的地基。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端 vs 後端（複習）</h2><div class="k">先分清楚誰做什麼</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">🖥️</div><h3>後端（Backend）</h3><p>伺服器程式，處理翻譯、查天氣、回傳資料。用 Python + Flask 寫。<b>這章的主角。</b></p></div>
+    <div class="cc"><div class="ico">📱</div><h3>前端（Frontend）</h3><p>使用者看到、按到的畫面。用 HTML/CSS/JS，下一章 CH05 做。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>什麼是 Flask？</h2><div class="k">用 Python 做網站的輕量框架</div></div>
+  <div class="body">
+    <p><b>Flask</b> 是一個 Python 的網站框架。它幫你處理「有人連到某個網址時，要回什麼」這件事。</p>
+    <p>它很輕、很好學，幾行程式就能跑起一個網站，非常適合初學者與這種專案。</p>
+    <div class="info-box">🧩 你只要定義「網址 → 要回傳什麼」，Flask 負責其餘的網路細節。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>用提示詞生出骨架</h2><div class="k">先看我們會怎麼「叫」AI 做</div></div>
+  <div class="prompt body">
+    <div class="lbl">💬 提示詞</div>
+    <button class="copy" onclick="cp(this)">複製</button>
+    <pre>請用 Python Flask 幫我建立最小網站骨架：
+1. app.py：首頁 / 回傳「Hello 亮言」；另做 /api/health 回傳 JSON {"ok": true}。
+2. 用 python-dotenv 讀取 .env（之後放金鑰）。
+3. requirements.txt 列出需要套件。
+4. 告訴我如何安裝、執行、用瀏覽器看結果。
+我是新手，請附完整程式碼與步驟。</pre>
+  </div>
+  <p class="note body">下一頁就是它會產生的 app.py。我們直接看、直接用。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>app.py（完整可複製）</h2><div class="k">建立這個檔，貼上內容</div></div>
+  <div class="term body">
+    <button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py — 最小 Flask 骨架</span>
+import os
+from flask import Flask, jsonify
+from dotenv import load_dotenv
+
+load_dotenv()                      <span class="cm"># 讀取 .env 裡的設定</span>
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return 'Hello 亮言！我的翻譯 App 開工了 🚀'
+
+@app.route('/api/health')
+def health():
+    return jsonify({'ok': True})
+
+if __name__ == '__main__':
+    port = int(os.getenv('PORT', '5001'))
+    app.run(host='0.0.0.0', port=port, debug=True)</pre>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 app.py</h2><div class="k">不必背，抓重點就好</div></div>
+  <ul class="body" style="padding-left:24px">
+    <li><code>load_dotenv()</code>：把 .env 裡的金鑰讀進來備用。</li>
+    <li><code>app = Flask(__name__)</code>：建立網站應用程式。</li>
+    <li><code>@app.route('/')</code>：有人連到首頁時，執行下面的函式、回傳文字。</li>
+    <li><code>/api/health</code>：回傳 JSON，之後用來檢查伺服器活著沒。</li>
+    <li><code>app.run(...)</code>：啟動伺服器，監聽 5001 埠。</li>
+  </ul>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>requirements.txt</h2><div class="k">列出這個專案需要的套件</div></div>
+  <div class="term body">
+    <button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="out">flask
+python-dotenv</span></pre>
+  </div>
+  <p class="note body">之後加功能會再補套件（google-genai、requests…），先放這兩個能跑起來就好。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>安裝套件</h2><div class="k">一行指令裝好 requirements 裡的東西</div></div>
+  <div class="term body">
+    <button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">pip install -r requirements.txt</span>
+<span class="out">Successfully installed flask... python-dotenv...</span></pre>
+  </div>
+  <p class="note body">在 VS Code 的內建終端機（Terminal → New Terminal）執行，確定你在專案資料夾裡。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>啟動網站！</h2><div class="k">見證第一個小成品</div></div>
+  <div class="term body">
+    <button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">python app.py</span>
+<span class="out">* Running on http://127.0.0.1:5001
+* Debug mode: on</span></pre>
+  </div>
+  <p class="body">看到「Running on http://127.0.0.1:5001」就是啟動成功了！</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>用瀏覽器打開</h2><div class="k">你的網站活了</div></div>
+  <div class="body">
+    <p>打開瀏覽器，網址列輸入：<code>http://127.0.0.1:5001</code>，按 Enter。</p>
+    <div class="ok-box">✅ 你會看到「Hello 亮言！我的翻譯 App 開工了 🚀」。恭喜，你的第一個網站跑起來了！</div>
+    <div class="shot"><span class="cam">📸</span>請截圖：瀏覽器顯示「Hello 亮言」的畫面</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>再測 /api/health</h2><div class="k">確認 API 也通</div></div>
+  <div class="body">
+    <p>網址列輸入：<code>http://127.0.0.1:5001/api/health</code></p>
+    <div class="term"><pre><span class="out">{"ok": true}</span></pre></div>
+    <p class="note">看到這段 JSON 就對了。這種「回資料」的網址，就是我們之後翻譯、天氣功能的形式。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>常見問題</h2><div class="k">跑不起來先看這</div></div>
+  <div class="tc body">
+    <div>
+      <p><b>找不到 flask？</b></p>
+      <p class="note">套件沒裝或裝錯環境。重跑 <code>pip install -r requirements.txt</code>。</p>
+      <p><b>Port 5001 被占用？</b></p>
+      <p class="note">改用別的埠：把 app.py 的 5001 改成 5002，或關掉占用的程式。</p>
+    </div>
+    <div>
+      <p><b>改了程式沒變化？</b></p>
+      <p class="note">存檔（Ctrl/Cmd+S），debug 模式會自動重載；必要時 Ctrl+C 停掉再 <code>python app.py</code>。</p>
+      <p><b>要停止伺服器？</b></p>
+      <p class="note">在終端機按 <code>Ctrl + C</code>。</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>認識「路由」</h2><div class="k">網址 → 對應的函式</div></div>
+  <div class="body">
+    <p>每個 <code>@app.route('網址')</code> 就是一條「路由」：有人連到那個網址，就執行底下的函式、回傳結果。</p>
+    <p>我們的 App 之後會有很多路由：<code>/api/translate</code>、<code>/api/weather</code>、<code>/api/currency</code>…每個負責一個功能。</p>
+    <div class="info-box">🛣️ 你可以把後端想成一棟房子，每條路由是一個窗口，各自處理不同的服務。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>把金鑰讀進來（預備）</h2><div class="k">.env + load_dotenv 的組合</div></div>
+  <div class="body">
+    <p>還記得 CH02 生成的 <code>.env</code> 嗎？把它放到專案根目錄。<code>load_dotenv()</code> 會讀它，之後程式就能這樣拿金鑰：</p>
+    <div class="term"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm"># 之後在需要的地方這樣取用</span>
+API_KEY = os.getenv('GEMINI_API_KEY')</pre></div>
+    <p class="note">現在骨架還用不到金鑰，但管線已經接好，CH06 串翻譯時就直接用。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 app.py 骨架生成器</h2><div class="k">改個訊息與埠號，幫你產生 app.py</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生 app.py 骨架</div>
+    <div class="grid2">
+      <div class="field"><label>首頁要顯示的文字</label><input id="a_msg" placeholder="Hello 亮言！我的翻譯 App 開工了 🚀"></div>
+      <div class="field"><label>埠號 Port</label><input id="a_port" placeholder="5001"></div>
+    </div>
+    <div class="btns">
+      <button onclick="genApp()">⚙️ 產生 app.py</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+      <button class="alt" onclick="dlApp()">⬇ 下載 app.py</button>
+    </div>
+    <div class="out" id="a_out">按「產生 app.py」，這裡會出現可直接存檔的程式碼…</div>
+    <div class="hint">下載後存成專案根目錄的 <b>app.py</b>，再 <code>python app.py</code> 就能跑。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>順手建 .gitignore</h2><div class="k">先講，之後上傳 GitHub 才不會外洩金鑰</div></div>
+  <div class="body">
+    <p>建一個檔案叫 <code>.gitignore</code>，列出「不要上傳」的東西。最重要的是 <b>.env</b>：</p>
+    <div class="term"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="out">.env
+__pycache__/
+*.pyc</span></pre></div>
+    <div class="ok-box">🔐 有了這行，你的金鑰檔就不會被傳上 GitHub。安全習慣，從第一天養成。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">確認你的小成品能跑</div></div>
+  <ul class="goals body">
+    <li>建好 app.py、requirements.txt、.gitignore。</li>
+    <li><code>python app.py</code> 能啟動，終端機顯示 Running。</li>
+    <li>瀏覽器打開看到「Hello 亮言」。</li>
+    <li>/api/health 回傳 <code>{"ok": true}</code>。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：能跑的網站地基</div><p>一個真的在你電腦上運作的 Flask 網站。接下來每加一個功能，都是往這個地基上疊。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH05</h2><div class="k">前端骨架與 UI</div></div>
+  <div class="body">
+    <p>後端會回文字了，但現在還很陽春。下一章我們做<b>前端畫面</b>：一個有語言選單、輸入框、按鈕的漂亮介面，讓 App 開始有「App 的樣子」。</p>
+    <div class="info-box">🎨 CH05 讓畫面長出來。走吧！</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH04 完成！<span class="g">網站跑起來了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH05.html">→ 下一章 CH05</a>
+  </div>
+</section>
+
+<script>
+function genApp(){
+  var msg=(document.getElementById('a_msg').value||'Hello 亮言！我的翻譯 App 開工了 🚀').replace(/'/g,"\\'");
+  var port=(document.getElementById('a_port').value||'5001').trim().replace(/[^0-9]/g,'')||'5001';
+  var code=
+"# app.py — 最小 Flask 骨架\n"+
+"import os\n"+
+"from flask import Flask, jsonify\n"+
+"from dotenv import load_dotenv\n\n"+
+"load_dotenv()\n"+
+"app = Flask(__name__)\n\n"+
+"@app.route('/')\n"+
+"def index():\n"+
+"    return '"+msg+"'\n\n"+
+"@app.route('/api/health')\n"+
+"def health():\n"+
+"    return jsonify({'ok': True})\n\n"+
+"if __name__ == '__main__':\n"+
+"    port = int(os.getenv('PORT', '"+port+"'))\n"+
+"    app.run(host='0.0.0.0', port=port, debug=True)\n";
+  document.getElementById('a_out').textContent=code;
+}
+function dlApp(){genApp();downloadText('app.py',document.getElementById('a_out').textContent);}
+</script>
+<script>window.SLIDE_CFG={title:'CH04 · Flask 後端骨架',part:'#27AE60',next:'CH05.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH15 · 旅遊助手</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第二篇 · Part 3 · 多模態與旅遊工具</div>
+  <h1>CH15 · <span class="g">旅遊助手</span></h1>
+  <h2>打一句話問旅遊問題，會上網幫你查</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">會上網查的旅遊小幫手</div></div>
+  <div class="body">
+    <p>打「沖繩 12 月適合玩水嗎？」——助手先用 <b>Tavily 上網搜尋</b>最新資訊，再讓 AI 整理成答案，附上來源連結。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個會查資料的旅遊問答框，行程外的問題都能問。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>設計重點：沒金鑰也能用</h2><div class="k">優雅退回，不會壞</div></div>
+  <div class="body">
+    <p>有 Tavily 金鑰 → 先上網查、再回答（即時）。沒有金鑰或額度爆掉 → <b>自動退回</b>用 AI 既有知識回答，附註說明。</p>
+    <div class="ok-box">✅ 這種「有就更好、沒有也能動」的設計，讓功能更耐用、對使用者更友善。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>提示詞</h2><div class="k">Tavily 選填 + LLM 回答</div></div>
+  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>做 /api/ask：收 question。若有 Tavily 金鑰就先呼叫
+Tavily search 拿搜尋結果當上下文，餵給 LLM 回答（用我的語言）；
+若沒有金鑰或搜尋失敗，就直接用 AI 知識回答並加註。
+回傳 {answer, sources, searched}。前端做問答框顯示答案與來源。</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Tavily 搜尋</h2><div class="k">一個 POST 就有搜尋結果</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py</span>
+def tavily_search(key, query):
+    r = requests.post('https://api.tavily.com/search', json={
+        'api_key':key, 'query':query, 'max_results':5,
+        'include_answer':True}, timeout=20)
+    r.raise_for_status()
+    return r.json()   <span class="cm"># 含 answer 與 results[title,url,content]</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>後端 /api/ask</h2><div class="k">搜尋 → 餵給 AI → 回答</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>@app.route('/api/ask', methods=['POST'])
+def api_ask():
+    d = request.get_json(force=True) or {}
+    q = (d.get('question') or '').strip()
+    tv = d.get('tavily_key') or os.getenv('TAVILY_API_KEY') or ''
+    ctx, sources, searched = '', [], False
+    if tv:
+        try:
+            res = tavily_search(tv, q)
+            for it in res.get('results', []):
+                ctx += f"- {it['title']}: {it['content']}\n"
+                sources.append({'title':it['title'],'url':it['url']})
+            searched = True
+        except Exception: pass   <span class="cm"># 失敗就退回純 AI</span>
+    key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
+    system = f"You are a travel assistant. Answer in Traditional Chinese. Use the web context if provided."
+    user = q if not ctx else f"Question: {q}\n\nWeb context:\n{ctx}"
+    answer = providers.generate('gemini', key, '', '', system, user)   <span class="cm"># 沿用 CH06 的供應商</span>
+    return jsonify({'ok':True,'answer':answer,'sources':sources,'searched':searched})</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端：問答框</h2><div class="k">問題 → 答案 + 來源</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>async function ask(){
+  const q = askInput.value.trim(); if(!q) return;
+  askAnswer.textContent = '思考中…';
+  const res = await fetch('/api/ask', {method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ question:q, tavily_key: cfg.tavilykey || '' })});
+  const d = await res.json();
+  askAnswer.textContent = d.answer;
+  askSources.innerHTML = d.sources.map(s=&gt;`&lt;a href="${s.url}" target="_blank"&gt;${s.title}&lt;/a&gt;`).join('');
+}</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測</h2><div class="k">問個旅遊問題</div></div>
+  <div class="body">
+    <p>打「那霸機場到國際通怎麼去？」按送出。有 Tavily 金鑰會顯示「🌐 已參考即時搜尋」+ 來源；沒金鑰則用 AI 知識回答。</p>
+    <div class="shot"><span class="cam">📸</span>請截圖：旅遊助手回答 + 來源連結</div>
+    <div class="warn-box">⚠️ 別用網路上撿到的公開 Tavily 金鑰（多半已用爆，回 429 額度錯誤）。自己申請一把（CH02 教過）。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 助手指令生成器</h2><div class="k">設定助手的角色與語言</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生助手 system 指令</div>
+    <div class="grid2">
+      <div class="field"><label>助手角色</label><input id="k_role" placeholder="專業又親切的旅遊助手"></div>
+      <div class="field"><label>回答語言</label><input id="k_lang" placeholder="Traditional Chinese (Taiwan)"></div>
+    </div>
+    <div class="btns">
+      <button onclick="genAsk()">⚙️ 產生指令</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+    </div>
+    <div class="out" id="k_out">填好後按產生，這裡會出現助手的 system 指令…</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">會查資料的助手</div></div>
+  <ul class="goals body">
+    <li>/api/ask 有 Tavily 就上網查、沒有就退回 AI 知識。</li>
+    <li>回答附上來源連結。</li>
+    <li>前端問答框能問能答。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 第二篇完成！旅遊神器成形</div><p>翻譯 + 拍照 + 檔案 + 匯率 + 天氣 + 助手，全部到齊！剩下讓它變成能安裝的手機 App 並上線，走到哪都能用。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH16</h2><div class="k">PWA 手機安裝（Part 4 開始）</div></div>
+  <div class="body">
+    <p>進入第三篇！下一章把網站做成 <b>PWA</b>：可以「加到主畫面」、支援離線，用起來像原生 App。會用到 manifest 與 Service Worker。</p>
+    <div class="info-box">📱 CH16 讓 App 裝得進手機。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH15 完成！<span class="g">旅遊神器成形</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH16.html">→ 下一章 CH16</a>
+  </div>
+</section>
+
+<script>
+function genAsk(){
+  var role=(document.getElementById('k_role').value||'專業又親切的旅遊助手').trim();
+  var lang=(document.getElementById('k_lang').value||'Traditional Chinese (Taiwan)').trim();
+  var out="You are a "+role+". Answer the user's question clearly and concisely in "+lang+". "+
+    "If web search context is provided, prefer those up-to-date facts and cite them; "+
+    "otherwise answer from your own knowledge and note uncertainty for time-sensitive details.";
+  document.getElementById('k_out').textContent=out;
+}
+</script>
+<script>window.SLIDE_CFG={title:'CH15 · 旅遊助手',part:'#8E44AD',next:'CH16.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

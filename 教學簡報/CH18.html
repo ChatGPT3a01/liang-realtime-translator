@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH18 · 部署到 Render</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第三篇 · Part 4 · 上線與加值</div>
+  <h1>CH18 · <span class="g">部署到 Render</span></h1>
+  <h2>GitHub + Render，讓你走到哪都能用你的 App</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">從本機走向雲端</div></div>
+  <div class="body">
+    <p>把專案上傳 GitHub、在 Render 建立服務、設定金鑰環境變數，得到一個<b>真實網址</b>。手機打開就能用、能裝到主畫面。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個公開網址（像 https://你的名字.onrender.com），走到哪打開都能用（密碼把關，只有你和授權的人進得來）。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>部署流程總覽</h2><div class="k">三步驟</div></div>
+  <div class="term body"><pre><span class="out">你的電腦（程式碼）
+   ① 上傳 → GitHub（雲端倉庫）
+                 ② 連結 → Render（自動抓程式碼、跑起來）
+                              ③ 得到 → 公開網址 🌐
+之後：改程式 → push GitHub → Render 自動重新部署</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>上線前檢查三個檔</h2><div class="k">確認都在專案根目錄</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">📦</div><h3>requirements.txt</h3><p>列出所有套件，Render 會照它安裝。</p></div>
+    <div class="cc"><div class="ico">🙈</div><h3>.gitignore</h3><p>含 .env，確保金鑰不上傳。</p></div>
+    <div class="cc"><div class="ico">⚙️</div><h3>render.yaml</h3><p>部署設定（選填但方便）。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>requirements.txt（完整）</h2><div class="k">把用到的都列上</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="out">flask
+flask-socketio
+simple-websocket
+python-dotenv
+google-genai
+requests</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>render.yaml</h2><div class="k">告訴 Render 怎麼跑</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># render.yaml</span>
+services:
+  - type: web
+    name: liang-translator
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false          <span class="cm"># 在 Render 儀表板填，不寫進 repo</span>
+      - key: TAVILY_API_KEY
+        sync: false</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>① GitHub：建立倉庫</h2><div class="k">程式碼的雲端家</div></div>
+  <ol class="sl body">
+    <li>登入 github.com，右上 <b>+</b> → New repository。</li>
+    <li>取名（例 liang-translator），選 <b>Private</b>（私人），建立。</li>
+  </ol>
+  <div class="shot"><span class="cam">📸</span>請截圖：GitHub 建立 repository 頁</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>① 上傳程式碼</h2><div class="k">兩種方式擇一</div></div>
+  <div class="tc body">
+    <div class="cc"><div class="ico">🖱️</div><h3>網頁上傳（新手）</h3><p>repo 頁 → Add file → Upload files → 把專案檔案拖進去 → Commit。</p></div>
+    <div class="cc"><div class="ico">⌨️</div><h3>用 Git 指令</h3><p>git init → add → commit → push。可請 AI 給你完整指令。</p></div>
+  </div>
+  <div class="warn-box body" style="margin-top:12px">⚠️ 上傳前再次確認 .env <b>沒有</b>被傳上去（.gitignore 要生效）。金鑰外流事小，帳單爆掉事大。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>② Render：建立服務</h2><div class="k">連結 GitHub 專案</div></div>
+  <ol class="sl body">
+    <li>登入 render.com（用 GitHub 帳號）。</li>
+    <li>New + → <b>Web Service</b>。</li>
+    <li>選剛剛的 GitHub 倉庫，按 Connect。</li>
+  </ol>
+  <div class="shot"><span class="cam">📸</span>請截圖：Render 選擇 GitHub 倉庫的畫面</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>② 基本設定</h2><div class="k">填對這幾格</div></div>
+  <table class="tbl body">
+    <tr><th>欄位</th><th>填什麼</th></tr>
+    <tr><td>Region</td><td>Singapore（離台灣近）</td></tr>
+    <tr><td>Branch</td><td>main</td></tr>
+    <tr><td>Build Command</td><td>pip install -r requirements.txt</td></tr>
+    <tr><td>Start Command</td><td>python app.py</td></tr>
+    <tr><td>Instance Type</td><td>Free</td></tr>
+  </table>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>② 設定環境變數（關鍵！）</h2><div class="k">金鑰放這裡，不進程式碼</div></div>
+  <div class="body">
+    <p>往下找到 <b>Environment Variables</b>，把金鑰一組一組加進去：</p>
+    <table class="tbl">
+      <tr><th>Key</th><th>Value</th></tr>
+      <tr><td>GEMINI_API_KEY</td><td>你的 Gemini 金鑰</td></tr>
+      <tr><td>TAVILY_API_KEY</td><td>你的 Tavily 金鑰（選填）</td></tr>
+    </table>
+    <div class="ok-box" style="margin-top:10px">🔐 這就是為什麼程式用 os.getenv()——它會來這裡讀，金鑰不出現在程式碼或 GitHub。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>② 部署！</h2><div class="k">按下去，等 2–5 分鐘</div></div>
+  <ol class="sl body">
+    <li>點最下方 <b>Create Web Service</b>。</li>
+    <li>Render 開始安裝套件、啟動，看 log 跑。</li>
+    <li>狀態變 <b>Live</b>（綠色）就上線了！</li>
+    <li>頁面上方有你的網址：https://xxx.onrender.com，複製起來。</li>
+  </ol>
+  <div class="shot"><span class="cam">📸</span>請截圖：Render 狀態 Live + 你的網址</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>免費方案要知道</h2><div class="k">休眠與喚醒</div></div>
+  <div class="body">
+    <ul style="padding-left:26px">
+      <li>免費服務閒置會<b>休眠</b>，第一次連線要等 <b>30–60 秒</b>喚醒，屬正常。</li>
+      <li>喚醒後就正常快。想常駐可升級付費方案。</li>
+    </ul>
+    <div class="info-box">🌐 用手機打開你的網址測測看：翻譯、拍照、天氣、匯率、助手都試一輪。還能「加到主畫面」！</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>之後怎麼更新？</h2><div class="k">push 就自動部署</div></div>
+  <div class="term body"><pre><span class="out">改程式 → 上傳/push 到 GitHub
+        → Render 偵測到變更
+        → 自動重新部署（約 2–5 分鐘）
+        → 網址上就是新版</span></pre></div>
+  <p class="note body">改了看不到？PWA 有快取——把 sw.js 的版本號 +1、手機重新整理兩次。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>常見部署問題</h2><div class="k">上不了線先看這</div></div>
+  <div class="tc body">
+    <div>
+      <p><b>Build 失敗？</b></p>
+      <p class="note">多半是 requirements.txt 少套件或打錯字，看 log 補上。</p>
+      <p><b>啟動就掛？</b></p>
+      <p class="note">確認 Start Command、app.py 用環境變數 PORT。</p>
+    </div>
+    <div>
+      <p><b>功能沒反應？</b></p>
+      <p class="note">檢查環境變數金鑰有沒有填、有沒有拼錯。</p>
+      <p><b>第一次好慢？</b></p>
+      <p class="note">免費方案喚醒中，等 30–60 秒。</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 render.yaml 生成器</h2><div class="k">填服務名，產生部署設定</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生 render.yaml</div>
+    <div class="field"><label>服務名稱</label><input id="r_name" placeholder="liang-translator"></div>
+    <div class="field"><label>要哪些環境變數？（逗號分隔）</label><input id="r_env" placeholder="GEMINI_API_KEY, TAVILY_API_KEY"></div>
+    <div class="btns">
+      <button onclick="genRy()">⚙️ 產生</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+      <button class="alt" onclick="dlRy()">⬇ 下載</button>
+    </div>
+    <div class="out" id="r_out">填好後按產生，這裡會出現 render.yaml…</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">你的 App 上線了</div></div>
+  <ul class="goals body">
+    <li>程式碼上傳 GitHub（.env 沒被上傳）。</li>
+    <li>Render 服務狀態 Live，拿到公開網址。</li>
+    <li>環境變數填好金鑰，功能正常。</li>
+    <li>手機打開網址能用、能加到主畫面。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 大成品完成：上線的【亮言即時翻譯】</div><p>從零到上線，你親手做出了完整的旅遊翻譯 App，走到哪都能用！最後一章，我們把整個過程做成一個「整合生成器」。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH19</h2><div class="k">整合生成器（最終章）</div></div>
+  <div class="body">
+    <p>最後一章，把整堂課用到的生成器<b>整合成一個</b>：填 App 名稱、語言、金鑰、要哪些功能，一鍵產生並下載你自己的客製化專案。</p>
+    <div class="info-box">⚙️ CH19 是課程的完美句點。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH18 完成！<span class="g">App 上線了 🎉</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH19.html">→ 下一章 CH19</a>
+  </div>
+</section>
+
+<script>
+function genRy(){
+  var name=(document.getElementById('r_name').value||'liang-translator').trim();
+  var envs=(document.getElementById('r_env').value||'GEMINI_API_KEY, TAVILY_API_KEY').split(',').map(function(s){return s.trim()}).filter(Boolean);
+  var envLines=envs.map(function(k){return "      - key: "+k+"\n        sync: false";}).join("\n");
+  var y="services:\n  - type: web\n    name: "+name+"\n    runtime: python\n    plan: free\n"+
+    "    buildCommand: pip install -r requirements.txt\n    startCommand: python app.py\n"+
+    "    envVars:\n"+envLines+"\n";
+  document.getElementById('r_out').textContent=y;
+}
+function dlRy(){genRy();downloadText('render.yaml',document.getElementById('r_out').textContent);}
+</script>
+<script>window.SLIDE_CFG={title:'CH18 · 部署到 Render',part:'#E74C3C',next:'CH19.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

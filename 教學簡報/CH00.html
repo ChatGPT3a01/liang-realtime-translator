@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH00 · 課程總覽與成品展示</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">🎓 Vibe Coding 實戰課 · 零基礎友善</div>
+  <h1>打造你的<span class="g">旅遊翻譯神器</span></h1>
+  <h2>從零到上線 · 用 AI 幫你寫程式的完整實戰</h2>
+  <p style="font-size:20px;color:#b9a9d6;margin-top:14px">CH00 · 課程總覽與成品展示</p>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>你的講師</h2><div class="k">帶你把「不會寫程式」變成「能做出上線 App」</div></div>
+  <div class="body">
+    <p><b>曾慶良 主任（阿亮老師）</b>，新興科技推廣中心主任、教育部學科中心研究教師、臺北市資訊教育輔導員。</p>
+    <p>擁有教育部人工智慧講師認證，曾獲百大資訊人才獎、親子天下創新 100 教師、臺北市特殊優良教師。長年在第一線把最新的 AI 工具，變成一般人也能上手的教學。</p>
+    <div class="ok-box">🎯 這堂課的信念：你不需要先變成工程師，才能做出好用的軟體。你需要的是「會跟 AI 溝通」，把腦中的點子一步步變成真的東西。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>上完這門課，你會…</h2><div class="k">不只是看懂，而是親手做出來、放上網</div></div>
+  <ul class="goals body">
+    <li>做出一個真正能用的「旅遊翻譯 App」，手機打開就能操作。</li>
+    <li>學會「Vibe Coding」——用自然語言下提示詞，讓 AI 幫你把功能寫出來。</li>
+    <li>親手申請並管理 Gemini、Tavily 等 AI 服務金鑰，知道每一把鑰匙在做什麼。</li>
+    <li>把專案上傳 GitHub、部署到 Render，得到一個真實網址，走到哪都能打開來用。</li>
+    <li>把網站做成 PWA，加到手機主畫面，用起來像原生 App。</li>
+    <li>最後做出一個「整合生成器」，讓別人填個表就能下載自己的專案。</li>
+  </ul>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>成品長這樣（1）· 主畫面</h2><div class="k">乾淨、好按、手機優先的介面</div></div>
+  <div class="tc body">
+    <div>
+      <p>打開 App，你會看到一個深紫金色的翻譯介面：上方選語言，中間是大大的翻譯結果，下方一顆麥克風按鈕。</p>
+      <p>對著手機講話，它會即時把你說的話翻成對方的語言，並用語音念出來。</p>
+      <div class="info-box">📱 這是一個「網頁 App」——不用上架商店，用網址就能開，也能「加到主畫面」。</div>
+    </div>
+    <div class="cc" style="border-top-color:var(--gold)"><div class="ico">🎙️</div><h3>即時語音翻譯</h3>
+      <p>點麥克風 → 說話 → 立刻聽到翻譯。支援中、英、日、韓、泰、越等多國語言。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>成品功能總覽</h2><div class="k">八大功能，一章一章逐一做出來</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">🎙️</div><h3>即時翻譯</h3><p>低延遲語音對話翻譯</p></div>
+    <div class="cc"><div class="ico">👥</div><h3>面對面模式</h3><p>手機平放，兩人對看</p></div>
+    <div class="cc"><div class="ico">📷</div><h3>拍照翻譯</h3><p>菜單看板，摘要＋翻譯</p></div>
+    <div class="cc"><div class="ico">📎</div><h3>檔案翻譯</h3><p>圖片／PDF／文字檔</p></div>
+    <div class="cc"><div class="ico">💱</div><h3>匯率換算</h3><p>即時匯率，免金鑰</p></div>
+    <div class="cc"><div class="ico">🌤️</div><h3>天氣查詢</h3><p>要不要帶傘一目了然</p></div>
+    <div class="cc"><div class="ico">🧭</div><h3>旅遊助手</h3><p>上網查最新旅遊資訊</p></div>
+    <div class="cc"><div class="ico">📱</div><h3>安裝到手機</h3><p>PWA 加到主畫面</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>成品長這樣（2）· 拍照翻譯</h2><div class="k">出國看不懂菜單？拍一張就好</div></div>
+  <div class="tc body">
+    <div>
+      <p>按下「📷 拍照翻譯」，手機會直接開相機。對著日文菜單、韓文看板、外文文件拍一張。</p>
+      <p>AI 會先幫你「看懂」照片內容，用中文摘要重點，再附上完整翻譯。看不懂的東西瞬間變清楚。</p>
+    </div>
+    <div class="cc" style="border-top-color:#8E44AD"><div class="ico">📷</div><h3>拍照 → 摘要 ＋ 翻譯</h3>
+      <p>背後用的是 Gemini 的「多模態」能力：它能同時理解圖片與文字。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>成品長這樣（3）· 旅遊助手</h2><div class="k">打一句話，它會上網幫你查</div></div>
+  <div class="tc body">
+    <div>
+      <p>「沖繩 12 月適合玩水嗎？」「那霸機場到國際通怎麼去？」——打進「🧭 助手」。</p>
+      <p>它會先<b>上網搜尋最新資訊</b>（用 Tavily 搜尋服務），再整理成清楚的答案，還附上參考來源連結。</p>
+    </div>
+    <div class="cc" style="border-top-color:#8E44AD"><div class="ico">🧭</div><h3>會查資料的旅遊小幫手</h3>
+      <p>沒有金鑰也能用——它會自動退回用 AI 既有知識回答，不會壞掉。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>什麼是 Vibe Coding？</h2><div class="k">用「說的」把軟體做出來</div></div>
+  <div class="body">
+    <p>Vibe Coding（氛圍編程）是近年因 AI 崛起而流行的做法：你<b>不用自己一行一行寫程式</b>，而是用自然語言描述你想要什麼，讓 AI 幫你把程式碼寫出來。</p>
+    <p>你的工作從「背語法、記指令」，變成「把需求講清楚、看結果、再調整」。就像跟一位很厲害的工程師夥伴合作，你負責出點子與方向，它負責動手。</p>
+    <div class="ok-box">🗝️ 關鍵能力不是打字，而是「怎麼把腦中的東西，講到 AI 聽得懂、做得對」。這就是整堂課要練的功夫。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Vibe Coding 三個心法</h2><div class="k">先記住，後面每一章都會用到</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">🎯</div><h3>講清楚「要什麼」</h3><p>目標、輸入、輸出、限制講明白。含糊的需求會得到含糊的結果。</p></div>
+    <div class="cc"><div class="ico">🔁</div><h3>小步快跑、逐步加</h3><p>一次只做一個功能，做好了再加下一個，不要一次要一大包。</p></div>
+    <div class="cc"><div class="ico">🔍</div><h3>看結果、回饋、修正</h3><p>跑跑看、哪裡不對就告訴 AI，讓它改。對話式地把東西磨好。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>每一章，都有能跑的小成品</h2><div class="k">功能一個一個疊上去，隨時都能用</div></div>
+  <div class="body">
+    <p>這堂課不是講完理論才動手。<b>每一章結束，你都會得到一個「可以使用的小成品」</b>——先能翻譯文字，再加語音，再加拍照…功能一層一層疊上去，每一層都能實際打開來玩。</p>
+    <div class="milestone"><div class="mh">🎁 可用的小成品</div><p>每章結尾都有這個綠色框，告訴你「現在你的 App 已經能做什麼了」。到課程最後，這些小成品就疊成一個完整的【亮言即時翻譯】App。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這堂課怎麼上？</h2><div class="k">每個步驟 = 一段可複製的提示詞 + 產出的程式碼</div></div>
+  <ol class="sl body">
+    <li>老師先講「這一步我們要做什麼、為什麼」。</li>
+    <li>投影片上給你一段<b>可以直接複製的提示詞</b>，或一個<b>填欄位就生成程式碼的生成器</b>。</li>
+    <li>你把提示詞貼給 AI（Claude／ChatGPT 等），得到程式碼。</li>
+    <li>把程式碼放到專案對應的位置，執行看看。</li>
+    <li>對照投影片的「預期結果」，不一樣就照「除錯提示」處理。</li>
+  </ol>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>提示詞長什麼樣子？搶先看</h2><div class="k">這就是你之後會一直用的東西</div></div>
+  <div class="body">
+    <p>比方說，要生出網站骨架，你會用到類似這樣的提示詞：</p>
+    <div class="prompt">
+      <div class="lbl">💬 提示詞範例</div>
+      <button class="copy" onclick="cp(this)">複製</button>
+      <pre>請用 Python Flask 幫我建立一個最小的網站專案，包含：
+1. app.py：啟動一個網頁伺服器，首頁回傳「Hello 亮言」。
+2. requirements.txt：列出需要的套件。
+3. 告訴我如何在本機執行、用瀏覽器打開看結果。
+請一步一步說明，我完全沒有寫過程式。</pre>
+    </div>
+    <p class="note">看到重點了嗎？<b>講清楚要什麼、列出輸出、說明我的程度</b>——這就是好提示詞。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>我們會用到的技術</h2><div class="k">名詞先混個臉熟，後面用到再細講</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">🐍</div><h3>Python + Flask</h3><p>後端（伺服器）的語言與框架，負責處理翻譯、天氣等請求。</p></div>
+    <div class="cc"><div class="ico">🌐</div><h3>HTML / CSS / JS</h3><p>前端（畫面），使用者在手機上看到、按到的東西。</p></div>
+    <div class="cc"><div class="ico">✨</div><h3>Google Gemini</h3><p>負責翻譯、看照片、朗讀、即時語音的 AI 大腦。</p></div>
+    <div class="cc"><div class="ico">📱</div><h3>PWA</h3><p>讓網頁能「安裝」到手機、支援離線的技術。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>我們會用到的線上服務</h2><div class="k">CH02 會一把一把帶你申請，先認識它們</div></div>
+  <table class="tbl body">
+    <tr><th>服務</th><th>做什麼</th><th>費用</th></tr>
+    <tr><td>Google AI Studio（Gemini）</td><td>翻譯、拍照、朗讀、即時語音的 AI</td><td>免費額度</td></tr>
+    <tr><td>Tavily</td><td>旅遊助手上網查資料</td><td>免費額度</td></tr>
+    <tr><td>Open-Meteo / ER-API</td><td>天氣、匯率</td><td>免費・免金鑰</td></tr>
+    <tr><td>GitHub</td><td>存放程式碼的雲端倉庫</td><td>免費</td></tr>
+    <tr><td>Render</td><td>讓網站 24 小時上線的平台</td><td>免費方案</td></tr>
+  </table>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>課程地圖</h2><div class="k">三篇 · 六 Part · 二十章，由淺入深</div></div>
+  <div class="cg c3 body">
+    <div class="cc" style="border-top-color:#4A90D9"><div class="ico">📦</div><h3>第一篇 · Part 0</h3><p>課前準備：認識課程、裝環境、申請金鑰（CH00–02）</p></div>
+    <div class="cc" style="border-top-color:#27AE60"><div class="ico">🏗️</div><h3>第一篇 · Part 1</h3><p>Vibe Coding 與骨架：心法 + 前後端骨架（CH03–05）</p></div>
+    <div class="cc" style="border-top-color:#E67E22"><div class="ico">🎙️</div><h3>第二篇 · Part 2</h3><p>核心翻譯：文字、語音、即時、面對面（CH06–10）</p></div>
+    <div class="cc" style="border-top-color:#8E44AD"><div class="ico">🧭</div><h3>第二篇 · Part 3</h3><p>多模態與旅遊工具：拍照、檔案、匯率、天氣、助手（CH11–15）</p></div>
+    <div class="cc" style="border-top-color:#E74C3C"><div class="ico">🚀</div><h3>第三篇 · Part 4</h3><p>上線與加值：PWA、金鑰設定、部署 Render（CH16–18）</p></div>
+    <div class="cc" style="border-top-color:#16A085"><div class="ico">⚙️</div><h3>第三篇 · Part 5</h3><p>整合生成器：填表產出整包專案（CH19）</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>上課前，你需要準備</h2><div class="k">CH01、CH02 會手把手帶你弄好</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">💻</div><h3>一台電腦</h3><p>Windows 或 Mac 都可以。</p></div>
+    <div class="cc"><div class="ico">📧</div><h3>一個 Email</h3><p>用來申請各種服務帳號。</p></div>
+    <div class="cc"><div class="ico">📱</div><h3>一支手機</h3><p>測試 App、裝到主畫面。</p></div>
+    <div class="cc"><div class="ico">🧠</div><h3>一顆好奇心</h3><p>願意動手、卡關不放棄。</p></div>
+    <div class="cc"><div class="ico">🌐</div><h3>穩定網路</h3><p>下載工具、呼叫 AI 都要連網。</p></div>
+    <div class="cc"><div class="ico">⏰</div><h3>彈性學習</h3><p>可分段學習，一個 Part 一個段落。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>會不會花錢？</h2><div class="k">跟著課程做，基本上零成本</div></div>
+  <div class="body">
+    <p>這堂課刻意選用「免費」或「免費額度」的服務：</p>
+    <ul style="padding-left:26px">
+      <li>天氣、匯率用<b>免金鑰</b>的公開 API，完全免費。</li>
+      <li>Gemini、Tavily 有<b>免費額度</b>，課堂用量遠遠用不完。</li>
+      <li>GitHub、Render 都有<b>免費方案</b>，足夠讓 App 上線。</li>
+    </ul>
+    <div class="warn-box">⚠️ 免費額度仍有上限。若你把 App 開放給很多人用、或大量測試，可能需要升級付費方案。課堂練習不會遇到。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>重要觀念：金鑰要保密</h2><div class="k">這是每個做 App 的人都要有的資安意識</div></div>
+  <div class="body">
+    <p>API 金鑰就像你家鑰匙——拿到的人可以用<b>你的額度、你的帳單</b>。所以：</p>
+    <ul style="padding-left:26px">
+      <li>❌ 不要把金鑰直接寫死在程式碼裡、上傳到 GitHub。</li>
+      <li>✅ 用「環境變數」的方式存放（課程會教）。</li>
+      <li>✅ 不小心外流了，就到後台把它「重新產生（regenerate）」作廢舊的。</li>
+    </ul>
+    <div class="info-box">🔐 我們的做法：金鑰放在伺服器的環境變數，或 App 的「設定」裡，<b>絕不寫進會公開的程式碼</b>。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>做完後，專案長這樣</h2><div class="k">先有個空間概念，之後每個檔案都會親手生出來</div></div>
+  <div class="prompt body" style="max-width:760px">
+    <div class="lbl">📁 專案結構</div>
+    <pre>雙向即時語音翻譯/
+├─ app.py              後端主程式（Flask）
+├─ providers.py        翻譯供應商抽象層
+├─ requirements.txt    需要的套件清單
+├─ .env                你的金鑰（不上傳）
+├─ render.yaml         部署設定
+├─ templates/
+│   └─ index.html      前端頁面
+└─ static/
+    ├─ js/app.js       前端邏輯
+    ├─ css/style.css   樣式
+    ├─ sw.js           Service Worker（PWA）
+    └─ manifest.json   PWA 設定</pre>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>課程結構一覽</h2><div class="k">三篇六 Part，一步一步往上疊</div></div>
+  <table class="tbl body">
+    <tr><th>篇</th><th>Part</th><th>章節</th></tr>
+    <tr><td>第一篇 · 起步</td><td>Part 0 課前準備</td><td>CH00–02</td></tr>
+    <tr><td>第一篇 · 起步</td><td>Part 1 Vibe Coding 與骨架</td><td>CH03–05</td></tr>
+    <tr><td>第二篇 · 核心功能</td><td>Part 2 核心翻譯</td><td>CH06–10</td></tr>
+    <tr><td>第二篇 · 核心功能</td><td>Part 3 多模態與旅遊工具</td><td>CH11–15</td></tr>
+    <tr><td>第三篇 · 上線與擴充</td><td>Part 4 上線與加值</td><td>CH16–18</td></tr>
+    <tr><td>第三篇 · 上線與擴充</td><td>Part 5 整合生成器</td><td>CH19</td></tr>
+  </table>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>卡關了怎麼辦？</h2><div class="k">這才是真正學會的地方</div></div>
+  <ol class="sl body">
+    <li>先看投影片的「預期結果 / 除錯提示」，多半有寫。</li>
+    <li>把<b>完整的錯誤訊息</b>複製，貼給 AI 問：「我遇到這個錯誤，怎麼解？」</li>
+    <li>一次只改一個地方，改完再跑，才知道是哪裡的問題。</li>
+    <li>真的卡住，回到上一個「能動」的版本，再小步前進。</li>
+  </ol>
+  <div class="ok-box body">💪 記住：出錯是正常的，工程師每天都在解錯。會解錯，你就真的會了。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>常見疑問 FAQ</h2><div class="k">開始前先解答幾個常見的擔心</div></div>
+  <div class="tc body">
+    <div>
+      <p><b>Q：我完全沒學過程式，跟得上嗎？</b></p>
+      <p class="note">A：跟得上。這堂課就是為零基礎設計的，每一步都有提示詞和截圖。</p>
+      <p><b>Q：一定要用哪個 AI？</b></p>
+      <p class="note">A：Claude、ChatGPT 等都可以，提示詞通用。</p>
+    </div>
+    <div>
+      <p><b>Q：Mac 還是 Windows？</b></p>
+      <p class="note">A：都可以，差異的地方課程會特別標註。</p>
+      <p><b>Q：做出來的東西是我的嗎？</b></p>
+      <p class="note">A：是你親手做的專案，課程素材版權屬阿亮老師、供學員學習。</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章，你該帶走的</h2><div class="k">進到 CH01 前，確認你懂了</div></div>
+  <ul class="goals body">
+    <li>知道這門課會做出一個「旅遊翻譯 App」並上線。</li>
+    <li>理解 Vibe Coding 是「用提示詞讓 AI 幫你寫程式」。</li>
+    <li>記得三心法：講清楚、小步快跑、看結果修正。</li>
+    <li>知道每一章都會產出「可用的小成品」，功能逐步疊加。</li>
+    <li>知道會用到 Gemini、Tavily、GitHub、Render，且金鑰要保密。</li>
+  </ul>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH01</h2><div class="k">開發環境準備</div></div>
+  <div class="body">
+    <p>接下來我們捲起袖子，把電腦環境準備好：安裝 Python、裝好編輯器與 AI 助手，確認一切就緒，準備開始 Vibe Coding。</p>
+    <div class="info-box">🚀 準備好了嗎？按右邊的 ▶ 或方向鍵，我們 CH01 見！</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">👨‍🏫 關於作者</div>
+  <h1 style="font-size:40px">曾慶良 主任（<span class="g">阿亮老師</span>）</h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:760px;line-height:1.9">
+    新興科技推廣中心主任・教育部學科中心研究教師・臺北市資訊教育輔導員<br>
+    教育部人工智慧講師認證・百大資訊人才獎・親子天下創新 100 教師</p>
+  <p style="margin-top:20px;font-size:18px;color:#b9a9d6">▶ YouTube：@Liang-yt02　　f 社團：3A 科技研究社　　✉ 3a01chatgpt@gmail.com</p>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 授權聲明</div>
+  <h1 style="font-size:38px">© 2026 阿亮老師 版權所有</h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px;margin-top:10px">本課程與專案僅供「阿亮老師課程學員」學習使用。</p>
+  <p style="font-size:18px;color:#ff9e9e;max-width:720px;margin-top:16px">❌ 禁止修改　❌ 禁止轉傳散布　❌ 禁止商業使用　❌ 禁止未經授權之任何形式使用</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH01.html">→ 下一章 CH01</a>
+  </div>
+</section>
+
+<script>window.SLIDE_CFG={title:'CH00 · 課程總覽與成品展示',part:'#4A90D9',next:'CH01.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

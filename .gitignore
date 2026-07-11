@@ -15,6 +15,9 @@ shot_*.png
 node_modules/
 .DS_Store
 
+# Netlify 本機狀態（含 site link，不進版控）
+.netlify/
+
 # 參考截圖不公開
 參考/
 

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH01 · 開發環境準備</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第一篇 · Part 0 · 課前準備</div>
+  <h1>CH01 · <span class="g">開發環境準備</span></h1>
+  <h2>把電腦準備好，才能開始 Vibe Coding</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章的目標</h2><div class="k">把三樣東西裝好，替後面的實作打好地基</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">🐍</div><h3>Python</h3><p>後端程式的語言，翻譯伺服器要靠它。</p></div>
+    <div class="cc"><div class="ico">📝</div><h3>編輯器</h3><p>用 VS Code 來開啟、檢視專案檔案。</p></div>
+    <div class="cc"><div class="ico">🤖</div><h3>AI 助手</h3><p>你的 Vibe Coding 夥伴（Claude／ChatGPT）。</p></div>
+  </div>
+  <div class="info-box body" style="margin-top:18px">💡 這章比較「工具性」，一步一步照做即可。裝好之後，後面就是真正的創作。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>為什麼需要 Python？</h2><div class="k">先懂它在專案裡的角色</div></div>
+  <div class="body">
+    <p>我們的 App 分成兩半：<b>前端</b>（手機上看到的畫面）和<b>後端</b>（背後幫你處理翻譯、查天氣的伺服器）。</p>
+    <p>後端我們用 <b>Python</b> 這個程式語言 + <b>Flask</b> 這個框架來寫。Python 好讀、好學、AI 也超會寫，是初學者的首選。</p>
+    <div class="ok-box">🎯 你不用「學會」Python 才能開始——AI 會幫你寫，你只要看得懂大概、會執行就好。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>安裝 Python（Windows）</h2><div class="k">照著點，5 分鐘搞定</div></div>
+  <ol class="sl body">
+    <li>打開瀏覽器，前往官方網站 <b>python.org/downloads</b>。</li>
+    <li>點黃色大按鈕「Download Python 3.x.x」下載安裝檔。</li>
+    <li>執行安裝檔，<b>務必先勾選最下面的「Add python.exe to PATH」</b>（超重要！）。</li>
+    <li>點「Install Now」，等它跑完，看到「Setup was successful」即完成。</li>
+  </ol>
+  <div class="warn-box body">⚠️ 沒勾「Add to PATH」的話，之後在終端機會找不到 python 指令。忘了勾就重新執行安裝檔、選 Modify 補勾。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>安裝 Python（Mac）</h2><div class="k">Mac 也很簡單</div></div>
+  <ol class="sl body">
+    <li>前往 <b>python.org/downloads</b>，它會自動偵測到 macOS。</li>
+    <li>下載「macOS 64-bit universal2 installer」。</li>
+    <li>打開下載的 <b>.pkg</b> 檔，一路按「繼續 → 同意 → 安裝」。</li>
+    <li>輸入電腦開機密碼授權，完成安裝。</li>
+  </ol>
+  <div class="info-box body">🍎 進階者也可用 Homebrew：<code>brew install python</code>。新手照上面的圖形安裝即可。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>先認識「終端機」</h2><div class="k">用打字指揮電腦的黑視窗</div></div>
+  <div class="tc body">
+    <div>
+      <p>終端機（Terminal）是一個用「打指令」操作電腦的視窗。之後我們會用它來執行 Python、安裝套件、啟動網站。</p>
+      <ul style="padding-left:24px">
+        <li><b>Windows</b>：開「PowerShell」或「終端機」。</li>
+        <li><b>Mac</b>：開「終端機 / Terminal」。</li>
+      </ul>
+    </div>
+    <div class="term"><div class="lbl">🖥️ 終端機長這樣</div>
+      <pre><span class="cm">$ 你在這裡打指令</span>
+<span class="out">電腦的回覆會顯示在這裡</span></pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>驗證 Python 裝好了沒</h2><div class="k">打一行指令確認</div></div>
+  <div class="body">
+    <p>打開終端機，輸入這行，按 Enter：</p>
+    <div class="term"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">python --version</span>
+<span class="out">Python 3.12.x   ← 有看到版本號就成功了！</span></pre></div>
+    <p class="note">若顯示「找不到指令」或版本是 2.x：Windows 試 <code>py --version</code>；Mac 試 <code>python3 --version</code>。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>安裝編輯器 VS Code</h2><div class="k">最多人用、免費的程式編輯器</div></div>
+  <ol class="sl body">
+    <li>前往 <b>code.visualstudio.com</b>。</li>
+    <li>點大按鈕下載對應系統版本（會自動偵測 Windows／Mac）。</li>
+    <li>執行安裝檔，一路下一步（Windows 建議勾「加入 PATH」「加入右鍵選單」）。</li>
+    <li>安裝完打開它，看到藍色歡迎畫面就成功。</li>
+  </ol>
+  <div class="ok-box body">📝 編輯器就是你「看程式碼、貼程式碼、存檔」的地方。AI 生的程式碼會貼到這裡。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>VS Code 三個你要會的地方</h2><div class="k">先認得這幾個位置就夠開始</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">📁</div><h3>左側檔案總管</h3><p>「Open Folder」開啟你的專案資料夾，看到所有檔案。</p></div>
+    <div class="cc"><div class="ico">📄</div><h3>中間編輯區</h3><p>點檔案在這裡開啟、編輯、貼上程式碼、Ctrl/Cmd+S 存檔。</p></div>
+    <div class="cc"><div class="ico">🖥️</div><h3>內建終端機</h3><p>選單 Terminal → New Terminal，不用另外開視窗。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>選一個 AI 助手當夥伴</h2><div class="k">Vibe Coding 的核心工具</div></div>
+  <table class="tbl body">
+    <tr><th>工具</th><th>特點</th><th>怎麼用</th></tr>
+    <tr><td>Claude（claude.ai）</td><td>寫程式、長文很強</td><td>網頁對話貼提示詞</td></tr>
+    <tr><td>ChatGPT</td><td>通用、生態成熟</td><td>網頁對話貼提示詞</td></tr>
+    <tr><td>Claude Code / Codex</td><td>直接在電腦幫你改檔案</td><td>命令列（進階）</td></tr>
+  </table>
+  <div class="info-box body" style="margin-top:14px">🤖 新手建議：先用<b>網頁版</b>（Claude 或 ChatGPT），把提示詞貼進去、把回覆的程式碼貼回 VS Code。最直覺。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>建立你的專案資料夾</h2><div class="k">給專案一個家</div></div>
+  <ol class="sl body">
+    <li>在桌面或文件夾，新建一個資料夾，命名 <b>my-translator</b>（英文、不要空格）。</li>
+    <li>打開 VS Code → File → Open Folder → 選這個資料夾。</li>
+    <li>之後所有檔案（app.py 等）都會放在這裡。</li>
+  </ol>
+  <div class="term body"><div class="lbl">🖥️ 或用指令建立</div><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">mkdir my-translator
+cd my-translator
+code .</span>
+<span class="out">（最後一行會用 VS Code 打開這個資料夾）</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>認識 pip 與套件</h2><div class="k">幫 Python 安裝別人寫好的工具</div></div>
+  <div class="body">
+    <p><b>套件（package）</b>是別人寫好、可以直接拿來用的工具包。例如 Flask 就是一個套件。</p>
+    <p><b>pip</b> 是 Python 的套件安裝器，用它一行指令就能裝好需要的工具：</p>
+    <div class="term"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">pip install flask</span>
+<span class="out">Successfully installed flask...  ← 看到這行就裝好了</span></pre></div>
+    <p class="note">之後我們會把所有需要的套件寫在 <code>requirements.txt</code>，一次全部安裝，不用一個一個裝。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>環境檢查清單</h2><div class="k">四項都打勾，才進下一章</div></div>
+  <ul class="goals body">
+    <li>Python 已安裝，<code>python --version</code> 看得到版本號。</li>
+    <li>VS Code 已安裝，能開啟資料夾、能開內建終端機。</li>
+    <li>選好一個 AI 助手（Claude 或 ChatGPT），能登入對話。</li>
+    <li>建好專案資料夾 my-translator，並用 VS Code 打開了。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 這一章的小成品</div><p>你有了一個「隨時能寫程式的工作台」——裝好 Python、編輯器、AI 助手，下一章開始就能真的動手做東西了。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>常見安裝問題</h2><div class="k">卡住先看這頁</div></div>
+  <div class="tc body">
+    <div>
+      <p><b>找不到 python 指令？</b></p>
+      <p class="note">Windows 沒勾 Add to PATH。重跑安裝檔選 Modify 補勾，或改用 <code>py</code>。</p>
+      <p><b>Mac 打 python 是 2.x？</b></p>
+      <p class="note">改用 <code>python3</code> 和 <code>pip3</code>。</p>
+    </div>
+    <div>
+      <p><b>pip 不是內部指令？</b></p>
+      <p class="note">試 <code>python -m pip install ...</code>。</p>
+      <p><b>公司/學校電腦裝不了？</b></p>
+      <p class="note">可能有權限限制，改用個人電腦，或線上環境（如 Replit）。</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH02</h2><div class="k">API 金鑰申請大全</div></div>
+  <div class="body">
+    <p>環境好了，接下來要幫 App 準備「鑰匙」——各種 AI 服務的 API 金鑰：</p>
+    <ul style="padding-left:26px">
+      <li>Google AI Studio（Gemini）— 翻譯與 AI 大腦</li>
+      <li>Tavily — 旅遊助手上網查資料</li>
+      <li>GitHub、Render — 之後部署上線要用</li>
+    </ul>
+    <div class="info-box">🔑 每一把鑰匙我都會一步一步、附畫面帶你申請，還有「.env 金鑰生成器」幫你組好設定檔。CH02 見！</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH01 完成！<span class="g">環境就緒</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH02.html">→ 下一章 CH02</a>
+  </div>
+</section>
+
+<script>window.SLIDE_CFG={title:'CH01 · 開發環境準備',part:'#4A90D9',next:'CH02.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

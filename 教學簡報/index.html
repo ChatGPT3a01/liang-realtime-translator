@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>亮言旅遊翻譯神器 · Vibe Coding 實戰課</title>
+<style>
+:root{
+  --bg1:#0f0c29; --bg2:#302b63; --bg3:#24243e;
+  --gold:#F5A623; --gold2:#f7d98a; --text:#f3eefb; --muted:#b9a9d6;
+  --p0:#4A90D9; --p1:#27AE60; --p2:#E67E22; --p3:#8E44AD; --p4:#E74C3C; --p5:#16A085;
+  --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',system-ui,'Microsoft JhengHei',sans-serif;color:var(--text);
+  background:linear-gradient(160deg,var(--bg1),var(--bg2) 55%,var(--bg3));min-height:100vh;line-height:1.7}
+.wrap{max-width:1240px;margin:0 auto;padding:40px 30px 80px}
+.hero{text-align:center;padding:50px 20px 40px}
+.hero .badge{display:inline-block;background:rgba(245,166,35,.15);border:1px solid var(--gold);
+  color:var(--gold2);padding:7px 18px;border-radius:20px;font-size:15px;font-weight:700;margin-bottom:20px}
+.hero h1{font-size:50px;font-weight:900;letter-spacing:1px;margin-bottom:16px;line-height:1.25}
+.hero h1 .hl{color:var(--gold)}
+.hero p.sub{font-size:21px;color:var(--muted);max-width:840px;margin:0 auto 12px;line-height:1.8}
+.hero .meta{margin-top:20px;color:var(--muted);font-size:16px}
+.cta{display:inline-block;margin-top:28px;background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#2a1a4a;padding:16px 40px;border-radius:14px;font-size:20px;font-weight:900;text-decoration:none;
+  box-shadow:0 8px 24px rgba(245,166,35,.3);transition:transform .2s}
+.cta:hover{transform:translateY(-3px)}
+h2.sec{font-size:32px;font-weight:900;margin:58px 0 6px;text-align:left;padding-left:16px;border-left:6px solid var(--gold)}
+h2.sec .hl{color:var(--gold)}
+p.seclead{text-align:left;color:var(--muted);margin-bottom:26px;padding-left:18px;font-size:17px}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.feat .f{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;transition:.2s}
+.feat .f:hover{border-color:var(--gold);transform:translateY(-3px)}
+.feat .f .ico{font-size:38px}.feat .f h3{font-size:21px;margin:10px 0 6px}.feat .f p{font-size:16px;color:var(--muted)}
+/* 篇 */
+.vol{margin-top:40px}
+.vol-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+.vol-head .vn{font-size:15px;font-weight:900;color:var(--gold);background:rgba(245,166,35,.12);border:1px solid var(--gold);
+  padding:4px 14px;border-radius:20px;white-space:nowrap}
+.vol-head b{font-size:27px}
+/* Part */
+.part{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.part .phead{display:flex;align-items:center;gap:14px;padding:16px 22px;background:rgba(255,255,255,.04)}
+.part .pnum{font-size:15px;font-weight:900;padding:7px 16px;border-radius:10px;color:#fff;flex-shrink:0;white-space:nowrap}
+.part .ptitle b{font-size:20px}.part .ptitle span{display:block;color:var(--muted);font-size:15px}
+.chs{padding:12px 18px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.ch{display:flex;align-items:center;gap:14px;padding:15px 18px;border-radius:12px;text-decoration:none;
+  color:var(--text);background:rgba(0,0,0,.18);border:1px solid var(--line);transition:.2s}
+.ch:hover{background:rgba(245,166,35,.12);border-color:var(--gold)}
+.ch .cnum{font-family:'Fira Code',monospace;font-size:15px;color:var(--gold2);font-weight:700;flex-shrink:0}
+.ch .ctxt b{font-size:17.5px}.ch .ctxt span{display:block;font-size:14px;color:var(--muted)}
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.why .w{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:20px 22px}
+.why .w h3{font-size:19px;margin-bottom:8px}.why .w p{font-size:16px;color:var(--muted)}
+.author{margin-top:50px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;text-align:center}
+.author h3{font-size:22px;color:var(--gold)}
+.author .role{color:var(--muted);font-size:14px;margin:10px 0}
+.author .links a{display:inline-block;margin:6px;padding:8px 16px;border-radius:20px;text-decoration:none;font-size:13px;font-weight:700;color:#fff}
+.author .yt{background:#c4302b}.author .fb{background:#1877f2}.author .mail{background:#1a9d54}
+.foot{text-align:center;color:var(--muted);font-size:13px;margin-top:40px;line-height:1.9}
+.foot .warn{color:#ffb3b3}
+@media(max-width:600px){.hero h1{font-size:32px}h2.sec{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="badge">🎓 Vibe Coding 實戰課 · 零基礎友善</div>
+    <h1>打造你的<span class="hl">旅遊翻譯神器</span><br>從零到上線的完整實戰</h1>
+    <p class="sub">跟著提示詞一步一步做，運用 AI 幫你寫程式，做出一個能<b>即時語音翻譯、拍照翻譯、查天氣匯率、旅遊問答</b>的手機網頁 App，並親手部署到雲端、加上<b>密碼開關</b>，讓你<b>走到哪、用到哪</b>。</p>
+    <p class="sub">這堂課的核心是 <b>Vibe Coding</b>——學會用提示詞指揮 AI，把你腦中的功能一個一個做出來。</p>
+    <div class="meta">講師：曾慶良 主任（阿亮老師）　|　技術：Flask + PWA + Gemini　|　部署：GitHub + Render</div>
+    <a class="cta" href="CH00.html">▶ 從第一章開始上課</a>
+  </div>
+
+  <h2 class="sec">你會<span class="hl">親手做出</span>什麼？</h2>
+  <p class="seclead">一個真正能用、可以裝到手機主畫面的旅遊翻譯 App，具備這些功能：</p>
+  <div class="feat">
+    <div class="f"><div class="ico">🎙️</div><h3>即時語音翻譯</h3><p>對著手機說話，即時翻譯並用語音念出來。</p></div>
+    <div class="f"><div class="ico">👥</div><h3>面對面模式</h3><p>手機平放桌上，上下對開，兩人各看各的語言。</p></div>
+    <div class="f"><div class="ico">📷</div><h3>拍照翻譯</h3><p>拍菜單、看板、文件，自動摘要 + 翻譯。</p></div>
+    <div class="f"><div class="ico">📎</div><h3>檔案翻譯</h3><p>上傳圖片 / PDF / 文字檔，一鍵翻成你的語言。</p></div>
+    <div class="f"><div class="ico">💱</div><h3>匯率換算</h3><p>即時匯率，出國購物心算不再卡關。</p></div>
+    <div class="f"><div class="ico">🌤️</div><h3>天氣查詢</h3><p>查任何城市天氣，還會提醒你要不要帶傘。</p></div>
+    <div class="f"><div class="ico">🧭</div><h3>旅遊助手</h3><p>問旅遊問題，會自動上網幫你查最新資訊。</p></div>
+    <div class="f"><div class="ico">📱</div><h3>安裝到手機</h3><p>做成 PWA，加到主畫面像原生 App 一樣用。</p></div>
+  </div>
+
+  <h2 class="sec">課程<span class="hl">地圖</span></h2>
+  <p class="seclead">三篇 · 六 Part · 二十章，由淺入深，每一步都有可複製的提示詞與程式碼。</p>
+
+  <!-- 第一篇 -->
+  <div class="vol">
+    <div class="vol-head"><span class="vn">第一篇</span><b>起步 · 從零到第一個畫面</b></div>
+
+    <div class="part">
+      <div class="phead"><div class="pnum" style="background:var(--p0)">Part 0 · 課前準備</div>
+        <div class="ptitle"><b>認識課程、裝好環境、申請所有金鑰</b><span>先把地基打穩</span></div></div>
+      <div class="chs">
+        <a class="ch" href="CH00.html"><span class="cnum">CH00</span><span class="ctxt"><b>課程總覽與成品展示</b><span>你會做出什麼、怎麼學</span></span></a>
+        <a class="ch" href="CH01.html"><span class="cnum">CH01</span><span class="ctxt"><b>開發環境準備</b><span>Python、編輯器、AI 助手</span></span></a>
+        <a class="ch" href="CH02.html"><span class="cnum">CH02</span><span class="ctxt"><b>API 金鑰申請大全</b><span>Gemini、Tavily、GitHub、Render</span></span></a>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="phead"><div class="pnum" style="background:var(--p1)">Part 1 · Vibe Coding 與骨架</div>
+        <div class="ptitle"><b>學會用提示詞讓 AI 寫程式</b><span>做出第一個能跑的網站</span></div></div>
+      <div class="chs">
+        <a class="ch" href="CH03.html"><span class="cnum">CH03</span><span class="ctxt"><b>Vibe Coding 心法</b><span>提示詞技巧與思維</span></span></a>
+        <a class="ch" href="CH04.html"><span class="cnum">CH04</span><span class="ctxt"><b>Flask 後端骨架</b><span>第一個能跑的網站</span></span></a>
+        <a class="ch" href="CH05.html"><span class="cnum">CH05</span><span class="ctxt"><b>前端骨架與 UI</b><span>畫面長出來</span></span></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第二篇 -->
+  <div class="vol">
+    <div class="vol-head"><span class="vn">第二篇</span><b>核心功能 · 把翻譯做到位</b></div>
+
+    <div class="part">
+      <div class="phead"><div class="pnum" style="background:var(--p2)">Part 2 · 核心翻譯</div>
+        <div class="ptitle"><b>文字、語音、即時、面對面</b><span>翻譯功能一次到位</span></div></div>
+      <div class="chs">
+        <a class="ch" href="CH06.html"><span class="cnum">CH06</span><span class="ctxt"><b>文字翻譯</b><span>供應商抽象層 providers</span></span></a>
+        <a class="ch" href="CH07.html"><span class="cnum">CH07</span><span class="ctxt"><b>語音辨識 STT</b><span>逐句模式</span></span></a>
+        <a class="ch" href="CH08.html"><span class="cnum">CH08</span><span class="ctxt"><b>語音朗讀 TTS</b><span>雲端 + 瀏覽器後備</span></span></a>
+        <a class="ch" href="CH09.html"><span class="cnum">CH09</span><span class="ctxt"><b>Gemini Live 即時語音</b><span>低延遲串流</span></span></a>
+        <a class="ch" href="CH10.html"><span class="cnum">CH10</span><span class="ctxt"><b>面對面模式</b><span>上下對開翻轉</span></span></a>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="phead"><div class="pnum" style="background:var(--p3)">Part 3 · 多模態與旅遊工具</div>
+        <div class="ptitle"><b>拍照、檔案、匯率、天氣、問答</b><span>讓 App 變成旅遊神器</span></div></div>
+      <div class="chs">
+        <a class="ch" href="CH11.html"><span class="cnum">CH11</span><span class="ctxt"><b>拍照翻譯</b><span>Vision 多模態</span></span></a>
+        <a class="ch" href="CH12.html"><span class="cnum">CH12</span><span class="ctxt"><b>上傳檔案翻譯</b><span>圖片 / PDF / 文字</span></span></a>
+        <a class="ch" href="CH13.html"><span class="cnum">CH13</span><span class="ctxt"><b>匯率換算</b><span>免金鑰 API</span></span></a>
+        <a class="ch" href="CH14.html"><span class="cnum">CH14</span><span class="ctxt"><b>天氣查詢</b><span>Open-Meteo + 地理編碼</span></span></a>
+        <a class="ch" href="CH15.html"><span class="cnum">CH15</span><span class="ctxt"><b>旅遊助手</b><span>Tavily 上網問答</span></span></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第三篇 -->
+  <div class="vol">
+    <div class="vol-head"><span class="vn">第三篇</span><b>上線與擴充 · 走到哪都能用</b></div>
+
+    <div class="part">
+      <div class="phead"><div class="pnum" style="background:var(--p4)">Part 4 · 上線與加值</div>
+        <div class="ptitle"><b>PWA、金鑰設定、部署上線</b><span>從本機走向雲端</span></div></div>
+      <div class="chs">
+        <a class="ch" href="CH16.html"><span class="cnum">CH16</span><span class="ctxt"><b>PWA 手機安裝與離線</b><span>manifest + Service Worker</span></span></a>
+        <a class="ch" href="CH17.html"><span class="cnum">CH17</span><span class="ctxt"><b>密碼閘門與金鑰設定</b><span>集中管理 API 金鑰</span></span></a>
+        <a class="ch" href="CH18.html"><span class="cnum">CH18</span><span class="ctxt"><b>部署到 Render</b><span>GitHub + Render 詳細</span></span></a>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="phead"><div class="pnum" style="background:var(--p5)">Part 5 · 整合生成器</div>
+        <div class="ptitle"><b>填完整資訊，一鍵產出整包專案</b><span>把整堂課用到的生成器整合成一個</span></div></div>
+      <div class="chs">
+        <a class="ch" href="CH19.html"><span class="cnum">CH19</span><span class="ctxt"><b>整合專案生成器</b><span>填金鑰 → 下載完整可跑專案</span></span></a>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">課程<span class="hl">亮點</span></h2>
+  <div class="why">
+    <div class="w"><h3>🗣️ Vibe Coding 教學</h3><p>不背語法，重點是「怎麼開口叫 AI 幫你做」。每個步驟都附可直接複製的提示詞。</p></div>
+    <div class="w"><h3>👶 零基礎友善</h3><p>從裝 Python、申請金鑰開始，每個畫面都截圖，一步都不跳過。</p></div>
+    <div class="w"><h3>🔑 金鑰申請全教</h3><p>Gemini、Tavily、GitHub、Render，每一把金鑰怎麼申請都帶你點到會。</p></div>
+    <div class="w"><h3>⚙️ 到處都有生成器</h3><p>填幾個欄位就即時產生對應的程式碼、設定檔或提示詞，複製或下載即可用。</p></div>
+    <div class="w"><h3>🏗️ 真的會上線</h3><p>做完部署到 Render，得到一個真實網址，手機打開就能用、能裝。</p></div>
+    <div class="w"><h3>💰 幾乎全免費</h3><p>天氣、匯率免金鑰；其他服務用免費額度，跟著做不用花錢。</p></div>
+  </div>
+
+  <div class="author">
+    <h3>👨‍🏫 曾慶良 主任（阿亮老師）</h3>
+    <p class="role">新興科技推廣中心主任　|　教育部學科中心研究教師　|　臺北市資訊教育輔導員<br>
+      教育部人工智慧講師認證　|　百大資訊人才獎　|　親子天下創新 100 教師</p>
+    <div class="links">
+      <a class="yt" href="https://www.youtube.com/@Liang-yt02" target="_blank">▶ YouTube</a>
+      <a class="fb" href="https://www.facebook.com/groups/2754139931432955" target="_blank">f Facebook 社團</a>
+      <a class="mail" href="mailto:3a01chatgpt@gmail.com">✉ Email</a>
+    </div>
+  </div>
+
+  <div class="foot">
+    © 2026 阿亮老師 版權所有　·　本課程與專案僅供阿亮老師課程學員學習使用<br>
+    <span class="warn">⚠️ 禁止修改、轉傳、散布或商業使用</span>
+  </div>
+
+</div>
+</body>
+</html>

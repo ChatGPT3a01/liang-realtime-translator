@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH17 · 密碼閘門與金鑰設定</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第三篇 · Part 4 · 上線與加值</div>
+  <h1>CH17 · <span class="g">密碼閘門與金鑰設定</span></h1>
+  <h2>集中管理金鑰，加一道基本門禁</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做兩件事</h2><div class="k">設定面板 + 密碼閘門</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">🔑</div><h3>金鑰集中設定</h3><p>一個設定面板，讓使用者填自己的 Gemini／Tavily（及選配的 OpenAI 相容）金鑰。</p></div>
+    <div class="cc"><div class="ico">🔒</div><h3>密碼閘門</h3><p>進站前先輸入密碼，做基本的存取阻擋（非高強度保護）。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>金鑰放哪裡？三選一</h2><div class="k">複習 CH02 的觀念</div></div>
+  <table class="tbl body">
+    <tr><th>位置</th><th>特性</th></tr>
+    <tr><td>Render 環境變數</td><td>最安全，全裝置共用（CH18）</td></tr>
+    <tr><td>App 設定面板（localStorage）</td><td>使用者自填、單機生效</td></tr>
+    <tr><td>.env（本機開發）</td><td>自己電腦測試用</td></tr>
+  </table>
+  <p class="note body" style="margin-top:10px">這章做「設定面板」，讓使用者能在網頁填金鑰，前端請求時一起帶給後端。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>設定面板（localStorage）</h2><div class="k">存在使用者瀏覽器</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// app.js — 讀寫設定</span>
+const DEFAULT_CFG = { provider:'gemini', geminikey:'', tavilykey:'', owmkey:'' };
+function loadCfg(){ return {...DEFAULT_CFG, ...JSON.parse(localStorage.getItem('cfg')||'{}')}; }
+function saveCfg(c){ localStorage.setItem('cfg', JSON.stringify(c)); }
+let cfg = loadCfg();
+<span class="cm">// 請求時帶上（Gemini 空的話後端用伺服器內建）</span>
+function providerBody(){ return { provider:cfg.provider, api_key:cfg.geminikey||'' }; }</pre></div>
+  <p class="note body">後端各端點改成「有帶金鑰就用、沒帶就用伺服器內建」，彈性最大。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>密碼閘門怎麼做？</h2><div class="k">用 SHA-256 雜湊，不存明文</div></div>
+  <div class="body">
+    <p>把「正確密碼」的 <b>SHA-256 雜湊</b>寫在程式裡。使用者輸入密碼時，前端算它的雜湊，跟存好的比對，對了才放行。</p>
+    <div class="warn-box">⚠️ 這是「閱讀阻擋」等級，不是高強度保護（前端的東西使用者都看得到）。真正機密仍要靠後端與環境變數。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>密碼閘門程式</h2><div class="k">比對雜湊</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 只存雜湊，不存明文密碼</span>
+const HASHES = ['3ee7f6...要換成你的密碼雜湊'];
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=&gt;b.toString(16).padStart(2,'0')).join('');
+}
+async function check(pw){
+  const h = await sha256(pw);
+  if(HASHES.includes(h)){ sessionStorage.setItem('authed','1'); hideGate(); }
+  else alert('密碼錯誤');
+}</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 SHA-256 密碼雜湊生成器</h2><div class="k">輸入密碼，算出雜湊貼進程式</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生密碼雜湊</div>
+    <div class="field"><label>設定一個密碼</label><input id="pw_in" placeholder="輸入你要的密碼"></div>
+    <div class="btns">
+      <button onclick="genHash()">⚙️ 算出 SHA-256</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+    </div>
+    <div class="out" id="pw_out">輸入密碼後按「算出 SHA-256」，這裡會出現雜湊值…</div>
+    <div class="hint">把雜湊值放進程式的 HASHES 陣列。程式碼裡看不到明文密碼，較安全。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測</h2><div class="k">設定 + 密碼都試一遍</div></div>
+  <div class="body">
+    <p>用生成器算出你的密碼雜湊、放進 HASHES；重整頁面應先跳密碼閘門，輸入正確密碼才進站。到設定面板填一把金鑰，確認翻譯仍正常。</p>
+    <div class="shot"><span class="cam">📸</span>請截圖：密碼閘門畫面 / 設定面板</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">有設定、有門禁</div></div>
+  <ul class="goals body">
+    <li>設定面板能填金鑰、存 localStorage、請求時帶上。</li>
+    <li>密碼閘門用 SHA-256 比對，不存明文。</li>
+    <li>用生成器產生過自己的密碼雜湊。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：能自訂金鑰、有門禁的 App</div><p>只差最後一哩路——把它<b>部署上線</b>！下一章用 GitHub + Render，讓你走到哪都能用（密碼把關，只有你和授權的人進得來）。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH18</h2><div class="k">部署到 Render</div></div>
+  <div class="body">
+    <p>下一章是重頭戲：把專案上傳 GitHub、在 Render 建立服務、設定環境變數，得到一個<b>真實網址</b>，手機打開就能用、能裝。</p>
+    <div class="info-box">🚀 CH18 讓 App 上線！</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH17 完成！<span class="g">設定與門禁就緒</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH18.html">→ 下一章 CH18</a>
+  </div>
+</section>
+
+<script>
+async function genHash(){
+  var pw=(document.getElementById('pw_in').value||'');
+  if(!pw){document.getElementById('pw_out').textContent='請先輸入密碼';return;}
+  var buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+  var hex=[].slice.call(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0')}).join('');
+  document.getElementById('pw_out').textContent="// 你的密碼雜湊（放進 HASHES 陣列）\nconst HASHES = ['"+hex+"'];";
+}
+</script>
+<script>window.SLIDE_CFG={title:'CH17 · 密碼閘門與金鑰設定',part:'#E74C3C',next:'CH18.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

@@ -11,7 +11,7 @@ load_dotenv()
 # --- Configuration ---
 # Get API Key from environment variable
 API_KEY = os.getenv("GOOGLE_API_KEY") 
-MODEL = "gemini-2.5-flash"  # Use the model specified by the user
+MODEL = "gemini-3.5-flash"  # Use the model specified by the user
 
 # Audio Configuration
 FORMAT = pyaudio.paInt16

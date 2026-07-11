@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH07 · 語音辨識 STT</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第二篇 · Part 2 · 核心翻譯</div>
+  <h1>CH07 · <span class="g">語音辨識 STT</span></h1>
+  <h2>用說的就能翻——讓 App 長出耳朵</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">按麥克風 → 說話 → 自動翻譯</div></div>
+  <div class="body">
+    <p>我們用瀏覽器<b>內建</b>的語音辨識（免費、免額外服務），把你說的話轉成文字，再送去 CH06 做好的翻譯。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個「開口就能翻譯」的 App：點麥克風、說一句、再點一下，翻譯就出來。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>什麼是 STT？</h2><div class="k">Speech To Text，語音轉文字</div></div>
+  <div class="body">
+    <p>STT 把「聲音」變成「文字」。瀏覽器提供了 <b>Web Speech API</b>，不用裝任何東西、不用金鑰，就能做語音辨識。</p>
+    <div class="warn-box">⚠️ 這個 API 在 Chrome / Edge 支援最好；部分瀏覽器不支援，我們會加「不支援就用打字」的後備。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>語言碼：BCP-47</h2><div class="k">告訴辨識器你講哪國話</div></div>
+  <div class="body">
+    <p>語音辨識要指定語言碼，例如繁中是 <code>zh-TW</code>、英文 <code>en-US</code>、日文 <code>ja-JP</code>。這叫 BCP-47 格式。</p>
+    <p>我們把每個語言的「顯示名稱、給模型的英文名、BCP-47 碼」整理成一個清單，一次管好。本章最後有生成器幫你產生。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>提示詞：做語音辨識</h2><div class="k">講清楚「逐句」的行為</div></div>
+  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>用瀏覽器 Web Speech API 幫我做語音辨識：
+- 點麥克風開始聽，即時把逐字稿顯示在結果框。
+- 再點一下停止，把整段文字交出去做翻譯。
+- 處理麥克風權限被拒、瀏覽器不支援的情況。
+給我一個 Recognizer class 與接到按鈕的程式碼，我是新手。</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Recognizer（重點）</h2><div class="k">包一個好用的辨識器</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// app.js</span>
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+class Recognizer{
+  constructor(bcp, onDone){ this.bcp=bcp; this.onDone=onDone; this.active=false; this.buffer=''; }
+  start(){
+    if(!SR){ alert('此瀏覽器不支援語音辨識，請改用打字'); return; }
+    if(this.active){ this.stop(); return; }   <span class="cm">// 再點一下 = 停止並翻譯</span>
+    this.buffer=''; const rec=new SR();
+    rec.lang=this.bcp; rec.interimResults=true; rec.continuous=true;
+    rec.onresult=(e)=&gt;{ let s=''; for(const r of e.results) s+=r[0].transcript;
+      result.textContent=s; this.buffer=s; };
+    rec.onend=()=&gt;{ if(this.active) rec.start(); };  <span class="cm">// 自動續聽</span>
+    this.rec=rec; this.active=true; rec.start();
+  }
+  stop(){ this.active=false; this.rec &amp;&amp; this.rec.stop();
+    const t=this.buffer.trim(); if(t) this.onDone(t); }
+}</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>接到麥克風按鈕</h2><div class="k">說完，整段送去翻譯</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 講完停止時，拿整段去翻譯</span>
+const BCP = {'zh-TW':'zh-TW','en':'en-US','ja':'ja-JP','ko':'ko-KR'};
+const rec = new Recognizer(BCP[langA.value], async (text)=&gt;{
+  result.textContent='翻譯中…';
+  try{ result.textContent = await translate(text, NAME[langA.value], NAME[langB.value]); }
+  catch(e){ result.textContent='（翻譯失敗）'; }
+});
+document.getElementById('mic').onclick = ()=&gt;{ rec.bcp = BCP[langA.value]; rec.start(); };</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>為什麼「說完再翻」？</h2><div class="k">逐句模式的用意</div></div>
+  <div class="body">
+    <p>我們讓使用者「說完、按停」才整段翻譯，而不是邊說邊翻。這樣：</p>
+    <ul style="padding-left:26px">
+      <li>翻譯更完整、更準（有完整句子）。</li>
+      <li>之後加「朗讀」時，朗讀不會佔用麥克風、造成混亂。</li>
+    </ul>
+    <div class="ok-box">🎯 這就是課程名稱裡「逐句」的意思：一句一句，穩穩來。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測 + 權限</h2><div class="k">第一次會問麥克風權限</div></div>
+  <div class="body">
+    <p>重整頁面，點麥克風。瀏覽器會跳出「允許使用麥克風？」→ 按<b>允許</b>。說一句中文，再點一下麥克風停止。</p>
+    <div class="ok-box">✅ 逐字稿會即時顯示，停止後整段被翻成目標語言。你用說的就翻好了！</div>
+    <div class="shot"><span class="cam">📸</span>請截圖：麥克風權限提示 / 語音翻譯結果</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>常見問題</h2><div class="k">沒反應先看這</div></div>
+  <div class="tc body">
+    <div>
+      <p><b>完全沒反應？</b></p>
+      <p class="note">用 Chrome/Edge 試；本機用 http://127.0.0.1 沒問題，正式上線需 HTTPS。</p>
+      <p><b>權限被拒？</b></p>
+      <p class="note">網址列左邊鎖頭 → 重設麥克風權限 → 重整。</p>
+    </div>
+    <div>
+      <p><b>辨識成別的語言？</b></p>
+      <p class="note">確認 rec.lang 用對 BCP-47，且對應你選的來源語言。</p>
+      <p><b>手機上不穩？</b></p>
+      <p class="note">正式版可搭配後面的 Gemini Live 即時模式（CH09）。</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 語言清單生成器</h2><div class="k">勾選要支援的語言，產生 LANGS 陣列</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生語言清單</div>
+    <div class="field"><label>要支援哪些語言？（用逗號分隔代碼：zh-TW, en, ja, ko, th, vi…）</label>
+      <input id="l_codes" placeholder="zh-TW, en, ja, ko"></div>
+    <div class="btns">
+      <button onclick="genLangs()">⚙️ 產生 LANGS</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+      <button class="alt" onclick="dlLangs()">⬇ 下載</button>
+    </div>
+    <div class="out" id="l_out">輸入語言代碼後按產生，這裡會出現含 label / name / bcp 的 LANGS 陣列…</div>
+    <div class="hint">把產生的 LANGS 放到 app.js，翻譯與語音辨識都用同一份語言設定。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">會聽的 App</div></div>
+  <ul class="goals body">
+    <li>點麥克風能開始/停止辨識，逐字稿即時顯示。</li>
+    <li>停止後整段自動翻譯。</li>
+    <li>有處理權限被拒 / 不支援的情況。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：能聽能翻的 App</div><p>用說的就能翻譯了！下一章我們讓它「開口說出」翻譯結果——加語音朗讀。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH08</h2><div class="k">語音朗讀 TTS</div></div>
+  <div class="body">
+    <p>翻好了，但還要自己看。下一章讓 App <b>用語音念出</b>翻譯結果——優先用 Gemini 雲端語音（任何語言都有聲音），失敗再用瀏覽器內建。</p>
+    <div class="info-box">🔊 CH08 讓 App 開口說話。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH07 完成！<span class="g">會聽了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH08.html">→ 下一章 CH08</a>
+  </div>
+</section>
+
+<script>
+function genLangs(){
+  var meta={
+    'zh-TW':['繁體中文','Traditional Chinese','zh-TW'],'zh-CN':['简体中文','Simplified Chinese','zh-CN'],
+    'en':['English','English','en-US'],'ja':['日本語','Japanese','ja-JP'],'ko':['한국어','Korean','ko-KR'],
+    'th':['ไทย','Thai','th-TH'],'vi':['Tiếng Việt','Vietnamese','vi-VN'],'id':['Indonesia','Indonesian','id-ID'],
+    'fr':['Français','French','fr-FR'],'de':['Deutsch','German','de-DE'],'es':['Español','Spanish','es-ES']
+  };
+  var codes=(document.getElementById('l_codes').value||'zh-TW, en, ja, ko').split(',').map(function(s){return s.trim()}).filter(Boolean);
+  var rows=codes.map(function(c){var m=meta[c]||[c,c,c];return "  { id:'"+c+"', label:'"+m[0]+"', name:'"+m[1]+"', bcp:'"+m[2]+"' },";});
+  document.getElementById('l_out').textContent="const LANGS = [\n"+rows.join("\n")+"\n];";
+}
+function dlLangs(){genLangs();downloadText('langs.js',document.getElementById('l_out').textContent);}
+</script>
+<script>window.SLIDE_CFG={title:'CH07 · 語音辨識 STT',part:'#E67E22',next:'CH08.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

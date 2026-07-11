@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH14 · 天氣查詢</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第二篇 · Part 3 · 多模態與旅遊工具</div>
+  <h1>CH14 · <span class="g">天氣查詢</span></h1>
+  <h2>查任何城市天氣，還提醒你要不要帶傘</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">輸入地名 → 即時天氣 + 建議</div></div>
+  <div class="body">
+    <p>輸入「那霸」「東京」，回傳目前溫度、天氣狀況，並依降雨機率給<b>帶傘/防曬/保暖</b>建議。用<b>免金鑰</b>的 Open-Meteo。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>出發前查目的地天氣，行李帶什麼一目了然。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>兩步驟：地名 → 座標 → 天氣</h2><div class="k">天氣 API 只吃經緯度</div></div>
+  <div class="term body"><pre><span class="out">「那霸」
+   ↓ 地理編碼（geocoding）
+緯度 26.21, 經度 127.68
+   ↓ Open-Meteo forecast
+溫度 29.9°C、晴天、降雨 10%
+   ↓ 判斷
+「👍 天氣舒適，玩得開心」</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>踩過的雷：中文地名查不到</h2><div class="k">最重要的一課</div></div>
+  <div class="body">
+    <p>Open-Meteo 的地理編碼<b>對中文地名很不準</b>：那霸、台北、大阪常常查不到！對台灣使用者是大問題。</p>
+    <div class="ok-box">✅ 解法：三段式地理編碼 —— ①內建熱門地點字典（保證那霸=沖繩正確）→ ②Nominatim（OpenStreetMap，中文佳）→ ③Open-Meteo（最後備援）。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>三段式地理編碼</h2><div class="k">內建字典 → Nominatim → Open-Meteo</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># providers/app：地名 → (lat, lon, 顯示名)</span>
+COMMON = {'那霸':(26.21,127.68,'那霸，日本'),'台北':(25.03,121.57,'台北，台灣'),
+          '東京':(35.69,139.69,'東京，日本'), ...}   <span class="cm"># 熱門地點先命中</span>
+
+def geocode(place):
+    if place in COMMON: return COMMON[place]
+    # Nominatim（要帶 User-Agent，中文支援佳）
+    r = requests.get('https://nominatim.openstreetmap.org/search',
+        params={'q':place,'format':'json','limit':1,'accept-language':'zh-TW'},
+        headers={'User-Agent':'liang-translator/1.0'}, timeout=10).json()
+    if r: return float(r[0]['lat']), float(r[0]['lon']), r[0]['display_name'].split(',')[0]
+    # 最後備援：Open-Meteo geocoding
+    ...</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>取天氣 + 帶傘建議</h2><div class="k">Open-Meteo forecast</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>w = requests.get('https://api.open-meteo.com/v1/forecast', params={
+    'latitude':lat, 'longitude':lon,
+    'current':'temperature_2m,relative_humidity_2m,weather_code,precipitation',
+    'daily':'precipitation_probability_max', 'timezone':'auto','forecast_days':1}).json()
+
+def advice(code, temp, pop):
+    if code in RAIN_CODES or (pop and pop&gt;=50): return '☂️ 建議帶傘'
+    if temp&gt;=30: return '🧴 高溫，注意防曬補水'
+    if temp&lt;=12: return '🧥 偏冷，記得保暖'
+    return '👍 天氣舒適，玩得開心'</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>WMO 天氣代碼</h2><div class="k">數字 → 中文 + emoji</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>WMO = {0:'晴天 ☀️', 1:'大致晴朗 🌤️', 2:'部分多雲 ⛅', 3:'陰天 ☁️',
+       61:'小雨 🌧️', 63:'中雨 🌧️', 65:'大雨 🌧️',
+       80:'陣雨 🌦️', 95:'雷陣雨 ⛈️'}   <span class="cm"># 把代碼翻成看得懂的字</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端：查詢 + 定位</h2><div class="k">打地名，或用目前位置</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 打地名查</span>
+async function getWeather(place){
+  const res = await fetch('/api/weather', {method:'POST',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify({place})});
+  const d = await res.json();
+  show(`${d.place} ${Math.round(d.temp)}°C ${d.desc}｜${d.advice}`);
+}
+<span class="cm">// 用目前位置（瀏覽器定位）</span>
+navigator.geolocation.getCurrentPosition(p=&gt;
+  fetch('/api/weather',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({lat:p.coords.latitude, lon:p.coords.longitude})}));</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測</h2><div class="k">查那霸、台北</div></div>
+  <div class="body">
+    <p>輸入「那霸」→ 顯示「那霸，日本 29.9°C 晴天 ☀️｜👍 天氣舒適」。試試台北、東京、首爾、曼谷都要正確。</p>
+    <div class="shot"><span class="cam">📸</span>請截圖：天氣查詢結果（含建議）</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 熱門地點字典生成器</h2><div class="k">加你要的城市座標</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生 COMMON 地點字典</div>
+    <div class="field"><label>城市（逗號分隔，用內建常見城市）</label><input id="w_cities" placeholder="那霸, 台北, 東京, 首爾, 曼谷"></div>
+    <div class="btns">
+      <button onclick="genW()">⚙️ 產生</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+    </div>
+    <div class="out" id="w_out">填城市後按產生，這裡會出現 COMMON 座標字典…</div>
+    <div class="hint">找不到的城市可 Google「地名 經緯度」自行補上。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">會查天氣的 App</div></div>
+  <ul class="goals body">
+    <li>三段式地理編碼，中文地名（那霸/台北）都正確。</li>
+    <li>回傳溫度、天氣描述、帶傘建議。</li>
+    <li>支援打地名與「用目前位置」。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：會查天氣的 App</div><p>旅遊工具快集滿了！最後一塊是最聰明的——「旅遊助手」，打一句話會上網幫你查。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH15</h2><div class="k">旅遊助手（Tavily 上網）</div></div>
+  <div class="body">
+    <p>下一章做<b>旅遊助手</b>：打一句話問任何旅遊問題，先用 Tavily 上網查最新資訊，再讓 AI 整理答案。沒金鑰也能退回用 AI 知識回答。</p>
+    <div class="info-box">🧭 CH15 完成第二篇。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH14 完成！<span class="g">會查天氣了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH15.html">→ 下一章 CH15</a>
+  </div>
+</section>
+
+<script>
+function genW(){
+  var meta={'那霸':[26.21,127.68,'那霸，日本'],'台北':[25.03,121.57,'台北，台灣'],'台中':[24.15,120.67,'台中，台灣'],
+    '高雄':[22.63,120.30,'高雄，台灣'],'東京':[35.69,139.69,'東京，日本'],'大阪':[34.69,135.50,'大阪，日本'],
+    '京都':[35.01,135.77,'京都，日本'],'首爾':[37.57,126.98,'首爾，韓國'],'曼谷':[13.76,100.50,'曼谷，泰國'],
+    '新加坡':[1.35,103.82,'新加坡'],'香港':[22.32,114.17,'香港']};
+  var cities=(document.getElementById('w_cities').value||'那霸, 台北, 東京, 首爾, 曼谷').split(',').map(function(s){return s.trim()}).filter(Boolean);
+  var rows=cities.map(function(c){var m=meta[c];return m?("  '"+c+"': ("+m[0]+", "+m[1]+", '"+m[2]+"'),"):("  # '"+c+"': (緯度, 經度, '顯示名'),  # 請自行查座標");});
+  document.getElementById('w_out').textContent="COMMON = {\n"+rows.join("\n")+"\n}";
+}
+</script>
+<script>window.SLIDE_CFG={title:'CH14 · 天氣查詢',part:'#8E44AD',next:'CH15.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH11 · 拍照翻譯</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第二篇 · Part 3 · 多模態與旅遊工具</div>
+  <h1>CH11 · <span class="g">拍照翻譯</span></h1>
+  <h2>拍菜單、看板，AI 幫你看懂 + 摘要 + 翻譯</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">拍一張 → 摘要 + 翻譯</div></div>
+  <div class="body">
+    <p>按下「📷 拍照翻譯」開相機拍一張外文菜單／看板，Gemini 幫你「看懂」內容，用中文<b>摘要重點</b>，再附<b>完整翻譯</b>。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個「拍照就翻譯」的功能——出國看不懂的東西，拍一下就清楚。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>什麼是「多模態」？</h2><div class="k">AI 同時看圖 + 讀字</div></div>
+  <div class="body">
+    <p>一般翻譯只吃「文字」。<b>多模態（multimodal）</b>模型能同時理解「圖片」和「文字」——所以它能看懂照片裡的菜單、招牌。</p>
+    <p>Gemini 的 <code>gemini-3.5-flash</code> 就支援圖片與 PDF，我們直接把影像丟給它。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>提示詞</h2><div class="k">要求輸出 JSON：摘要 + 翻譯</div></div>
+  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>幫我做拍照翻譯：後端 analyze() 收到圖片 bytes，
+用 Gemini 多模態讀圖，輸出 JSON {summary, translation}：
+summary=用目標語言摘要重點，translation=完整翻譯。
+關閉 thinking（避免思考 token 吃掉輸出導致 JSON 被截斷），
+並做 JSON 解析容錯。再做 /api/vision 端點收 base64 影像。</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>後端 analyze()（重點）</h2><div class="k">多模態讀圖 → JSON</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># providers.py</span>
+<span class="cm"># text / file_bytes 擇一：圖片與 PDF 用 file_bytes，純文字用 text（CH12 會用到）</span>
+def analyze(api_key, target_name, text=None, file_bytes=None, mime_type=None):
+    from google import genai
+    from google.genai import types
+    client = genai.Client(api_key=api_key)
+    system = (f"Read the input. Write a concise summary in {target_name}, "
+              f"and a faithful full translation into {target_name}. "
+              'Respond ONLY as JSON: {"summary":"...","translation":"..."}')
+    parts = []
+    if file_bytes is not None:
+        parts.append(types.Part.from_bytes(data=file_bytes, mime_type=mime_type))
+    if text:
+        parts.append(text)
+    resp = client.models.generate_content(
+        model='gemini-3.5-flash',
+        contents=parts,
+        config=types.GenerateContentConfig(system_instruction=system,
+            response_mime_type='application/json', max_output_tokens=8192,
+            thinking_config=types.ThinkingConfig(thinking_budget=0)))   <span class="cm"># 關閉思考</span>
+    return parse_json(resp.text)   <span class="cm"># 容錯解析 summary/translation</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>踩過的雷：JSON 被截斷</h2><div class="k">為什麼要關 thinking</div></div>
+  <div class="body">
+    <p>Gemini 3.x flash 預設會「思考」，思考 token 會占用輸出額度。長內容時，答案的 JSON 會被<b>截斷</b>（少了結尾大括號），解析失敗。</p>
+    <div class="ok-box">✅ 解法：<code>thinking_budget=0</code> 關閉思考（OCR/翻譯不需推理），輸出穩定又更快。再加「容錯解析」救回被截斷的內容。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>後端 /api/vision</h2><div class="k">收 base64 影像</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py</span>
+import base64
+@app.route('/api/vision', methods=['POST'])
+def api_vision():
+    data = request.get_json(force=True) or {}
+    img = data.get('image','')            <span class="cm"># dataURL</span>
+    target = data.get('target','Traditional Chinese (Taiwan)')
+    mime='image/jpeg'
+    if img.startswith('data:'):
+        head,img = img.split(',',1); mime = head.split(':')[1].split(';')[0]
+    raw = base64.b64decode(img)
+    key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
+    res = providers.analyze(key, target, file_bytes=raw, mime_type=mime)
+    return jsonify({'ok':True, **res})</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端：開相機</h2><div class="k">一個 input 就能叫出後鏡頭</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">&lt;!-- 手機會直接開後鏡頭 --&gt;</span>
+&lt;input type="file" id="cam" accept="image/*" capture="environment" hidden&gt;
+&lt;button onclick="cam.click()"&gt;📷 拍照翻譯&lt;/button&gt;</pre></div>
+  <p class="note body">秘訣：<code>capture="environment"</code> 讓手機直接開後鏡頭；電腦則開檔案選擇。不需相機權限 API。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端：縮圖 + 送出</h2><div class="k">先縮小省流量，再打 /api/vision</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>cam.onchange = async (e)=&gt;{
+  const file = e.target.files[0]; if(!file) return;
+  const dataURL = await downscale(file, 1568);   <span class="cm">// canvas 縮到最長邊 1568</span>
+  const res = await fetch('/api/vision', {method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ image:dataURL, target:'Traditional Chinese (Taiwan)' })});
+  const d = await res.json();
+  showResult(d.summary, d.translation);   <span class="cm">// 顯示摘要 + 翻譯</span>
+};</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測</h2><div class="k">拍一張外文的東西</div></div>
+  <div class="body">
+    <p>找一張日文/英文菜單或包裝，按「📷 拍照翻譯」拍下。幾秒後跳出「摘要」+「翻譯」。</p>
+    <div class="shot"><span class="cam">📸</span>請截圖：拍照後顯示摘要 + 翻譯的結果</div>
+    <div class="warn-box">⚠️ 手機照片很大，一定要先在瀏覽器縮圖再上傳，否則慢又可能失敗。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 Vision 指令生成器</h2><div class="k">選目標語言，產生讀圖 system 指令</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生 Vision 指令</div>
+    <div class="field"><label>翻譯成什麼語言？</label><input id="vi_t" placeholder="Traditional Chinese (Taiwan)"></div>
+    <div class="btns">
+      <button onclick="genVi()">⚙️ 產生指令</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+    </div>
+    <div class="out" id="vi_out">填語言後按產生，這裡會出現讀圖用的 system 指令…</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">會看照片的 App</div></div>
+  <ul class="goals body">
+    <li>providers.analyze() 能讀圖回 JSON（含關 thinking、容錯解析）。</li>
+    <li>/api/vision 收 base64 影像。</li>
+    <li>前端拍照 → 縮圖 → 顯示摘要 + 翻譯。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：會看照片的 App</div><p>拍照翻譯上線！下一章用同一套多模態能力，做「上傳檔案翻譯」——支援圖片、PDF、文字檔。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH12</h2><div class="k">上傳檔案翻譯</div></div>
+  <div class="body">
+    <p>拍照是「相機」，下一章加「上傳檔案」：圖片、<b>PDF</b>、文字檔都能翻。PDF 也是 Gemini 原生就能讀。</p>
+    <div class="info-box">📎 CH12 讓 App 會讀檔。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH11 完成！<span class="g">會看照片了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH12.html">→ 下一章 CH12</a>
+  </div>
+</section>
+
+<script>
+function genVi(){
+  var t=(document.getElementById('vi_t').value||'Traditional Chinese (Taiwan)').trim();
+  var out="You are a visual translation assistant. Read all text and visual information in the image.\n"+
+    "1. Write a concise summary of the key points in "+t+".\n"+
+    "2. Provide a faithful full translation of the text into "+t+".\n"+
+    'Respond with ONLY a JSON object: {"summary":"...","translation":"..."}. No markdown, no code fences.';
+  document.getElementById('vi_out').textContent=out;
+}
+</script>
+<script>window.SLIDE_CFG={title:'CH11 · 拍照翻譯',part:'#8E44AD',next:'CH12.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

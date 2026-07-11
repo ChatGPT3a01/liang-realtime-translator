@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH06 · 文字翻譯</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第二篇 · Part 2 · 核心翻譯</div>
+  <h1>CH06 · <span class="g">文字翻譯</span></h1>
+  <h2>接上 Gemini，讓 App 第一次真的翻出字</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章的目標</h2><div class="k">輸入文字 → 得到翻譯</div></div>
+  <div class="body">
+    <p>前面兩章我們做好了後端骨架和前端畫面，但畫面上的「翻譯」按鈕還沒有靈魂。這一章，我們讓它<b>真的會翻譯</b>。</p>
+    <p>做法：前端把「文字 + 目標語言」送到後端的 <code>/api/translate</code>，後端交給 Gemini 翻譯，再把結果送回畫面。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個「打字就能翻譯」的 App。輸入「你好」選英文，會回「Hello」，而且會念出來（下一章加聲音）。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>先回顧：我們現在有什麼</h2><div class="k">站在 CH05 的成果上往前疊</div></div>
+  <div class="body">
+    <p>到上一章結束，你的專案已經有：</p>
+    <ul style="padding-left:26px">
+      <li><b>app.py</b>：能啟動的 Flask 伺服器，有首頁和 <code>/api/health</code>。</li>
+      <li><b>templates/index.html</b>：有語言選單、結果框、麥克風鈕、輸入框的畫面。</li>
+      <li><b>static/js/app.js</b>：前端邏輯，已能呼叫 <code>/api/health</code>。</li>
+    </ul>
+    <div class="info-box">🧱 這章只加「翻譯」這一塊，其他都不動。這就是「堆疊」——每次只疊一層。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這章的完整藍圖</h2><div class="k">資料怎麼流動</div></div>
+  <div class="term body"><pre><span class="out">你在輸入框打「你好」，按「翻譯」
+   ↓ 前端 app.js 的 translate()
+POST /api/translate  { text:"你好", target:"English" }
+   ↓ 後端 app.py 收到，交給
+providers.py 的 translate()
+   ↓ 呼叫 Gemini（gemini-3.5-flash）
+Gemini 回「Hello」
+   ↓ 一路傳回前端
+結果框顯示「Hello」</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>為什麼要「供應商抽象層」？</h2><div class="k">providers.py 的用意</div></div>
+  <div class="body">
+    <p>我們不直接在 app.py 裡呼叫 Gemini，而是獨立出一個檔 <code>providers.py</code>，把「呼叫哪家 AI」包起來。</p>
+    <p>為什麼多這一層？因為<b>翻譯引擎將來可能想換</b>——今天用 Gemini，明天想用 OpenAI 或 Groq。有了這層，換引擎只要改 providers.py，app.py 和前端完全不用動。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>用一個比喻理解</h2><div class="k">抽象層 = 萬用轉接頭</div></div>
+  <div class="tc body">
+    <div>
+      <p>想像你的電器（app.py）要插電。不同國家插座（Gemini／OpenAI）形狀不一樣。</p>
+      <p><b>providers.py 就是萬用轉接頭</b>：電器永遠插同一個孔，轉接頭負責對接不同插座。要換國家，只換轉接頭。</p>
+    </div>
+    <div class="cc"><div class="ico">🔌</div><h3>統一介面</h3><p>app.py 永遠只呼叫 <code>translate()</code>，不管背後是誰。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>補上需要的套件</h2><div class="k">google-genai 與 requests</div></div>
+  <div class="body">
+    <p>翻譯要呼叫 Gemini，需要 Google 的 SDK；未來接 OpenAI 相容服務要用 requests。打開 <code>requirements.txt</code>，改成：</p>
+    <div class="term"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="out">flask
+python-dotenv
+google-genai
+requests</span></pre></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>安裝並確認</h2><div class="k">跑一次 pip，看預期輸出</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">pip install -r requirements.txt</span>
+<span class="out">Successfully installed google-genai... requests...</span></pre></div>
+  <p class="note body">看到 <code>Successfully installed</code> 就代表套件到位。若出現紅字錯誤，多半是網路或 pip 版本，重跑一次或看除錯頁。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>用提示詞生出 providers.py</h2><div class="k">先看我們怎麼「講」給 AI</div></div>
+  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>幫我寫 providers.py：一個 translate(data) 函式，
+輸入 dict 含 text、source、target。
+用 google-genai 呼叫 Gemini（模型 gemini-3.5-flash）翻譯，
+system 指令要求「只輸出翻譯後文字，不要解釋」。
+金鑰從環境變數 GEMINI_API_KEY / GOOGLE_API_KEY 取得。
+回傳 {ok, translation} 或 {ok:false, error}。
+我是新手，請附完整程式碼與逐段說明。</pre></div>
+  <p class="note body">下面直接給你它會產生的程式碼，我們一段一段看懂。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>providers.py（完整可複製）</h2><div class="k">新建這個檔、貼上</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># providers.py</span>
+import os
+from google import genai
+from google.genai import types
+
+def build_prompt(source, target):
+    return (f"You are a professional translation engine. "
+            f"Translate from {source} into {target}. "
+            "Output ONLY the translated text — no explanations.")
+
+def translate(data):
+    text = (data.get('text') or '').strip()
+    source = data.get('source') or 'auto'
+    target = data.get('target') or 'English'
+    if not text:
+        return {"ok": False, "error": "empty text"}
+    key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
+    if not key:
+        return {"ok": False, "error": "找不到 Gemini 金鑰"}
+    try:
+        client = genai.Client(api_key=key)
+        resp = client.models.generate_content(
+            model='gemini-3.5-flash',
+            contents=text,
+            config=types.GenerateContentConfig(
+                system_instruction=build_prompt(source, target),
+                temperature=0.3))
+        return {"ok": True, "translation": (resp.text or '').strip()}
+    except Exception as e:
+        return {"ok": False, "error": f"{type(e).__name__}: {e}"}</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 (1)：開頭與指令</h2><div class="k">import 與 build_prompt</div></div>
+  <div class="body">
+    <p><code>import os</code>：讓程式能讀「環境變數」（金鑰放那裡）。</p>
+    <p><code>from google import genai</code>：載入 Gemini 的 SDK。</p>
+    <p><code>build_prompt(source, target)</code>：組一句「給 AI 的指令」，告訴它「把 source 語言翻成 target，而且<b>只輸出翻譯、不要囉嗦</b>」。這句話品質，直接決定翻譯乾不乾淨。</p>
+    <div class="info-box">💡「system 指令」就是給 AI 的角色設定與規則。寫得越明確，AI 越聽話。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 (2)：處理輸入</h2><div class="k">translate 函式的前半</div></div>
+  <div class="body">
+    <p><code>data.get('text')</code>：從前端送來的資料拿出「要翻的文字」。<code>.strip()</code> 去掉頭尾空白。</p>
+    <p><code>if not text:</code>：如果沒文字，直接回一個錯誤，不浪費一次 API 呼叫。</p>
+    <p><code>key = os.getenv(...)</code>：讀金鑰。先找 GEMINI_API_KEY，沒有再找 GOOGLE_API_KEY（兩個名字都支援，較保險）。</p>
+    <div class="ok-box">✅ 這種「先檢查、再動作」的寫法，能擋掉很多低級錯誤，是好習慣。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 (3)：呼叫 Gemini</h2><div class="k">真正翻譯的那幾行</div></div>
+  <div class="body">
+    <p><code>client = genai.Client(api_key=key)</code>：拿金鑰建立一個「Gemini 連線客戶端」。</p>
+    <p><code>client.models.generate_content(...)</code>：請 Gemini 產生回應。三個重點參數：</p>
+    <ul style="padding-left:26px">
+      <li><code>model='gemini-3.5-flash'</code>：用哪個模型（3.5 flash 快又便宜）。</li>
+      <li><code>contents=text</code>：要處理的內容（使用者的文字）。</li>
+      <li><code>system_instruction=...</code>：我們的翻譯規則。</li>
+    </ul>
+    <p><code>resp.text</code>：Gemini 回的文字，就是翻譯結果。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂 (4)：錯誤處理</h2><div class="k">try / except 的用意</div></div>
+  <div class="body">
+    <p><code>try: ... except Exception as e:</code>：把「可能出錯」的動作包起來。萬一呼叫失敗（沒網路、金鑰錯、額度到），程式<b>不會整個當掉</b>，而是回一個帶錯誤訊息的結果。</p>
+    <p><code>return {"ok": False, "error": ...}</code>：把錯誤原因帶回前端，方便你看到「到底哪裡錯」。</p>
+    <div class="info-box">🛡️ 有 try/except，使用者看到的是「翻譯失敗」而不是白畫面。這叫「優雅地失敗」。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>你可能會想改的地方</h2><div class="k">看懂了，就能自己調</div></div>
+  <table class="tbl body">
+    <tr><th>想做的事</th><th>改哪裡</th></tr>
+    <tr><td>換更強/更省的模型</td><td><code>model=</code> 改成別的 Gemini 模型名</td></tr>
+    <tr><td>翻譯更「靈活」或更「死板」</td><td><code>temperature</code>（0～1，越高越發散）</td></tr>
+    <tr><td>調整翻譯風格</td><td>改 <code>build_prompt</code> 裡的英文指令</td></tr>
+  </table>
+  <p class="note body">看不懂沒關係，先照抄能跑；等有感覺了再回來調這些。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>在 app.py 加 /api/translate</h2><div class="k">把 providers 接進來</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py 增加這幾行</span>
+from flask import request
+import providers
+
+@app.route('/api/translate', methods=['POST'])
+def api_translate():
+    data = request.get_json(force=True, silent=True) or {}
+    result = providers.translate(data)
+    return jsonify(result), (200 if result.get('ok') else 400)</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂：這段 app.py</h2><div class="k">後端多了一個「窗口」</div></div>
+  <div class="body">
+    <p><code>@app.route('/api/translate', methods=['POST'])</code>：開一條新路由，而且限定用 <b>POST</b>（帶資料的請求）。</p>
+    <p><code>request.get_json(...)</code>：把前端送來的 JSON 資料拿出來。</p>
+    <p><code>providers.translate(data)</code>：交給我們剛寫的翻譯函式。</p>
+    <p><code>return jsonify(result), (200 if ... else 400)</code>：成功回 200、失敗回 400，並把結果轉成 JSON 送回前端。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>小補充：POST 與 JSON</h2><div class="k">兩個常聽到的名詞</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">📮</div><h3>POST</h3><p>一種「帶著資料去請求」的方式（相對於只是「看網頁」的 GET）。翻譯要把文字送過去，所以用 POST。</p></div>
+    <div class="cc"><div class="ico">📦</div><h3>JSON</h3><p>一種前後端溝通的資料格式，長得像 <code>{"text":"你好"}</code>。輕巧、通用。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端：呼叫翻譯</h2><div class="k">app.js 的 translate 函式</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// static/js/app.js</span>
+async function translate(text, source, target){
+  const res = await fetch('/api/translate', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ text, source, target })
+  });
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error);
+  return data.translation;
+}</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐段看懂：前端 fetch</h2><div class="k">前端怎麼「打電話」給後端</div></div>
+  <div class="body">
+    <p><code>fetch('/api/translate', {...})</code>：向後端發出請求。<code>method:'POST'</code> + <code>body: JSON.stringify(...)</code> 把文字打包送過去。</p>
+    <p><code>await res.json()</code>：等後端回覆，並把 JSON 解析成物件。</p>
+    <p><code>if(!data.ok) throw ...</code>：後端說失敗就丟出錯誤，讓呼叫它的地方顯示「翻譯失敗」。</p>
+    <div class="info-box">💡 <code>async</code>／<code>await</code> 是處理「要等一下才有結果」的寫法（等 AI 回覆）。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>語言代碼 → 給模型的名稱</h2><div class="k">這張對照表哪來的</div></div>
+  <div class="body">
+    <p>選單的值是代碼（如 <code>zh-TW</code>），但要告訴 Gemini「翻成什麼」得用英文名稱。做一張對照表：</p>
+    <div class="term"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">// app.js — 語言代碼對應給模型看的名稱</span>
+const NAME = {'zh-TW':'Traditional Chinese','en':'English',
+              'ja':'Japanese','ko':'Korean'};</pre></div>
+    <p class="note">CH07 我們會把它升級成完整的 LANGS 清單（含語音辨識用的代碼），現在先簡單版。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>接到「翻譯」按鈕</h2><div class="k">讓 send 真的動起來</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 這裡的 langA、langB、result 是 CH05 用</span>
+<span class="cm">// document.getElementById 取得的元素，沿用即可</span>
+document.getElementById('send').onclick = async () =&gt; {
+  const text = document.getElementById('text').value.trim();
+  if(!text) return;
+  result.textContent = '翻譯中…';
+  try{
+    const out = await translate(text, NAME[langA.value], NAME[langB.value]);
+    result.textContent = out;
+  }catch(e){
+    result.textContent = '（翻譯失敗）';
+    alert(e.message);
+  }
+};</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>存檔、重啟伺服器</h2><div class="k">改了後端要重啟才生效</div></div>
+  <ol class="sl body">
+    <li>所有檔案存檔（Ctrl/Cmd + S）。</li>
+    <li>回終端機，若伺服器還開著，按 <code>Ctrl + C</code> 停掉。</li>
+    <li>重新 <code>python app.py</code> 啟動。</li>
+    <li>瀏覽器重新整理頁面（前端改動才會載入新版）。</li>
+  </ol>
+  <div class="note body">前端（js/html/css）改了只要重整頁面；後端（app.py/providers.py）改了要重啟伺服器。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>預期畫面：成功長這樣</h2><div class="k">先知道「對」是什麼樣子</div></div>
+  <div class="body">
+    <p>在輸入框打「你好，很高興認識你」，語言選 繁中 → English，按「翻譯 ➤」。</p>
+    <div class="ok-box">✅ 結果框先短暫顯示「翻譯中…」，接著變成「Hello, nice to meet you.」之類的翻譯。<b>沒有多餘的解釋文字</b>，就是乾淨的翻譯。</div>
+    <div class="shot"><span class="cam">📸</span>請截圖：輸入中文、結果框顯示英文翻譯的完整畫面</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>動手實測</h2><div class="k">多試幾組</div></div>
+  <ol class="sl body">
+    <li>中 → 英：「今天天氣真好」。</li>
+    <li>對調語言（⇄），英 → 中：「Where is the station?」</li>
+    <li>試長一點的句子，看翻譯是否自然。</li>
+  </ol>
+  <div class="info-box body">🎯 每次按翻譯，都是前端 → 後端 → Gemini → 回來的完整往返。你剛剛串起了一條真實的 AI 應用鏈！</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>除錯 1：找不到金鑰</h2><div class="k">最常見的第一個坑</div></div>
+  <div class="body">
+    <p><b>症狀</b>：結果框顯示「翻譯失敗」，錯誤訊息含「找不到 Gemini 金鑰」。</p>
+    <p><b>檢查清單</b>：</p>
+    <ul style="padding-left:26px">
+      <li><code>.env</code> 是否在專案<b>根目錄</b>（跟 app.py 同一層）？</li>
+      <li><code>.env</code> 裡是否有 <code>GEMINI_API_KEY=AIza...</code>？</li>
+      <li>app.py 最上面是否有 <code>load_dotenv()</code>？</li>
+      <li>改了 .env 後，伺服器<b>重啟</b>了嗎？</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>除錯 2：回 429 額度錯誤</h2><div class="k">額度或上限到了</div></div>
+  <div class="body">
+    <p><b>症狀</b>：錯誤訊息含 <code>429</code> 或 <code>RESOURCE_EXHAUSTED</code>。</p>
+    <p><b>原因</b>：Gemini 免費額度用完，或你設的「月支出上限」到了。</p>
+    <p><b>解法</b>：到 <code>ai.studio/spend</code> 查看並調整上限；或稍等額度重置。課堂練習量通常不會遇到。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>除錯 3：翻譯多了廢話</h2><div class="k">出現「翻譯結果是：…」之類</div></div>
+  <div class="body">
+    <p><b>症狀</b>：翻譯前後多了「這句話的意思是」「Here is the translation:」等多餘文字。</p>
+    <p><b>解法</b>：加強 <code>build_prompt</code> 的指令，例如再補一句 <code>"Do not add any prefix or explanation."</code>。指令越明確，輸出越乾淨。</p>
+    <div class="ok-box">🎯 這就是「提示詞工程」——同一個模型，指令不同，結果差很多。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>除錯 4：前端呼叫沒反應</h2><div class="k">按了按鈕結果框不動</div></div>
+  <div class="body">
+    <p><b>檢查</b>：按 <code>F12</code> 打開瀏覽器 Console 看有沒有紅字錯誤。</p>
+    <ul style="padding-left:26px">
+      <li><code>404</code>：後端沒有 /api/translate，確認 app.py 加對、重啟了。</li>
+      <li><code>langA is not defined</code>：前端變數沒接上，確認 CH05 的元素有取得。</li>
+      <li>什麼都沒印：按鈕的 <code>onclick</code> 沒綁上，確認 id 是 <code>send</code>。</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>加分：抽象層的威力</h2><div class="k">未來想換 OpenAI？</div></div>
+  <div class="body">
+    <p>因為有 providers 這層，要多支援 OpenAI／Groq 等「OpenAI 相容」服務，只要在 providers.py 加一個分支，用 requests 打它們的 <code>/chat/completions</code>。</p>
+    <p><b>app.py 和前端完全不用改</b>——這就是一開始多花力氣做抽象層的回報。</p>
+    <div class="info-box">🔌 細節可請 AI 幫你補 <code>translate_openai()</code>，並在 translate() 依 provider 分流。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 翻譯指令生成器</h2><div class="k">選來源/目標語言，產生 system 指令</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生翻譯 system 指令</div>
+    <div class="grid2">
+      <div class="field"><label>來源語言</label><input id="t_src" placeholder="Traditional Chinese 或 auto"></div>
+      <div class="field"><label>目標語言</label><input id="t_tgt" placeholder="English"></div>
+    </div>
+    <div class="btns">
+      <button onclick="genTr()">⚙️ 產生指令</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+    </div>
+    <div class="out" id="t_out">填語言後按「產生指令」，這裡會出現可放進 build_prompt 的 system 指令…</div>
+    <div class="hint">把產生的字串當成 system_instruction，翻譯品質更穩、更聽話。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>動手練習</h2><div class="k">加深印象</div></div>
+  <ul class="sl body">
+    <li>用生成器產生一個「日文 → 繁中」的指令，貼進 build_prompt 試試。</li>
+    <li>把 temperature 從 0.3 改成 0.9，翻同一句，感覺差異。</li>
+    <li>故意把金鑰改錯，看錯誤處理有沒有「優雅地失敗」。</li>
+  </ul>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">會翻譯的 App</div></div>
+  <ul class="goals body">
+    <li>建好 providers.py，app.py 有 /api/translate。</li>
+    <li>前端輸入文字、按翻譯，結果框顯示乾淨的翻譯。</li>
+    <li>能中↔英互翻成功。</li>
+    <li>看得懂每段程式碼大概在做什麼。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：會翻譯的 App</div><p>核心功能誕生！接下來我們讓它「聽得懂話」——加語音辨識，你用說的就能翻。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH07</h2><div class="k">語音辨識 STT（逐句）</div></div>
+  <div class="body">
+    <p>打字有點慢對吧？下一章用瀏覽器內建的語音辨識，讓你<b>用說的</b>，App 把你的話變文字、再翻譯。</p>
+    <div class="info-box">🎤 CH07 讓 App 長出耳朵。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH06 完成！<span class="g">會翻譯了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH07.html">→ 下一章 CH07</a>
+  </div>
+</section>
+
+<script>
+function genTr(){
+  var s=(document.getElementById('t_src').value||'auto').trim();
+  var t=(document.getElementById('t_tgt').value||'English').trim();
+  var out;
+  if(s.toLowerCase()==='auto'){
+    out="You are a professional real-time translation engine. Detect the input language. "+
+        "If it is "+t+", translate it into the other party's language; otherwise translate it into "+t+". "+
+        "Output ONLY the translated text — no explanations, no language labels.";
+  }else{
+    out="You are a professional translation engine. Translate the text from "+s+" into "+t+". "+
+        "Output ONLY the translated text — no explanations, no quotation marks. "+
+        "Make it sound natural to a native speaker.";
+  }
+  document.getElementById('t_out').textContent=out;
+}
+</script>
+<script>window.SLIDE_CFG={title:'CH06 · 文字翻譯',part:'#E67E22',next:'CH07.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

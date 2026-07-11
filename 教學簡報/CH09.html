@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH09 · Gemini Live 即時語音</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第二篇 · Part 2 · 核心翻譯</div>
+  <h1>CH09 · <span class="g">Gemini Live 即時語音</span></h1>
+  <h2>邊說邊翻、低延遲，像真的口譯員</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">即時模式：不用等你說完</div></div>
+  <div class="body">
+    <p>逐句模式要「說完按停」；<b>即時模式</b>邊說就邊翻、直接吐語音，延遲很低。我們接 <b>Gemini Live</b> 原生語音來做。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個「即時口譯」切換：按下去持續聽、持續翻、持續說。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>逐句 vs 即時</h2><div class="k">兩種模式各有用途</div></div>
+  <table class="tbl body">
+    <tr><th></th><th>逐句（CH07-08）</th><th>即時（本章）</th></tr>
+    <tr><td>時機</td><td>說完按停才翻</td><td>邊說邊翻</td></tr>
+    <tr><td>延遲</td><td>較高</td><td>很低</td></tr>
+    <tr><td>技術</td><td>瀏覽器 STT + 翻譯 + TTS</td><td>Gemini Live 原生語音串流</td></tr>
+    <tr><td>連線</td><td>一般 HTTP</td><td>WebSocket 即時雙向</td></tr>
+  </table>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>即時模式的資料流</h2><div class="k">先懂原理再動手</div></div>
+  <div class="term body"><pre><span class="out">你的麥克風
+   ↓ 擷取音訊、轉成 16kHz PCM
+瀏覽器 → (WebSocket) → 你的 Flask 伺服器
+   ↓ 轉送
+Gemini Live（即時翻譯模型）
+   ↓ 回傳翻譯後的語音 + 字幕
+Flask → (WebSocket) → 瀏覽器
+   ↓ 播放 24kHz 語音、顯示字幕</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>安裝 WebSocket 套件</h2><div class="k">flask-socketio</div></div>
+  <div class="term body"><div class="lbl">requirements.txt 增加</div><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="out">flask-socketio
+simple-websocket</span></pre></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">pip install -r requirements.txt</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>後端：啟用 SocketIO</h2><div class="k">改造 app.py</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py</span>
+from flask_socketio import SocketIO, emit
+socketio = SocketIO(app, cors_allowed_origins='*', async_mode='threading')
+LIVE_MODEL = 'gemini-3.5-live-translate-preview'   <span class="cm"># 專為翻譯的即時模型</span>
+
+<span class="cm"># 啟動改用 socketio.run</span>
+if __name__ == '__main__':
+    port = int(os.getenv('PORT','5001'))
+    socketio.run(app, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>後端：連上 Gemini Live</h2><div class="k">一個 Session 管一次對話（重點）</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># 概念版：每個使用者一個 Session（用執行緒跑 async）</span>
+@socketio.on('start_session')
+def start(data):
+    inst = (f"You are a real-time voice translator. "
+            f"When you hear {data['langA']}, reply in {data['langB']}; "
+            f"when you hear {data['langB']}, reply in {data['langA']}. "
+            "Output ONLY the translation.")
+    <span class="cm"># 在背景執行緒開 client.aio.live.connect(model=LIVE_MODEL, config=...)</span>
+    <span class="cm"># config: response_modalities=['AUDIO'], system_instruction=inst,</span>
+    <span class="cm">#         output_audio_transcription={}  # 同時要字幕</span>
+
+@socketio.on('audio_in')
+def audio_in(chunk):
+    <span class="cm"># 把瀏覽器送來的 PCM 丟進該 session 的佇列，轉送給 Gemini</span>
+    pass</pre></div>
+  <p class="note body">完整版可請 AI 依「用執行緒＋asyncio 跑 live.connect，收到 inline_data 就 emit('audio_response')」補齊。</p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端：擷取麥克風 PCM</h2><div class="k">轉成 16kHz 送出去</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// app.js（即時模式）</span>
+const socket = io();
+async function startLive(){
+  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  const ctx = new AudioContext();
+  const src = ctx.createMediaStreamSource(stream);
+  const proc = ctx.createScriptProcessor(4096,1,1);
+  src.connect(proc); proc.connect(ctx.destination);
+  proc.onaudioprocess = (e)=&gt;{
+    const input = e.inputBuffer.getChannelData(0);
+    const pcm = downsampleTo16k(input, ctx.sampleRate);  <span class="cm">// 轉 16kHz Int16</span>
+    socket.emit('audio_in', pcm.buffer);
+  };
+  socket.emit('start_session', {langA:'Chinese', langB:'English'});
+}</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端：收語音 + 字幕</h2><div class="k">播放 Gemini 回來的聲音</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm">// 沿用 CH08 的 playPCM 播放</span>
+socket.on('audio_response', (data)=&gt; playPCM(data));
+socket.on('text_response', (d)=&gt; result.textContent += d.text);   <span class="cm">// 字幕</span>
+socket.on('turn_complete', ()=&gt;{ /* 一輪結束 */ });</pre></div>
+  <p class="note body">前端載入 socket.io：<code>&lt;script src="https://cdn.socket.io/4.7.2/socket.io.min.js"&gt;&lt;/script&gt;</code></p>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測即時模式</h2><div class="k">按下就開始口譯</div></div>
+  <div class="body">
+    <p>加一個「即時」開關，按下呼叫 startLive()。對著麥克風連續說中文，App 幾乎<b>同步</b>吐出英文語音。</p>
+    <div class="shot"><span class="cam">📸</span>請截圖：即時模式運作中（字幕 + 連線狀態）</div>
+    <div class="warn-box">⚠️ 正式上線需 HTTPS 才能用麥克風（getUserMedia）。本機 127.0.0.1 可測。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>常見問題</h2><div class="k">即時模式的雷</div></div>
+  <div class="tc body">
+    <div>
+      <p><b>連不上 / 沒聲音？</b></p>
+      <p class="note">確認 socketio.run 啟動、前端有載 socket.io、麥克風權限允許。</p>
+      <p><b>延遲很大？</b></p>
+      <p class="note">網路品質影響大；PCM 取樣要正確降到 16kHz。</p>
+    </div>
+    <div>
+      <p><b>翻譯行為怪？</b></p>
+      <p class="note">若即時翻譯品質或行為異常，可回退到通用即時模型 gemini-3.1-flash-live-preview（通用版，非專為翻譯優化）比較差異。</p>
+      <p><b>額度到了？</b></p>
+      <p class="note">即時模式較耗用量，注意 Gemini 支出上限。</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 Live 翻譯指令生成器</h2><div class="k">選雙語，產生 system_instruction</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生 Live 指令</div>
+    <div class="grid2">
+      <div class="field"><label>語言 A</label><input id="lv_a" placeholder="Chinese"></div>
+      <div class="field"><label>語言 B</label><input id="lv_b" placeholder="English"></div>
+    </div>
+    <div class="btns">
+      <button onclick="genLive()">⚙️ 產生指令</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+    </div>
+    <div class="out" id="lv_out">填雙語後按產生，這裡會出現雙向即時翻譯的 system 指令…</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">即時口譯上線</div></div>
+  <ul class="goals body">
+    <li>裝好 flask-socketio，app.py 用 socketio.run 啟動。</li>
+    <li>能開麥克風串流，Gemini Live 回傳即時語音。</li>
+    <li>字幕即時顯示、能開關即時模式。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：即時口譯 App</div><p>逐句 + 即時兩種模式都有了！下一章做「面對面模式」，讓兩個人隔著手機也能對話。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH10</h2><div class="k">面對面模式</div></div>
+  <div class="body">
+    <p>下一章把手機平放桌上，畫面<b>上下對開</b>：對面的人看倒過來的一半、你看正的一半，各講各的語言，翻譯顯示在對方那側。</p>
+    <div class="info-box">👥 CH10 完成 Part 2。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH09 完成！<span class="g">即時口譯</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH10.html">→ 下一章 CH10</a>
+  </div>
+</section>
+
+<script>
+function genLive(){
+  var a=(document.getElementById('lv_a').value||'Chinese').trim();
+  var b=(document.getElementById('lv_b').value||'English').trim();
+  var out="You are a real-time voice translator. Your ONLY job is to translate speech.\n"+
+    "- When you hear "+a+", translate it to "+b+" and reply in "+b+".\n"+
+    "- When you hear "+b+", translate it to "+a+" and reply in "+a+".\n"+
+    "Output ONLY the translation. No greeting or explanation. Speak naturally.";
+  document.getElementById('lv_out').textContent=out;
+}
+</script>
+<script>window.SLIDE_CFG={title:'CH09 · Gemini Live 即時語音',part:'#E67E22',next:'CH10.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

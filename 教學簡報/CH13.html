@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH13 · 匯率換算</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第二篇 · Part 3 · 多模態與旅遊工具</div>
+  <h1>CH13 · <span class="g">匯率換算</span></h1>
+  <h2>即時匯率、免金鑰，出國購物不再心算</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">輸入金額，即時換算</div></div>
+  <div class="body">
+    <p>做一個匯率換算器：選來源幣別、目標幣別、輸入金額，即時算出結果。用<b>免金鑰</b>的公開匯率 API，完全不用申請帳號。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>1000 日圓 = 多少台幣？點一下就知道。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>免金鑰匯率來源</h2><div class="k">主 + 備援，更穩</div></div>
+  <div class="cg body">
+    <div class="cc"><div class="ico">💵</div><h3>ER-API（主）</h3><p>open.er-api.com，免金鑰、幣別多、含台幣 TWD。</p></div>
+    <div class="cc"><div class="ico">🏦</div><h3>Frankfurter（備援）</h3><p>歐洲央行匯率，免金鑰。主來源失敗時頂上。</p></div>
+  </div>
+  <div class="warn-box body" style="margin-top:12px">⚠️ 小提醒：Frankfurter 用歐洲央行資料，<b>沒有台幣</b>；所以我們用有 TWD 的 ER-API 當主來源。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>提示詞</h2><div class="k">主來源 + 備援</div></div>
+  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>做 /api/currency：收 base、target、amount。
+先打 open.er-api.com/v6/latest/{base} 取匯率，
+拿不到再打 frankfurter.app 當備援。
+回傳 {rate, result, date}。前端做換算器 UI，
+選幣別或改金額就即時換算。</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>後端 /api/currency</h2><div class="k">主 ER-API、備援 Frankfurter</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py</span>
+import requests
+@app.route('/api/currency', methods=['POST'])
+def api_currency():
+    d = request.get_json(force=True) or {}
+    base=(d.get('base') or 'USD').upper(); target=(d.get('target') or 'TWD').upper()
+    amount=float(d.get('amount') or 1)
+    if base==target: return jsonify({'ok':True,'rate':1,'result':amount})
+    try:
+        r=requests.get(f'https://open.er-api.com/v6/latest/{base}', timeout=8).json()
+        rate=(r.get('rates') or {}).get(target)
+        if rate: return jsonify({'ok':True,'base':base,'target':target,
+            'rate':rate,'result':amount*rate,'date':r.get('time_last_update_utc','')})
+    except Exception: pass
+    r=requests.get('https://api.frankfurter.app/latest',
+        params={'from':base,'to':target}, timeout=8).json()   <span class="cm"># 備援</span>
+    rate=(r.get('rates') or {}).get(target)
+    return jsonify({'ok':bool(rate),'rate':rate,'result':(amount*rate) if rate else None})</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端：換算器</h2><div class="k">改金額或幣別就即時算</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>async function convert(){
+  const amount = +document.getElementById('amt').value || 0;
+  const from = curFrom.value, to = curTo.value;
+  const res = await fetch('/api/currency', {method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({base:from, target:to, amount})});
+  const d = await res.json();
+  if(!d.ok || d.result == null){ curResult.textContent = '查不到此幣別匯率'; return; }
+  curResult.textContent = `${amount} ${from} = ${d.result.toFixed(2)} ${to}`;
+}
+amt.addEventListener('input', convert);   <span class="cm">// 打字就換算（可加防抖）</span></pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測</h2><div class="k">1000 JPY → TWD</div></div>
+  <div class="body">
+    <p>選 JPY → TWD，輸入 1000，馬上看到「1000 JPY = 約 198 TWD」之類的結果，還顯示匯率更新時間。</p>
+    <div class="shot"><span class="cam">📸</span>請截圖：匯率換算結果</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 幣別清單生成器</h2><div class="k">選常用幣別，產生下拉選項</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生 CURRENCIES</div>
+    <div class="field"><label>要哪些幣別？（逗號分隔：TWD, JPY, USD, KRW, EUR…）</label><input id="c_codes" placeholder="TWD, JPY, USD, KRW, EUR"></div>
+    <div class="btns">
+      <button onclick="genCur()">⚙️ 產生</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+    </div>
+    <div class="out" id="c_out">填幣別後按產生，這裡會出現含中文標籤的 CURRENCIES 陣列…</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">會換匯的 App</div></div>
+  <ul class="goals body">
+    <li>/api/currency 免金鑰、主來源 + 備援。</li>
+    <li>前端選幣別/改金額即時換算。</li>
+    <li>顯示匯率與更新時間。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：會換匯的 App</div><p>不花一毛錢就加了實用工具！下一章同樣免金鑰，加上「天氣查詢」——還會提醒你帶不帶傘。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH14</h2><div class="k">天氣查詢（免金鑰）</div></div>
+  <div class="body">
+    <p>下一章用免金鑰的 Open-Meteo，查任何城市天氣。還會處理「中文地名查不到」的坑，並依天氣給你帶傘/防曬建議。</p>
+    <div class="info-box">🌤️ CH14 加上天氣工具。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH13 完成！<span class="g">會換匯了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH14.html">→ 下一章 CH14</a>
+  </div>
+</section>
+
+<script>
+function genCur(){
+  var meta={TWD:'台幣',JPY:'日圓',USD:'美元',KRW:'韓元',EUR:'歐元',CNY:'人民幣',HKD:'港幣',
+    GBP:'英鎊',THB:'泰銖',SGD:'新加坡幣',MYR:'馬來幣',VND:'越南盾',AUD:'澳幣'};
+  var codes=(document.getElementById('c_codes').value||'TWD, JPY, USD, KRW, EUR').split(',').map(function(s){return s.trim().toUpperCase()}).filter(Boolean);
+  var rows=codes.map(function(c){return "  { code:'"+c+"', label:'"+c+" "+(meta[c]||'')+"' },";});
+  document.getElementById('c_out').textContent="const CURRENCIES = [\n"+rows.join("\n")+"\n];";
+}
+</script>
+<script>window.SLIDE_CFG={title:'CH13 · 匯率換算',part:'#8E44AD',next:'CH14.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

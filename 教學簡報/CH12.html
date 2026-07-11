@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH12 · 上傳檔案翻譯</title>
+<link rel="stylesheet" href="assets/slides.css">
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第二篇 · Part 3 · 多模態與旅遊工具</div>
+  <h1>CH12 · <span class="g">上傳檔案翻譯</span></h1>
+  <h2>圖片、PDF、文字檔，一鍵翻成你的語言</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這一章要做出什麼</h2><div class="k">拍照的延伸：直接上傳檔案</div></div>
+  <div class="body">
+    <p>拍照是用相機，這章加「上傳檔案」：<b>圖片、PDF、文字檔</b>都能翻。沿用 CH11 的 analyze()，多支援 PDF 與純文字。</p>
+    <div class="milestone"><div class="mh">🎁 本章小成品</div><p>把外文 PDF 或圖片丟進來，得到摘要 + 翻譯。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>三種檔案，怎麼處理</h2><div class="k">Gemini 原生就能讀圖與 PDF</div></div>
+  <table class="tbl body">
+    <tr><th>檔案類型</th><th>做法</th></tr>
+    <tr><td>圖片 jpg/png</td><td>當影像丟給 Gemini（同拍照）</td></tr>
+    <tr><td>PDF</td><td>Gemini 原生讀取，當 application/pdf 丟進去</td></tr>
+    <tr><td>文字檔 txt</td><td>直接讀文字內容，當純文字翻譯</td></tr>
+  </table>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>提示詞</h2><div class="k">用 multipart 上傳、依類型分流</div></div>
+  <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>做 /api/file：用 multipart 接收上傳檔案，
+依副檔名/MIME 分流：txt→讀文字、pdf→當 application/pdf、
+圖片→當影像，都交給 analyze() 回 {summary, translation}。
+限制 15MB。前端用 &lt;input type=file&gt; + FormData 上傳。</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>後端 /api/file</h2><div class="k">依類型分流</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre><span class="cm"># app.py</span>
+@app.route('/api/file', methods=['POST'])
+def api_file():
+    f = request.files.get('file')
+    target = request.form.get('target','Traditional Chinese (Taiwan)')
+    raw = f.read()
+    if len(raw) &gt; 15*1024*1024: return jsonify({'ok':False,'error':'檔案過大'}),400
+    mime = (f.mimetype or '').lower()
+    ext = f.filename.rsplit('.',1)[-1].lower()
+    key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
+    if mime=='text/plain' or ext in ('txt','md','csv'):
+        res = providers.analyze(key, target, text=raw.decode('utf-8','replace'))
+    elif mime=='application/pdf' or ext=='pdf':
+        res = providers.analyze(key, target, file_bytes=raw, mime_type='application/pdf')
+    else:  <span class="cm"># 圖片</span>
+        res = providers.analyze(key, target, file_bytes=raw, mime_type=mime or 'image/jpeg')
+    return jsonify({'ok':True, **res})</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>前端：上傳</h2><div class="k">FormData 送檔</div></div>
+  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
+    <pre>&lt;input type="file" id="fileIn" accept="image/*,application/pdf,text/plain,.pdf,.txt" hidden&gt;
+&lt;button onclick="fileIn.click()"&gt;📎 上傳檔案&lt;/button&gt;
+
+fileIn.onchange = async (e)=&gt;{
+  const file = e.target.files[0]; if(!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('target', 'Traditional Chinese (Taiwan)');
+  const res = await fetch('/api/file', {method:'POST', body:fd});   <span class="cm">// 不用設 Content-Type</span>
+  const d = await res.json();
+  showResult(d.summary, d.translation);
+};</pre></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>實測</h2><div class="k">丟一份外文 PDF</div></div>
+  <div class="body">
+    <p>按「📎 上傳檔案」選一份英文/日文 PDF 或圖片，稍等就得到摘要 + 翻譯。</p>
+    <div class="shot"><span class="cam">📸</span>請截圖：上傳 PDF 後的摘要 + 翻譯</div>
+    <div class="ok-box">✅ 圖片建議也先縮圖再上傳；PDF、txt 直接送即可。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 檔案類型設定生成器</h2><div class="k">勾選要支援的類型，產生設定</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生 accept 與白名單</div>
+    <div class="field"><label>要支援哪些？（逗號分隔：image, pdf, txt）</label><input id="f_types" placeholder="image, pdf, txt"></div>
+    <div class="btns">
+      <button onclick="genFile()">⚙️ 產生</button>
+      <button class="alt" onclick="cp(this)">📋 複製</button>
+    </div>
+    <div class="out" id="f_out">按產生，這裡會出現前端 accept 與後端可接受的 MIME 清單…</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>本章驗收</h2><div class="k">會讀檔的 App</div></div>
+  <ul class="goals body">
+    <li>/api/file 依類型分流（圖片/PDF/文字）。</li>
+    <li>有 15MB 大小限制。</li>
+    <li>前端上傳後顯示摘要 + 翻譯。</li>
+  </ul>
+  <div class="milestone body"><div class="mh">🎁 你現在有：會讀檔的 App</div><p>拍照、檔案都能翻了！接下來換上不用 AI、免金鑰的實用小工具——先做「匯率換算」。</p></div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一章 · CH13</h2><div class="k">匯率換算（免金鑰）</div></div>
+  <div class="body">
+    <p>出國購物最實用的就是匯率！下一章串接<b>免金鑰</b>的匯率 API，即時換算，不用申請任何帳號。</p>
+    <div class="info-box">💱 CH13 加上匯率工具。</div>
+  </div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">CH12 完成！<span class="g">會讀檔了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="CH13.html">→ 下一章 CH13</a>
+  </div>
+</section>
+
+<script>
+function genFile(){
+  var t=(document.getElementById('f_types').value||'image, pdf, txt').toLowerCase();
+  var acc=[], mime=[];
+  if(t.indexOf('image')&gt;=0){acc.push('image/*');mime.push('image/jpeg','image/png','image/webp');}
+  if(t.indexOf('pdf')&gt;=0){acc.push('application/pdf','.pdf');mime.push('application/pdf');}
+  if(t.indexOf('txt')&gt;=0){acc.push('text/plain','.txt');mime.push('text/plain');}
+  var out="// 前端 input accept\naccept=\""+acc.join(',')+"\"\n\n"+
+          "# 後端可接受 MIME\nALLOWED = "+JSON.stringify(mime);
+  document.getElementById('f_out').textContent=out;
+}
+</script>
+<script>window.SLIDE_CFG={title:'CH12 · 上傳檔案翻譯',part:'#8E44AD',next:'CH13.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>

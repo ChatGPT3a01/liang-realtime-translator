@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH19 · 整合專案生成器</title>
+<link rel="stylesheet" href="assets/slides.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="assets/project-template.js"></script>
+</head>
+<body>
+
+<section class="slide cover">
+  <div class="tag">第三篇 · Part 5 · 整合專案生成器</div>
+  <h1>CH19 · <span class="g">整合專案生成器</span></h1>
+  <h2>填完資訊，一鍵下載完整可跑的專案</h2>
+  <div class="by">曾慶良 主任（阿亮老師）<br>2026</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>課程的完美句點</h2><div class="k">把一路的生成器整合成一個</div></div>
+  <div class="body">
+    <p>這堂課每一章都有小生成器（.env、app.py、提示詞、語言、幣別、manifest、render.yaml…）。最後我們把它們整合成<b>一個大生成器</b>：填幾格 → 打包下載一整包專案設定檔。</p>
+    <div class="milestone"><div class="mh">🎁 最終大成品</div><p>一個能幫你（或別人）快速生出客製化【亮言即時翻譯】專案骨架的工具。</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>回顧：我們做過的生成器</h2><div class="k">每一個都併進來了</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">🔑</div><h3>.env 生成器</h3><p>CH02</p></div>
+    <div class="cc"><div class="ico">🐍</div><h3>app.py 骨架</h3><p>CH04</p></div>
+    <div class="cc"><div class="ico">💬</div><h3>提示詞生成器</h3><p>CH03</p></div>
+    <div class="cc"><div class="ico">🌐</div><h3>語言/幣別清單</h3><p>CH07 / CH13</p></div>
+    <div class="cc"><div class="ico">📇</div><h3>manifest</h3><p>CH16</p></div>
+    <div class="cc"><div class="ico">⚙️</div><h3>render.yaml</h3><p>CH18</p></div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>這個生成器會產出</h2><div class="k">完整、可直接執行的專案</div></div>
+  <div class="term body"><pre><span class="out">你的專案.zip（完整可跑）
+├─ app.py              ← 後端主程式（完整版）
+├─ providers.py        ← 翻譯供應商抽象層
+├─ requirements.txt    ← 套件清單
+├─ render.yaml         ← 部署設定
+├─ .env                ← 你填的金鑰（自動注入）
+├─ .gitignore
+├─ templates/index.html   ← 完整前端
+└─ static/（app.js / style.css / sw.js / manifest.json）</span></pre></div>
+  <div class="ok-box body">✅ 這不是骨架——是<b>和老師示範完全相同的正式版程式碼</b>，解壓後裝套件就能直接跑。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🎁 整合專案生成器</h2><div class="k">填一填，按「打包下載」</div></div>
+  <div class="gen body">
+    <div class="gh">⚙️ 產生你的專案</div>
+    <div class="grid2">
+      <div class="field"><label>品牌名稱（會取代專案裡所有「亮言」）</label><input id="P_name" placeholder="留空＝維持「亮言」；填「小東」則全換成小東"></div>
+      <div class="field"><label>主題色</label><input id="P_color" type="color" value="#f5c451" style="height:44px;padding:4px"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>語言（逗號分隔代碼）</label><input id="P_langs" placeholder="zh-TW, en, ja, ko"></div>
+      <div class="field"><label>服務名稱（Render）</label><input id="P_svc" placeholder="my-translator"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Gemini 金鑰（選填）</label><input id="P_gem" placeholder="AIza…"></div>
+      <div class="field"><label>Tavily 金鑰（選填）</label><input id="P_tav" placeholder="tvly-…"></div>
+    </div>
+    <div class="field"><label>要包含哪些功能？（逗號分隔：翻譯, 拍照, 檔案, 匯率, 天氣, 助手）</label>
+      <input id="P_feat" placeholder="翻譯, 拍照, 檔案, 匯率, 天氣, 助手"></div>
+    <div class="btns">
+      <button onclick="genProject()">⚙️ 產生預覽</button>
+      <button onclick="dlZip()">📦 打包下載 .zip</button>
+      <button class="alt" onclick="cp(this)">📋 複製預覽</button>
+    </div>
+    <div class="out" id="P_out">填好金鑰後按「產生預覽」看內容，或直接「打包下載 .zip」…</div>
+    <div class="hint">下載的 zip 是<b>完整正式版</b>，已把你的金鑰寫進 .env。填「品牌名稱」的話，App 標題／頁首／PWA 名稱／密碼閘門裡的「亮言」會<b>全部換成你的品牌</b>。解壓 → 裝套件 → 執行，立刻能跑。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下載後怎麼用？</h2><div class="k">三步驟直接啟動</div></div>
+  <ol class="sl body">
+    <li>解壓縮 zip，用 VS Code 打開資料夾。</li>
+    <li>終端機 <code>pip install -r requirements.txt</code> 裝好套件。</li>
+    <li><code>python app.py</code> → 開瀏覽器 <code>http://127.0.0.1:5001</code> → 你的 App 就跑起來了！</li>
+  </ol>
+  <div class="ok-box body">✅ 這就是老師示範的同一份正式程式。要上線，照 CH18 上傳 GitHub → Render 即可。</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>恭喜你，全課完成！</h2><div class="k">回顧這一路的成長</div></div>
+  <ul class="goals body">
+    <li>從裝環境、申請金鑰，到寫出會翻譯、會看照片、會查天氣的 App。</li>
+    <li>學會用 Vibe Coding 提示詞讓 AI 幫你寫程式。</li>
+    <li>把 App 做成 PWA、部署上線，拿到真實網址。</li>
+    <li>做出一套生成器，能快速重建客製化專案。</li>
+  </ul>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>下一步：繼續長大</h2><div class="k">你的 App 還能加什麼？</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">💹</div><h3>股價查詢</h3><p>用同樣模式接一個免金鑰的股價 API。</p></div>
+    <div class="cc"><div class="ico">🗺️</div><h3>地圖導航</h3><p>問地點，產生 Google 地圖連結。</p></div>
+    <div class="cc"><div class="ico">🆘</div><h3>緊急聯絡</h3><p>當地救護、警察一鍵查。</p></div>
+  </div>
+  <div class="info-box body" style="margin-top:14px">🚀 你已經有能力自己加功能了——想到什麼，就用提示詞叫 AI 幫你做！</div>
+</section>
+
+<section class="slide cover">
+  <div class="tag">👨‍🏫 感謝一路同行</div>
+  <h1 style="font-size:40px">曾慶良 主任（<span class="g">阿亮老師</span>）</h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:760px;line-height:1.9">
+    謝謝你完成這趟從零到上線的旅程。<br>你不只做出一個 App，更學會了跟 AI 一起創造的能力。</p>
+  <p style="margin-top:20px;font-size:18px;color:#b9a9d6">▶ YouTube：@Liang-yt02　　f 社團：3A 科技研究社　　✉ 3a01chatgpt@gmail.com</p>
+</section>
+
+<section class="slide cover">
+  <div class="tag">📜 © 2026 阿亮老師 版權所有</div>
+  <h1 style="font-size:38px">🎉 課程完成！<span class="g">你做到了</span></h1>
+  <p style="font-size:20px;color:#cfc9e8;max-width:720px">本課程與專案僅供阿亮老師課程學員學習使用，禁止修改、轉傳、散布或商業使用。</p>
+  <div class="endbtns">
+    <button class="b home" onclick="go(0)">↺ 回到第一頁</button>
+    <a class="b next" href="index.html">🏠 返回課程首頁</a>
+  </div>
+</section>
+
+<script>
+// 產生學員的 .env（把填入的金鑰組成設定檔）
+function studentEnv(){
+  var gem=(document.getElementById('P_gem').value||'貼上你的Gemini金鑰').trim();
+  var tav=(document.getElementById('P_tav').value||'').trim();
+  return 'GEMINI_API_KEY='+gem+'\nGOOGLE_API_KEY='+gem+(tav?('\nTAVILY_API_KEY='+tav):'')+'\n';
+}
+// 取得要打包的檔案：老師的真實完整專案 + 注入 .env（App 名稱若有填就換 manifest 名稱）
+function projectFiles(){
+  var files={};
+  var src=window.PROJECT_FILES||{};
+  for(var k in src){ files[k]=src[k]; }
+  // 品牌自訂：把所有「亮言」換成使用者填的品牌（標題、頁首、PWA 名稱、密碼閘門標題…一次到位）
+  var brand=(document.getElementById('P_name').value||'').trim();
+  if(brand && brand!=='亮言'){
+    for(var k2 in files){ if(typeof files[k2]==='string'){ files[k2]=files[k2].split('亮言').join(brand); } }
+  }
+  files['.env']=studentEnv();
+  return files;
+}
+function genProject(){
+  var f=projectFiles();
+  if(!window.PROJECT_FILES){ document.getElementById('P_out').textContent='（範本尚未載入，請用瀏覽器開啟本頁，勿以純文字檢視）'; return; }
+  var list=Object.keys(f).sort().map(function(k){
+    var lines=String(f[k]).split('\n').length; return '  '+k+'  ('+lines+' 行)';
+  }).join('\n');
+  document.getElementById('P_out').textContent=
+    '下載的 zip 會包含這些「真實可運作」的檔案：\n'+list+'\n\n並自動寫入你的 .env：\n'+studentEnv();
+}
+async function dlZip(){
+  if(!window.PROJECT_FILES){ alert('專案範本未載入，請用瀏覽器直接開啟本頁（非純文字檢視）。'); return; }
+  if(!window.JSZip){ alert('JSZip 未載入（可能離線）。請連網後再試，或改用 CH04–CH18 各章的個別檔案生成器。'); return; }
+  var f=projectFiles(); var zip=new JSZip();
+  for(var k in f){ zip.file(k, f[k]); }
+  var blob=await zip.generateAsync({type:'blob'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=((document.getElementById('P_svc').value||'my-translator').trim())+'.zip'; a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href)},1500);
+}
+</script>
+<script>window.SLIDE_CFG={title:'CH19 · 整合專案生成器',part:'#16A085',next:'index.html'}</script>
+<script src="assets/slides.js"></script>
+</body>
+</html>
