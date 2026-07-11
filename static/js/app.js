@@ -125,6 +125,9 @@ function browserSpeak(text, bcp, onEnd = null) {
 // force=true 無視自動朗讀設定（手動朗讀鈕）；onEnd 於播放結束回呼（供「停止」鈕重置狀態）
 async function speak(text, bcp, force = false, onEnd = null) {
     if ((!cfg.autospeak && !force) || !text) { onEnd?.(); return; }
+    // 先中斷前一句尚在播放或排隊的語音，確保只念最新這一句。
+    // 否則雲端 TTS 會依 nextTime 一段段往後排，把之前累積的語音接連重播，聽起來像重複、延遲。
+    stopAllAudio();
     try {
         const res = await fetch('/api/tts', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -158,6 +161,21 @@ if (synth) synth.onvoiceschanged = () => synth.getVoices();
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 function sttSupported() { return !!SR; }
 
+// 手機（Android/Chrome）的國語辨識常回傳簡體字，即使 lang 設 zh-TW 也一樣。
+// 這裡用 OpenCC 把辨識結果轉回繁體；OpenCC 未載入時原字輸出，不影響其他語言。
+let _s2t = null, _s2tReady = false;
+function toTraditional(text) {
+    if (!text) return text;
+    try {
+        if (!_s2tReady) { _s2tReady = true; if (window.OpenCC) _s2t = window.OpenCC.Converter({ from: 'cn', to: 'tw' }); }
+        return _s2t ? _s2t(text) : text;
+    } catch (e) { return text; }
+}
+// 只有辨識語言為繁體中文時才需要轉換
+function convForBcp(bcp, text) {
+    return (bcp === 'zh-TW' || bcp === 'zh-HK') ? toTraditional(text) : text;
+}
+
 class Recognizer {
     constructor({ bcp, onInterim, onDone, onState }) {
         this.bcp = bcp; this.onInterim = onInterim; this.onDone = onDone; this.onState = onState;
@@ -176,7 +194,9 @@ class Recognizer {
             for (let i = e.resultIndex; i < e.results.length; i++) {
                 const r = e.results[i];
                 // 已確定的句段累積起來，但先不翻譯；只有停止時才整段送出
-                if (r.isFinal) this.buffer += r[0].transcript; else interim += r[0].transcript;
+                // 繁中辨識先轉回繁體，避免手機回傳簡體字
+                if (r.isFinal) this.buffer += convForBcp(this.bcp, r[0].transcript);
+                else interim += convForBcp(this.bcp, r[0].transcript);
             }
             // 即時顯示逐字稿（已確定 + 正在辨識），讓使用者看到自己講到哪
             const shown = (this.buffer + interim).trim();
