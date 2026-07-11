@@ -1,0 +1,6 @@
+# 本站 (fable5-aliang-insight) 只發佈「教學簡報」靜態站。
+# 翻譯 App 本體 (app.py 等) 走 Render，不從這裡上 Netlify。
+# 鎖定 publish 目錄，避免裸跑 `netlify deploy` 誤發專案根目錄。
+[build]
+  publish = "教學簡報"
+  command = ""
