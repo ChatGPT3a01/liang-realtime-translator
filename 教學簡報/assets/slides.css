@@ -190,4 +190,9 @@ body.bg-10 .cs .tbl th,body.bg-10 .cs .tbl td{border-color:#3a3a4a}
 @media(max-width:640px){
   .slide{padding:24px 18px}.cover h1{font-size:34px}.sh h2{font-size:26px}
   .tc,.cg,.cg.c3,.gen .grid2{grid-template-columns:1fr}.cs p,.cs li{font-size:19px}.tb-title{display:none}
+  /* 手機：頂部列太擠會把「⚙ 設定」擠出畫面而點不到。隱藏次要的 YouTube／社團／✉ 連結，
+     只留 首頁＋⚙設定＋全螢幕，確保設定鈕一定點得到。 */
+  .top-bar .tb-btn[target="_blank"],.top-bar .tb-btn[href^="mailto"]{display:none}
+  .top-bar{padding:0 10px;gap:6px}.tb-btn{padding:5px 9px;font-size:12px}
+  .panel{width:min(260px,92vw)}
 }
