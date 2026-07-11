@@ -79,7 +79,7 @@
     <tr><th>檔案</th><th>加什麼</th></tr>
     <tr><td><span class="filechip">templates/index.html</span></td><td>加一個 <code>faceView</code> 區塊（上下兩塊：語言選單＋結果框＋麥克風），頂部加「切換模式」鈕</td></tr>
     <tr><td><span class="filechip">static/css/style.css</span></td><td>把上半 <code>.face-panel.top</code> 用 <code>transform: rotate(180deg)</code> 翻過來</td></tr>
-    <tr><td><span class="filechip">static/js/app.js</span></td><td>寫 <code>makeFaceSide()</code>（一邊的邏輯）呼叫兩次，再加模式切換</td></tr>
+    <tr><td><span class="filechip">static/js/app.js</span></td><td>在 <code>// ===== 6. 面對面 =====</code> 區寫 <code>makeFaceSide()</code>（一邊的邏輯）呼叫兩次，再加模式切換</td></tr>
   </table>
   <div class="info-box">📂 就這三個檔，<b>後端 app.py / providers.py 完全不用動</b>。下面每一步都會告訴你「打開哪一個、貼在哪裡」。</div>
 </section>
@@ -201,7 +201,8 @@ faceView 用 flex 直向排列、上下兩塊平分高度。
   <div class="body">
     <span class="step-tag">步驟 3／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個「幫某一塊裝上麥克風」的小工廠函式 <code>makeFaceSide()</code>——按麥克風→聽你講→翻成對面的語言→顯示在<b>對面那一框</b>並朗讀。上、下各呼叫一次就好。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把它<b>貼在檔案裡「模式切換」那段的前面</b>（也就是即時口譯相關函式的後面）。</p>
+    <div class="info-box">🔌 <b>接線</b>：<code>makeFaceSide()</code> 裡面直接<b>重用</b> CH06 的 <code>translate()</code> 與 CH08 的 <code>speak()</code>——面對面只是把「聽到的字 → 翻譯 → 朗讀」這條線在<b>兩邊各接一次</b>，翻譯與朗讀<b>完全不用重寫</b>，只是換個麥克風、換個顯示框。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 <code>// ===== 6. 面對面 =====</code> 這一區，把它<b>貼在這一區裡</b>（接在 CH09 即時口譯的第 5 區後面、模式切換那段的前面）。<span class="note">💡 照著區塊名字放就對了，不用一行一行數行號。</span></p>
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>幫我寫 makeFaceSide(langSelId, resultBoxId, micBtnId, getTargetId)：
@@ -290,7 +291,7 @@ makeFaceSide('f_langTop', 'f_resultTop', 'f_micTop', () =&gt; $('f_langBottom').
   <div class="body">
     <span class="step-tag">步驟 4／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：頂部放一顆鈕，按一下在「單人畫面」和「面對面畫面」之間切換，同時把另一個藏起來。</div>
-    <p>📂 <b>打開這個檔案</b>：先在 <span class="filechip">templates/index.html</span> 頂部工具列放一顆 <code>id="modeBtn"</code> 的按鈕；切換邏輯寫在 <span class="filechip">static/js/app.js</span>，<b>接在 makeFaceSide 那段後面</b>。</p>
+    <p>📂 <b>打開這個檔案</b>：先在 <span class="filechip">templates/index.html</span> 頂部工具列放一顆 <code>id="modeBtn"</code> 的按鈕；切換邏輯寫在 <span class="filechip">static/js/app.js</span> 的 <code>// ===== 6. 面對面 =====</code> 區，<b>接在 makeFaceSide 那段後面</b>。</p>
     <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
       <pre><span class="cm">&lt;!-- index.html 頂部工具列 --&gt;</span>
 &lt;button class="icon-btn" id="modeBtn" title="切換模式"&gt;👤 單人&lt;/button&gt;</pre></div>
@@ -389,6 +390,39 @@ $('modeBtn').addEventListener('click', () =&gt; {
     <li>把上半的預設語言 <code>f_langTop</code> 改成日文，找個朋友當「日本店員」對講，看中↔日互翻。</li>
     <li>把 <code>.face-result { font-size: 1.4rem }</code> 調大到 <code>2rem</code>，隔著桌子看更清楚——體會「面對面要字大」的體驗設計。</li>
   </ul>
+</section>
+
+<!-- C：此刻全貌 -->
+<section class="slide cs">
+  <div class="sh"><h2>🗺️ 此刻你的 app.js 全貌</h2><div class="k">對一下你的檔案，區塊有沒有對上</div></div>
+  <div class="body">
+    <p>做完這章，你的骨架應該長這樣（這章新增的用 ⭐ 標出來）：</p>
+    <table class="tbl">
+      <tr><th>區</th><th>內容</th><th>狀態</th></tr>
+      <tr><td>1 設定與語言</td><td>語言清單、設定</td><td>✅</td></tr>
+      <tr><td>2 翻譯</td><td><code>translate()</code></td><td>✅ CH06</td></tr>
+      <tr><td>3 語音辨識 STT</td><td><code>Recognizer</code>、簡轉繁、<code>sRecognizer</code></td><td>✅ CH07</td></tr>
+      <tr><td>4 朗讀 TTS</td><td><code>speak()</code></td><td>✅ CH08</td></tr>
+      <tr><td>5 即時口譯</td><td>Gemini Live、<code>stopLive()</code></td><td>✅ CH09</td></tr>
+      <tr><td>6 面對面</td><td><code>makeFaceSide()</code>×2、模式切換 <code>modeBtn</code></td><td>⭐ 這章新增</td></tr>
+      <tr><td>7~9</td><td>拍照、檔案、匯率/天氣/旅遊…</td><td>⬜ 待填</td></tr>
+    </table>
+    <div class="ok-box">👉 如果你的第 6 區有 <code>makeFaceSide()</code> 與模式切換、且跟上面對得上，就代表這章做對了。對不上？用下一頁的「本章完成檔」下載對照。</div>
+  </div>
+</section>
+
+<!-- D：本章存檔點 -->
+<section class="slide cs">
+  <div class="sh"><h2>💾 存檔點：下載本章完整專案</h2><div class="k">做壞了不怕，抓乾淨的檔就好</div></div>
+  <div class="body">
+    <div class="cg">
+      <div class="cc"><div class="ico">⏮️</div><h3>本章起點</h3><p>CH09 完成時的完整專案。若你 CH09 做壞了，下載這個當起點再做 CH10。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH09')">💾 下載 CH09 完成檔</button></div>
+      <div class="cc"><div class="ico">✅</div><h3>本章完成</h3><p>做完 CH10 的完整專案（含面對面模式）。拿來跟你自己的對照，或存起來。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH10')">💾 下載 CH10 完成檔</button></div>
+    </div>
+    <div class="info-box">🎮 每一章都有這兩顆「存檔點」，你永遠有一個能跑的乾淨版本可以回去。</div>
+  </div>
 </section>
 
 <!-- 驗收 -->

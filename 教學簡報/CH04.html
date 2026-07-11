@@ -56,17 +56,28 @@
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>app.py（完整可複製）</h2><div class="k">建立這個檔，貼上內容</div></div>
+  <div class="sh"><h2>app.py（骨架：先分好 10 區）</h2><div class="k">整支檔案先畫好格子，之後每章填一格</div></div>
   <div class="term body">
     <button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py — 最小 Flask 骨架</span>
+    <pre><span class="cm"># app.py —— 整支檔案先分成 10 區，之後每一章填其中一區</span>
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from dotenv import load_dotenv
 
+<span class="cm"># ===== 1. 設定與金鑰 =====   （CH04，這章先放一點）</span>
 load_dotenv()                      <span class="cm"># 讀取 .env 裡的設定</span>
 app = Flask(__name__)
 
+<span class="cm"># ===== 2. 翻譯 API =====          （CH06 會填 /api/translate）</span>
+<span class="cm"># ===== 3. 朗讀 TTS API =====      （CH08 會填 /api/tts）</span>
+<span class="cm"># ===== 4. 即時語音 SocketIO =====（CH09 會填）</span>
+<span class="cm"># ===== 5. 拍照 / 檔案 API =====   （CH11–12 會填）</span>
+<span class="cm"># ===== 6. 匯率 API =====          （CH13 會填 /api/currency）</span>
+<span class="cm"># ===== 7. 天氣 API =====          （CH14 會填 /api/weather）</span>
+<span class="cm"># ===== 8. 旅遊助手 API =====      （CH15 會填）</span>
+<span class="cm"># ===== 9. PWA 與路由 =====        （CH16 會填 / 與靜態檔）</span>
+
+<span class="cm"># ===== 10. 啟動 =====</span>
 @app.route('/')
 def index():
     return 'Hello 亮言！我的翻譯 App 開工了 🚀'
@@ -90,6 +101,25 @@ if __name__ == '__main__':
     <li><code>/api/health</code>：回傳 JSON，之後用來檢查伺服器活著沒。</li>
     <li><code>app.run(...)</code>：啟動伺服器，監聽 5001 埠。</li>
   </ul>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🗺️ 你的 app.py 骨架地圖</h2><div class="k">先看懂這張，之後每章都不會迷路</div></div>
+  <div class="body">
+    <p>剛剛那 10 個 <code># ===== 區 =====</code> 就是你整支後端的「格子」。<b>之後每一章，只會挑其中一格把程式碼填進去</b>，其他格不動。現在只有第 1 區與第 10 區有東西。</p>
+    <table class="tbl">
+      <tr><th>區</th><th>哪一章填</th><th>狀態</th></tr>
+      <tr><td>1 設定與金鑰</td><td>CH04（現在）</td><td>✅ load_dotenv</td></tr>
+      <tr><td>2 翻譯 API</td><td>CH06</td><td>⬜ 待填</td></tr>
+      <tr><td>3 朗讀 TTS API</td><td>CH08</td><td>⬜ 待填</td></tr>
+      <tr><td>4 即時語音 SocketIO</td><td>CH09</td><td>⬜ 待填</td></tr>
+      <tr><td>5 拍照 / 檔案 API</td><td>CH11–12</td><td>⬜ 待填</td></tr>
+      <tr><td>6~8 匯率 / 天氣 / 助手</td><td>CH13~CH15</td><td>⬜ 待填</td></tr>
+      <tr><td>9 PWA 與路由</td><td>CH16</td><td>⬜ 待填</td></tr>
+      <tr><td>10 啟動</td><td>CH04（現在）</td><td>✅ 首頁 + /api/health</td></tr>
+    </table>
+    <div class="ok-box">👉 以後每章的口訣都一樣：<b>「打開 app.py，找到 <code># ===== X =====</code> 這一區，把程式碼貼在它下面。」</b>不用再煩惱貼哪裡。</div>
+  </div>
 </section>
 
 <section class="slide cs">

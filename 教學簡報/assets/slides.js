@@ -102,6 +102,10 @@
       navigator.clipboard.writeText(el.innerText).then(ok).catch(fallback);   // file:// 或非 HTTPS 會走 fallback
     } else { fallback(); }
   };
+  // D：階段存檔點下載（實際檔案由產生器產出後接上；先給提示避免出錯）
+  window.dlCheckpoint = window.dlCheckpoint || function (chap) {
+    alert('「' + chap + ' 完整專案」存檔點正在製作中，很快就能下載 🙂');
+  };
   // 一鍵下載
   window.downloadText = function (filename, text) {
     var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });

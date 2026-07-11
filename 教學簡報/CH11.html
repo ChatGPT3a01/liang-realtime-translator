@@ -46,6 +46,7 @@
     <li>前端把摘要與翻譯<b>顯示在畫面上</b></li>
   </ol>
   <div class="info-box">👉 這一章就是照著這 6 步，一段一段做出來。</div>
+  <div class="info-box">🔌 <b>接線</b>：前端拍照 → 送 <span class="filechip">/api/vision</span> → 後端呼叫 <code>providers.analyze()</code> 讀圖。這跟 CH06 的文字翻譯是<b>不同端點</b>（文字走 <code>/api/translate</code>、拍照走 <code>/api/vision</code>），但<b>同一套供應商設定</b>（一樣的金鑰、一樣的 <code>gemini-3.5-flash</code>）。新功能接到舊設定，不用重弄一次。</div>
 </section>
 
 <!-- 5. 觀念 -->
@@ -64,11 +65,11 @@
   <table class="tbl body">
     <tr><th>檔案</th><th>加什麼</th></tr>
     <tr><td><span class="filechip">providers.py</span></td><td>新增 <code>analyze()</code>：把圖丟給 Gemini，回傳摘要＋翻譯</td></tr>
-    <tr><td><span class="filechip">app.py</span></td><td>新增 <code>/api/vision</code> 端點：收前端送來的照片</td></tr>
+    <tr><td><span class="filechip">app.py</span></td><td>在 <code># ===== 5. 拍照 / 檔案 API =====</code> 區新增 <code>/api/vision</code> 端點：收前端送來的照片</td></tr>
     <tr><td><span class="filechip">templates/index.html</span></td><td>加一顆「📷 拍照翻譯」按鈕</td></tr>
-    <tr><td><span class="filechip">static/js/app.js</span></td><td>按鈕按下後：縮圖 → 送出 → 顯示結果</td></tr>
+    <tr><td><span class="filechip">static/js/app.js</span></td><td>在 <code>// ===== 7. 拍照 / 檔案 =====</code> 區：縮圖 → 送出 → 顯示結果</td></tr>
   </table>
-  <div class="info-box">📂 就這四個檔。下面每一步都會告訴你「打開哪一個、貼在哪裡」。</div>
+  <div class="info-box">📂 就這四個檔，而且前後端各有自己的分區。下面每一步都會告訴你「打開哪一個、貼在哪一區」。</div>
 </section>
 
 <!-- 步驟一：後端 analyze() -->
@@ -142,7 +143,7 @@ def analyze(api_key, target_name, text=None, file_bytes=None, mime_type=None):
   <div class="body">
     <span class="step-tag">步驟 2／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/vision</code>，讓前端能把照片送進來，後端收下後叫剛剛的 <code>analyze()</code> 去讀。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把端點<b>貼在其他 <code>@app.route</code> 的旁邊</b>。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 <code># ===== 5. 拍照 / 檔案 API =====</code> 這一區，把端點<b>貼在這一區裡</b>（跟其他 <code>@app.route</code> 分區放）。<span class="note">💡 前端有第 7 區、後端有第 5 區，拍照相關的程式各自歸位，之後 CH12 上傳檔案也放同一區。</span></p>
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>請在 app.py 新增一個 /api/vision 端點（POST）：
@@ -223,7 +224,7 @@ def api_vision():
   <div class="body">
     <span class="step-tag">步驟 4／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：拍完照後，前端先把照片縮小，送到 <code>/api/vision</code>，拿回摘要＋翻譯後顯示出來。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段<b>接在「開相機」那段的下面</b>。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 <code>// ===== 7. 拍照 / 檔案 =====</code> 這一區，把這段<b>貼在它下面</b>。<span class="note">💡 照著區塊名字放就對了，不用想「貼哪」。</span></p>
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>照片選好後，先用 canvas 把它縮到最長邊 1568 像素（省流量、變快），
@@ -309,6 +310,41 @@ def api_vision():
       <button class="alt" onclick="cp(this)">📋 複製</button>
     </div>
     <div class="out" id="vi_out">填語言後按產生，這裡會出現讀圖用的 system 指令…</div>
+  </div>
+</section>
+
+<!-- C：此刻全貌 -->
+<section class="slide cs">
+  <div class="sh"><h2>🗺️ 此刻你的 app.js 全貌</h2><div class="k">對一下你的檔案，區塊有沒有對上</div></div>
+  <div class="body">
+    <p>做完這章，你的 app.js 骨架應該長這樣（這章新增的用 ⭐ 標出來）：</p>
+    <table class="tbl">
+      <tr><th>區</th><th>內容</th><th>狀態</th></tr>
+      <tr><td>1 設定與語言</td><td>語言清單、設定</td><td>✅</td></tr>
+      <tr><td>2 翻譯</td><td><code>translate()</code></td><td>✅</td></tr>
+      <tr><td>3 語音辨識 STT</td><td><code>Recognizer</code>、<code>sRecognizer</code></td><td>✅</td></tr>
+      <tr><td>4 朗讀 TTS</td><td><code>speak()</code></td><td>✅</td></tr>
+      <tr><td>5 即時 Live</td><td>串流即時模式</td><td>✅</td></tr>
+      <tr><td>6 面對面對話</td><td>雙向對話</td><td>✅</td></tr>
+      <tr><td>7 拍照 / 檔案</td><td>相機按鈕、縮圖、送 <code>/api/vision</code>、顯示摘要＋翻譯</td><td>⭐ 這章新增</td></tr>
+      <tr><td>8~9</td><td>旅遊工具、其他…</td><td>⬜ 還沒</td></tr>
+      <tr><td>10 啟動</td><td>初始化、綁定按鈕</td><td>✅</td></tr>
+    </table>
+    <div class="ok-box">👉 如果你的第 7 區有東西、且跟上面對得上，就代表這章做對了。對不上？用下一頁的「本章完成檔」下載對照。</div>
+  </div>
+</section>
+
+<!-- D：本章存檔點 -->
+<section class="slide cs">
+  <div class="sh"><h2>💾 存檔點：下載本章完整專案</h2><div class="k">做壞了不怕，抓乾淨的檔就好</div></div>
+  <div class="body">
+    <div class="cg">
+      <div class="cc"><div class="ico">⏮️</div><h3>本章起點</h3><p>CH10 完成時的完整專案。若你 CH10 做壞了，下載這個當起點再做 CH11。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH10')">💾 下載 CH10 完成檔</button></div>
+      <div class="cc"><div class="ico">✅</div><h3>本章完成</h3><p>做完 CH11 的完整專案（含拍照翻譯）。拿來跟你自己的對照，或存起來。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH11')">💾 下載 CH11 完成檔</button></div>
+    </div>
+    <div class="info-box">🎮 每一章都有這兩顆「存檔點」，你永遠有一個能跑的乾淨版本可以回去。</div>
   </div>
 </section>
 

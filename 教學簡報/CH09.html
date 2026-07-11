@@ -130,7 +130,7 @@ simple-websocket</span></pre></div>
   <div class="body">
     <span class="step-tag">步驟 2／5</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：讓 <code>app.py</code> 建立一個 SocketIO 物件，並在最後用 <code>socketio.run</code> 啟動（取代原本的 <code>app.run</code>）。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>。import 區加一行、建立 app 的地方加一行、最底下啟動改一下。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 <code># ===== 4. 即時語音 SocketIO =====</code> 這一區。import 區加一行、建立 app 的地方加一行、最底下啟動改一下（本區以外的設定行照放）。<span class="note">💡 之後的 <code>GeminiSession</code> 與 socket 事件也都放這一區。</span></p>
     <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>請幫我在 app.py 啟用 flask-socketio：
@@ -182,7 +182,7 @@ if __name__ == '__main__':
 <section class="slide cs">
   <div class="sh"><h2>✅ 階段檢核 ①：socket 有連上嗎？</h2><div class="k">第一關：先確認「電話接通了」</div></div>
   <div class="body">
-    <p>先別急著做語音。我們先確認「前端連得上後端」。在 <span class="filechip">app.py</span> 的 socket 事件區，加一段最簡單的「連上就印一行 log」：</p>
+    <p>先別急著做語音。我們先確認「前端連得上後端」。在 <span class="filechip">app.py</span> 的 <code># ===== 4. 即時語音 SocketIO =====</code> 這一區，加一段最簡單的「連上就印一行 log」：</p>
     <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
       <pre><span class="cm"># app.py — 加在檔案下半部（route 之後）</span>
 @socketio.on('connect')
@@ -210,7 +210,7 @@ def handle_disconnect():
   <div class="body">
     <span class="step-tag">步驟 3／5</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：每位使用者按下「即時」，就替他開一條到 Gemini Live 的專線。我們用一個 <code>GeminiSession</code> 類別包起來：它在<b>背景執行緒</b>裡連 Gemini，一邊收你送來的音訊往上丟，一邊把 Gemini 回來的語音往下傳。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把這個類別<b>貼在 route 前面（LIVE_MODEL 那幾行之後）</b>。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，一樣在 <code># ===== 4. 即時語音 SocketIO =====</code> 這一區裡，把這個類別<b>貼在 <code>LIVE_MODEL</code> 那幾行之後（route 之前）</b>。</p>
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>請在 app.py 新增一個 GeminiSession 類別（用 google-genai 的 live 即時 API）：
@@ -324,7 +324,7 @@ class GeminiSession:
   <div class="body">
     <span class="step-tag">步驟 4／5</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：前端會發四種訊號進來——「開始」「送音訊」「停止」「斷線」。我們在 <code>app.py</code> 各接一個處理函式。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把這幾個事件<b>貼在剛剛 connect／disconnect 的旁邊</b>。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，在 <code># ===== 4. 即時語音 SocketIO =====</code> 這一區，把這幾個事件<b>貼在剛剛 connect／disconnect 的旁邊</b>。</p>
     <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
       <pre><span class="cm"># app.py — 四個 socket 事件</span>
 @socketio.on('start_session')
@@ -400,7 +400,8 @@ def handle_disconnect():
   <div class="body">
     <span class="step-tag">步驟 5／5</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：按下「即時」後，開麥克風、把聲音<b>降到 16kHz PCM</b>，用 socket 一份份送出去。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段<b>貼在檔案最下面</b>（接在其他函式後面就好）。</p>
+    <div class="info-box">🔌 <b>接線總覽</b>：前端的「即時」開關（<code>toggleLive()</code> → <code>startLive()</code>）先 <code>socket.emit('start_session', …)</code>，再持續 <code>socket.emit('audio_in', pcm)</code> 把音訊送出 → 後端 <code>// ===== 4. 即時語音 SocketIO =====</code> 區的 <code>start_session</code> 事件開一個 <code>GeminiSession</code>、<code>audio_in</code> 事件把音訊丟進它的佇列 → <code>GeminiSession</code> 的 <code>receiver</code> 再 <code>emit('audio_response')</code> 把翻好的語音送回來 → 前端用（CH08 朗讀已寫好的）<code>playLiveAudio()</code> 播出。<b>同一顆按鈕、一條線來回</b>。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 <code>// ===== 5. 即時語音 =====</code> 這一區，把這段<b>貼在這一區裡</b>（接在 socket 初始化後面）。<span class="note">💡 照著區塊名字放就對了，不用想「貼哪」。</span></p>
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>請在 app.js 寫 startLive()：用 getUserMedia 開麥克風，
@@ -465,8 +466,9 @@ socket.emit('audio_in', pcm.buffer);</pre></div>
 
 <section class="slide cs">
   <div class="sh"><h2>步驟五：收語音 + 字幕 + 播放</h2><div class="k">把 Gemini 回來的聲音放出來</div></div>
+  <p class="body">📂 一樣在 <span class="filechip">static/js/app.js</span> 的 <code>// ===== 5. 即時語音 =====</code> 區，接在 <code>startLive()</code> 後面。<span class="note">💡 <code>playLiveAudio()</code> 就是 CH08 朗讀 TTS 已經寫好的同一個播放函式，這裡直接沿用、不用重寫。</span></p>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// app.js — 綁定 Gemini 回來的三種訊號</span>
+    <pre><span class="cm">// app.js — 綁定 Gemini 回來的三種訊號（同一區）</span>
 let livePending = '';
 socket.on('text_response', (d)=&gt;{ if(d.text){ livePending += d.text; setResult(sResult, livePending); } });  <span class="cm">// 字幕逐字出現</span>
 socket.on('audio_response', (data)=&gt; playLiveAudio(data));   <span class="cm">// 播放翻譯語音</span>
@@ -503,8 +505,9 @@ function playLiveAudio(data){
 
 <section class="slide cs">
   <div class="sh"><h2>步驟五：加開關 + stopLive</h2><div class="k">把「即時」按鈕接起來</div></div>
+  <p class="body">📂 收尾也放在 <span class="filechip">static/js/app.js</span> 的 <code>// ===== 5. 即時語音 =====</code> 區，接在 <code>stopLive()</code> 附近。</p>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// app.js — 一顆按鈕切換即時開/關</span>
+    <pre><span class="cm">// app.js — 一顆按鈕切換即時開/關（同一區）</span>
 async function toggleLive(){ liveOn ? stopLive() : startLive(); }
 
 function stopLive(){
@@ -587,6 +590,39 @@ function stopLive(){
     </div>
     <div class="out" id="lv_out">填雙語後按產生，這裡會出現雙向即時翻譯的 system 指令…</div>
     <div class="hint">把產生的字串當成 GeminiSession 的 instruction，雙向翻譯更聽話。</div>
+  </div>
+</section>
+
+<!-- C：此刻全貌 -->
+<section class="slide cs">
+  <div class="sh"><h2>🗺️ 此刻你的 app.js 全貌</h2><div class="k">對一下你的檔案，區塊有沒有對上</div></div>
+  <div class="body">
+    <p>做完這章，你的 10 區骨架應該長這樣（這章新增的用 ⭐ 標出來）：</p>
+    <table class="tbl">
+      <tr><th>區</th><th>內容</th><th>狀態</th></tr>
+      <tr><td>1 設定與語言</td><td>語言清單、設定</td><td>✅</td></tr>
+      <tr><td>2 翻譯</td><td><code>translate()</code></td><td>✅ CH06</td></tr>
+      <tr><td>3 語音辨識 STT</td><td><code>Recognizer</code>、<code>sRecognizer</code></td><td>✅ CH07</td></tr>
+      <tr><td>4 朗讀 TTS</td><td><code>speak()</code>、<code>playLiveAudio()</code></td><td>✅ CH08</td></tr>
+      <tr><td>5 即時語音</td><td>socket、<code>startLive()</code>／<code>stopLive()</code>、收播語音字幕</td><td>⭐ 這章新增</td></tr>
+      <tr><td>6~9</td><td>面對面、拍照、匯率、天氣…</td><td>⬜ 還沒</td></tr>
+      <tr><td>10 啟動</td><td>初始化、綁定按鈕</td><td>✅</td></tr>
+    </table>
+    <div class="ok-box">👉 <code>playLiveAudio()</code> 在第 4 區（CH08 朗讀）就寫好了，這章的即時語音直接沿用它播放——所以第 5 區不必再重寫播放函式。對得上就代表這章做對了。</div>
+  </div>
+</section>
+
+<!-- D：本章存檔點 -->
+<section class="slide cs">
+  <div class="sh"><h2>💾 存檔點：下載本章完整專案</h2><div class="k">做壞了不怕，抓乾淨的檔就好</div></div>
+  <div class="body">
+    <div class="cg">
+      <div class="cc"><div class="ico">⏮️</div><h3>本章起點</h3><p>CH08 完成時的完整專案（含逐句翻譯 + 朗讀）。若你 CH08 做壞了，下載這個當起點再做 CH09。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH08')">💾 下載 CH08 完成檔</button></div>
+      <div class="cc"><div class="ico">✅</div><h3>本章完成</h3><p>做完 CH09 的完整專案（含 Gemini Live 即時口譯）。拿來跟你自己的對照，或存起來。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH09')">💾 下載 CH09 完成檔</button></div>
+    </div>
+    <div class="info-box">🎮 每一章都有這兩顆「存檔點」，你永遠有一個能跑的乾淨版本可以回去。即時語音這章最容易做壞，這顆更該備著。</div>
   </div>
 </section>
 

@@ -91,7 +91,7 @@
   <div class="body">
     <span class="step-tag">步驟 1／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個 <code>_geocode()</code>，收到一個地名，回傳它的 <b>(緯度, 經度, 顯示名)</b>。先查內建的常見地點表，查不到再上網問。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把 AI 給你的表格與函式<b>貼在其他函式的上面（靠近檔案設定區）</b>。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 <code># ===== 7. 天氣 API =====</code> 這一區，把 AI 給你的表格與函式<b>貼在這一區裡</b>（<code>_geocode</code>、<code>_weather_advice</code>、<code>api_weather</code> 都放這區）。<span class="note">💡 照分區名字放，不用煩惱貼哪一行。</span></p>
     <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>請在 app.py 新增一個 _geocode(place) 函式，把中文地名換成 (緯度, 經度, 顯示名)：
@@ -185,7 +185,7 @@ def _geocode(place):
   <div class="body">
     <span class="step-tag">步驟 2／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：Open-Meteo 回的是一個<b>數字代碼</b>（例如 0＝晴天）。做一張對照表把數字翻成中文，再寫一個 <code>_weather_advice()</code> 依天氣給建議。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把兩張表<b>貼在 <code>_geocode()</code> 的上面／下面都可以</b>。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，一樣放在 <code># ===== 7. 天氣 API =====</code> 這一區，兩張表<b>貼在 <code>_geocode()</code> 的上面／下面都可以</b>。</p>
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>請在 app.py 新增：
@@ -251,7 +251,7 @@ def _weather_advice(code, temp, pop):
   <div class="body">
     <span class="step-tag">步驟 3／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/weather</code>。前端送地名（或經緯度）進來，後端地理編碼 → 問 Open-Meteo → 組好結果回傳。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把端點<b>貼在其他 <code>@app.route</code> 的旁邊</b>。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，一樣放在 <code># ===== 7. 天氣 API =====</code> 這一區，端點<b>貼在 <code>_weather_advice()</code> 下面</b>（和其他 <code>@app.route</code> 放在一起）。</p>
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>請在 app.py 新增 /api/weather 端點（POST）：
@@ -344,6 +344,8 @@ def api_weather():
 
 <section class="slide cs">
   <div class="sh"><h2>步驟四：前端查詢邏輯（貼進 app.js）</h2><div class="k">送地名 → 收結果 → 顯示</div></div>
+  <div class="info-box body">🔌 <b>接線</b>：天氣也是一個<b>獨立小工具</b>——前端「🌤️ 天氣」按鈕按下去開視窗，直接打 <code>/api/weather</code>（免金鑰的 Open-Meteo，後端先把地名轉座標再查），拿回溫度、天氣與帶傘建議顯示出來。它<b>不依賴</b>翻譯或 AI，自成一格。</div>
+  <p class="note body">📂 這整段放在 <span class="filechip">static/js/app.js</span> 的 <code>// ===== 8. 匯率 / 天氣 / 助手 =====</code> 這一區（接在匯率後面，和助手放同一區）。</p>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
     <pre><span class="cm">// static/js/app.js — 送 payload 給後端，畫出結果</span>
 async function fetchWeather(payload) {
@@ -488,6 +490,41 @@ $('wx_geo').addEventListener('click', () =&gt; {
     </div>
     <div class="out" id="w_out">填城市後按產生，這裡會出現 COMMON_PLACES 座標字典…</div>
     <div class="hint">找不到的城市可 Google「地名 經緯度」自行補上。</div>
+  </div>
+</section>
+
+<!-- C：此刻全貌 -->
+<section class="slide cs">
+  <div class="sh"><h2>🗺️ 此刻你的 app.js 全貌</h2><div class="k">對一下你的檔案，區塊有沒有對上</div></div>
+  <div class="body">
+    <p>做完這章，前端 <span class="filechip">app.js</span> 的第 8 區已經同時裝了「匯率」和「天氣」兩個小工具（新增的用 ⭐ 標出來）：</p>
+    <table class="tbl">
+      <tr><th>區</th><th>內容</th><th>狀態</th></tr>
+      <tr><td>1 設定與語言</td><td>語言清單、設定</td><td>✅</td></tr>
+      <tr><td>2 翻譯</td><td><code>translate()</code></td><td>✅</td></tr>
+      <tr><td>3 語音辨識 STT</td><td><code>Recognizer</code>、簡轉繁</td><td>✅</td></tr>
+      <tr><td>4 朗讀 TTS</td><td><code>speak()</code></td><td>✅</td></tr>
+      <tr><td>5 即時／面對面</td><td>Gemini Live、上下對開</td><td>✅</td></tr>
+      <tr><td>6 拍照／檔案翻譯</td><td>多模態摘要＋翻譯</td><td>✅</td></tr>
+      <tr><td>7 歷史／設定 Modal</td><td>歷史紀錄、設定面板</td><td>✅</td></tr>
+      <tr><td>8 匯率 / 天氣 / 助手</td><td><code>doConvert()</code>、<code>fetchWeather()</code></td><td>⭐ ✅ 匯率+天氣</td></tr>
+      <tr><td>9 旅遊助手</td><td>Tavily 上網問答</td><td>⬜ 待填（CH15）</td></tr>
+    </table>
+    <div class="ok-box">👉 第 8 區現在有 <code>fetchWeather()</code>、跟匯率的 <code>doConvert()</code> 並排，就代表這章做對了。第 9 區的助手留到下一章補。</div>
+  </div>
+</section>
+
+<!-- D：本章存檔點 -->
+<section class="slide cs">
+  <div class="sh"><h2>💾 存檔點：下載本章完整專案</h2><div class="k">做壞了不怕，抓乾淨的檔就好</div></div>
+  <div class="body">
+    <div class="cg">
+      <div class="cc"><div class="ico">⏮️</div><h3>本章起點</h3><p>CH13 完成時的完整專案（含匯率換算）。若你 CH13 做壞了，下載這個當起點再做 CH14。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH13')">💾 下載 CH13 完成檔</button></div>
+      <div class="cc"><div class="ico">✅</div><h3>本章完成</h3><p>做完 CH14 的完整專案（含天氣查詢）。拿來跟你自己的對照，或存起來。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH14')">💾 下載 CH14 完成檔</button></div>
+    </div>
+    <div class="info-box">🎮 每一章都有這兩顆「存檔點」，你永遠有一個能跑的乾淨版本可以回去。</div>
   </div>
 </section>
 

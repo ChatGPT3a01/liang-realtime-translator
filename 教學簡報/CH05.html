@@ -178,9 +178,19 @@ select{ flex:1; padding:12px; border-radius:12px; }
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>app.js（起步）</h2><div class="k">先確認前後端有連上</div></div>
+  <div class="sh"><h2>app.js（骨架：先分好 10 區）</h2><div class="k">整支檔案先畫好格子，之後每章填一格</div></div>
   <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// static/js/app.js</span>
+    <pre><span class="cm">// static/js/app.js —— 整支檔案先分成 10 區，之後每一章填其中一區</span>
+<span class="cm">// ===== 1. 設定與語言 =====   （語言清單、預設設定，這章先放一點）</span>
+<span class="cm">// ===== 2. 翻譯 =====          （CH06 會填）</span>
+<span class="cm">// ===== 3. 語音辨識 STT =====  （CH07 會填）</span>
+<span class="cm">// ===== 4. 朗讀 TTS =====      （CH08 會填）</span>
+<span class="cm">// ===== 5. 即時語音 =====      （CH09 會填）</span>
+<span class="cm">// ===== 6. 面對面 =====        （CH10 會填）</span>
+<span class="cm">// ===== 7. 拍照 / 檔案 =====   （CH11–12 會填）</span>
+<span class="cm">// ===== 8. 匯率 / 天氣 / 助手 =====（CH13–15 會填）</span>
+<span class="cm">// ===== 9. 設定面板 / 密碼 / 換風格 =====（CH16–17 會填）</span>
+<span class="cm">// ===== 10. 啟動 =====</span>
 async function checkHealth(){
   const res = await fetch('/api/health');
   const data = await res.json();
@@ -196,6 +206,34 @@ checkHealth();</pre></div>
     <p><code>await res.json()</code>：等回覆並解析成物件。</p>
     <p><code>console.log(...)</code>：印到瀏覽器 Console（開發用，使用者看不到）。</p>
     <p><code>checkHealth()</code>：頁面一載入就執行，馬上驗證前後端通不通。</p>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>🗺️ 你的 app.js 骨架地圖</h2><div class="k">先看懂這張，之後每章都不會迷路</div></div>
+  <div class="body">
+    <p>剛剛那 10 個 <code>// ===== 區 =====</code> 就是你整支 App 的「格子」。<b>之後每一章，只會挑其中一格把程式碼填進去</b>，其他格不動。</p>
+    <table class="tbl">
+      <tr><th>區</th><th>哪一章填</th><th>狀態</th></tr>
+      <tr><td>1 設定與語言</td><td>CH05（現在）</td><td>✅ 已放一點</td></tr>
+      <tr><td>2 翻譯</td><td>CH06</td><td>⬜ 待填</td></tr>
+      <tr><td>3 語音辨識 STT</td><td>CH07</td><td>⬜ 待填</td></tr>
+      <tr><td>4~9 各功能</td><td>CH08~CH17</td><td>⬜ 待填</td></tr>
+      <tr><td>10 啟動</td><td>CH05（現在）</td><td>✅ checkHealth</td></tr>
+    </table>
+    <div class="ok-box">👉 以後每章的口訣都一樣：<b>「打開 app.js，找到 <code>// ===== X =====</code> 這一區，把程式碼貼在它下面。」</b>不用再煩惱貼哪裡。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>💾 每章都能「存檔點」下載</h2><div class="k">做壞了、跟丟了，隨時抓乾淨的檔重來</div></div>
+  <div class="body">
+    <p>從下一章起，<b>每一章的開頭和結尾都會有一顆下載鈕</b>：</p>
+    <ul class="sl">
+      <li><b>開頭「上一章完成檔」</b>：萬一你上一章做壞了，直接下載這個當起點，接著做本章。</li>
+      <li><b>結尾「本章完成檔」</b>：本章做完的完整專案，拿來跟你自己的對照，或存起來。</li>
+    </ul>
+    <div class="info-box">🎮 就像遊戲的「存檔點」——你永遠有一個乾淨、能跑的版本可以回去，不怕卡關。</div>
   </div>
 </section>
 

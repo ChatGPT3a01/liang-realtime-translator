@@ -103,7 +103,7 @@
   <div class="body">
     <span class="step-tag">步驟 1／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個好用的「聽寫器」<code>Recognizer</code>。點一下開始聽、逐字稿即時顯示；<b>再點一下</b>停止，把整段文字交出去翻譯。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段<b>貼在檔案最下面</b>（接在其他函式後面就好）。<span class="note">💡 JavaScript 的函式貼在檔案哪個位置都能運作，所以「貼最下面」最不會出錯，不用煩惱順序。</span></p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 CH05 建立的 <code>// ===== 3. 語音辨識 STT =====</code> 這一區，把這段<b>貼在它下面</b>。<span class="note">💡 這就是骨架分區的好處——不用想「貼哪」，照著區塊名字放就對了。</span></p>
     <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>用瀏覽器內建的 Web Speech API，幫我寫一個 Recognizer class：
@@ -238,7 +238,7 @@ class Recognizer {
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這兩個小函式（貼上去）</h2><div class="k">貼進 static/js/app.js 最下面</div></div>
+  <div class="sh"><h2>步驟二：AI 會給你這兩個小函式（貼上去）</h2><div class="k">貼進 // ===== 3. 語音辨識 STT ===== 區</div></div>
   <div class="body">
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
@@ -302,7 +302,8 @@ function convForBcp(bcp, text){
   <div class="body">
     <span class="step-tag">步驟 3／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：先做出一個「單人模式的聽寫器」<code>sRecognizer</code>，設定好「即時顯示」與「講完翻譯」要做的事；再把它接到畫面上的 🎤 麥克風按鈕。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，一樣<b>貼在檔案最下面</b>（接在其他函式後面就好）。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，一樣放在 <code>// ===== 3. 語音辨識 STT =====</code> 這一區裡（接在剛剛的 <code>Recognizer</code> 後面）。</p>
+    <div class="info-box">🔌 <b>接線</b>：這個聽寫器聽到的整段文字，會交給 <b>CH06 做的 <code>translate()</code></b> 去翻譯——你<b>不用重寫翻譯</b>，只是把「聽到的字」接到「已經會翻的函式」上。這就是疊加：新功能接到舊功能。</p>
     <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
       <pre><span class="cm">// 單人模式的聽寫器：設定「顯示」「翻譯」「按鈕變色」三件事</span>
 const sRecognizer = new Recognizer({
@@ -450,6 +451,37 @@ $('s_mic').addEventListener('click', ()=&gt;{
     </div>
     <div class="out" id="l_out">輸入語言代碼後按產生，這裡會出現含 label / name / bcp 的 LANGS 陣列…</div>
     <div class="hint">把產生的 LANGS 放到 app.js，翻譯與語音辨識都用同一份語言設定（<code>bcp</code> 給辨識器、<code>name</code> 給翻譯）。</div>
+  </div>
+</section>
+
+<!-- C：此刻全貌 -->
+<section class="slide cs">
+  <div class="sh"><h2>🗺️ 此刻你的 app.js 全貌</h2><div class="k">對一下你的檔案，區塊有沒有對上</div></div>
+  <div class="body">
+    <p>做完這章，你的 10 區骨架應該長這樣（新增的用 ⭐ 標出來）：</p>
+    <table class="tbl">
+      <tr><th>區</th><th>內容</th><th>狀態</th></tr>
+      <tr><td>1 設定與語言</td><td>語言清單、設定</td><td>✅</td></tr>
+      <tr><td>2 翻譯</td><td><code>translate()</code></td><td>✅ CH06</td></tr>
+      <tr><td>3 語音辨識 STT</td><td><code>Recognizer</code>、簡轉繁、<code>sRecognizer</code></td><td>⭐ 這章新增</td></tr>
+      <tr><td>4~9</td><td>朗讀、即時、面對面、拍照…</td><td>⬜ 還沒</td></tr>
+      <tr><td>10 啟動</td><td>初始化、綁定按鈕</td><td>✅</td></tr>
+    </table>
+    <div class="ok-box">👉 如果你的第 3 區有東西、且跟上面對得上，就代表這章做對了。對不上？用下一頁的「本章完成檔」下載對照。</div>
+  </div>
+</section>
+
+<!-- D：本章存檔點 -->
+<section class="slide cs">
+  <div class="sh"><h2>💾 存檔點：下載本章完整專案</h2><div class="k">做壞了不怕，抓乾淨的檔就好</div></div>
+  <div class="body">
+    <div class="cg">
+      <div class="cc"><div class="ico">⏮️</div><h3>本章起點</h3><p>CH06 完成時的完整專案。若你 CH06 做壞了，下載這個當起點再做 CH07。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH06')">💾 下載 CH06 完成檔</button></div>
+      <div class="cc"><div class="ico">✅</div><h3>本章完成</h3><p>做完 CH07 的完整專案（含語音辨識）。拿來跟你自己的對照，或存起來。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH07')">💾 下載 CH07 完成檔</button></div>
+    </div>
+    <div class="info-box">🎮 每一章都有這兩顆「存檔點」，你永遠有一個能跑的乾淨版本可以回去。</div>
   </div>
 </section>
 

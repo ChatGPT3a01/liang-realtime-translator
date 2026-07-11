@@ -45,6 +45,7 @@
       <div class="cc"><div class="ico">📇</div><h3>manifest</h3><p>App 的「身分證」：告訴手機它叫什麼、用哪個圖示、什麼顏色、要不要全螢幕。</p></div>
       <div class="cc"><div class="ico">⚙️</div><h3>Service Worker</h3><p>躲在背景的小管家：攔截網路請求、做快取，讓 App 開得快、靜態畫面能離線。</p></div>
     </div>
+    <div class="info-box body">🔌 <b>接線</b>：PWA <b>不改動任何功能</b>，只是幫網頁「多穿一層外殼」——<code>manifest</code> 讓它能加到主畫面、<code>Service Worker</code> 在背景管快取。翻譯、語音、拍照、問答等 <b>App 本身的邏輯完全不動</b>，一行都不用改。</div>
   </div>
 </section>
 
@@ -247,9 +248,9 @@ self.addEventListener('fetch', (e) =&gt; {
   <div class="body">
     <span class="step-tag">步驟 4／5</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：光有 sw.js 檔還不夠，要在前端「叫它上工」。這段程式碼就是把 Service Worker 註冊起來。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段接在<b>檔案最下面</b>。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到結尾的 <code>// ===== 10. 啟動 =====</code> 這一區，把這段<b>放進這區裡</b>（接在初始化那幾行之後）。<span class="note">💡 SW 註冊屬於「啟動」動作，放在啟動區最合適。</span></p>
     <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">// static/js/app.js — 貼在檔案結尾</span>
+      <pre><span class="cm">// static/js/app.js — ===== 10. 啟動 ===== 區結尾</span>
 <span class="cm">// 註冊 Service Worker (PWA)</span>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
@@ -274,7 +275,7 @@ if ('serviceWorker' in navigator) {
   <div class="body">
     <span class="step-tag">步驟 5／5</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：檔案實際放在 <code>static/</code>，但步驟三、四都用了根路徑 <code>/manifest.json</code>、<code>/sw.js</code>。這一步就是在後端「開兩個門」，把這兩個檔從根路徑送出去。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，把這段貼在<b>其他 <code>@app.route</code> 旁邊</b>。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 <code># ===== 9. PWA 與路由 =====</code> 這一區，把這兩條路由<b>貼在這區裡</b>（跟其他 <code>@app.route</code> 放一起）。<span class="note">💡 照骨架分區放，不用想「貼哪」，區塊名字對上就行。</span></p>
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>請在 app.py 加兩條路由，從根路徑提供 PWA 檔案：
@@ -436,6 +437,37 @@ const CACHE = 'liang-translate-v12';   <span class="cm">// v11 → v12</span></p
       <button class="alt" onclick="dlMan()">⬇ 下載</button>
     </div>
     <div class="out" id="m_out">填好後按產生，這裡會出現 manifest.json…</div>
+  </div>
+</section>
+
+<!-- C：此刻你的專案全貌 -->
+<section class="slide cs">
+  <div class="sh"><h2>🗺️ 此刻你的專案全貌</h2><div class="k">對一下你的專案，這章新增／動到的都在這</div></div>
+  <div class="body">
+    <p>做完這章，你的專案多了兩個新檔、動了三個舊檔（新增的用 ⭐ 標出來）：</p>
+    <table class="tbl">
+      <tr><th>檔案</th><th>這章的角色</th><th>狀態</th></tr>
+      <tr><td><span class="filechip">static/manifest.json</span></td><td>App 的身分證（名稱、圖示、深紫配色、standalone）</td><td>⭐ 這章新增</td></tr>
+      <tr><td><span class="filechip">static/sw.js</span></td><td>Service Worker（網路優先的快取管家，<code>v11</code>）</td><td>⭐ 這章新增</td></tr>
+      <tr><td><span class="filechip">templates/index.html</span></td><td><code>&lt;head&gt;</code> 加 <code>theme-color</code> 與 <code>&lt;link rel="manifest"&gt;</code></td><td>✏️ 這章加兩行</td></tr>
+      <tr><td><span class="filechip">static/js/app.js</span></td><td>第 <b>10 區「啟動」</b>結尾 <code>register('/sw.js')</code> 註冊 SW</td><td>✏️ 這章加一段</td></tr>
+      <tr><td><span class="filechip">app.py</span></td><td>第 <b>9 區「PWA 與路由」</b>加 <code>/manifest.json</code>、<code>/sw.js</code> 兩條路由</td><td>✏️ 這章加兩條</td></tr>
+    </table>
+    <div class="ok-box">👉 這五個檔對得上，就代表 PWA 這章做對了。核心翻譯邏輯一行都沒動——PWA 只是外殼。</div>
+  </div>
+</section>
+
+<!-- D：本章存檔點 -->
+<section class="slide cs">
+  <div class="sh"><h2>💾 存檔點：下載本章完整專案</h2><div class="k">做壞了不怕，抓乾淨的檔就好</div></div>
+  <div class="body">
+    <div class="cg">
+      <div class="cc"><div class="ico">⏮️</div><h3>本章起點</h3><p>CH15 完成時的完整專案。若你 CH15 做壞了，下載這個當起點再做 CH16。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH15')">💾 下載 CH15 完成檔</button></div>
+      <div class="cc"><div class="ico">✅</div><h3>本章完成</h3><p>做完 CH16 的完整專案（含 PWA：manifest／sw.js／根路徑路由）。拿來跟你自己的對照，或存起來。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH16')">💾 下載 CH16 完成檔</button></div>
+    </div>
+    <div class="info-box">🎮 每一章都有這兩顆「存檔點」，你永遠有一個能跑的乾淨版本可以回去。</div>
   </div>
 </section>
 

@@ -193,16 +193,20 @@ def translate(data):
 
 <section class="slide cs">
   <div class="sh"><h2>在 app.py 加 /api/translate</h2><div class="k">把 providers 接進來</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py 增加這幾行</span>
+  <div class="body">
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 <code># ===== 2. 翻譯 API =====</code> 這一區，把這段<b>貼在它下面</b>。<span class="note">💡 上面的 <code>from flask import request</code>、<code>import providers</code> 放在檔案最上面的 import 區。</span></p>
+    <div class="term"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm"># app.py 最上面的 import 區補這兩行</span>
 from flask import request
 import providers
 
+<span class="cm"># ===== 2. 翻譯 API =====（把下面這段貼在這一區）</span>
 @app.route('/api/translate', methods=['POST'])
 def api_translate():
     data = request.get_json(force=True, silent=True) or {}
     result = providers.translate(data)
     return jsonify(result), (200 if result.get('ok') else 400)</pre></div>
+  </div>
 </section>
 
 <section class="slide cs">
@@ -225,8 +229,10 @@ def api_translate():
 
 <section class="slide cs">
   <div class="sh"><h2>前端：呼叫翻譯</h2><div class="k">app.js 的 translate 函式</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// static/js/app.js</span>
+  <div class="body">
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 CH05 建立的 <code>// ===== 2. 翻譯 =====</code> 這一區，把這段<b>貼在它下面</b>。<span class="note">💡 這就是骨架分區的好處——不用想「貼哪」，照著區塊名字放就對了。</span></p>
+    <div class="term"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">// static/js/app.js　// ===== 2. 翻譯 =====</span>
 async function translate(text, source, target){
   const res = await fetch('/api/translate', {
     method:'POST',
@@ -237,6 +243,7 @@ async function translate(text, source, target){
   if(!data.ok) throw new Error(data.error);
   return data.translation;
 }</pre></div>
+  </div>
 </section>
 
 <section class="slide cs">
@@ -263,8 +270,11 @@ const NAME = {'zh-TW':'Traditional Chinese','en':'English',
 
 <section class="slide cs">
   <div class="sh"><h2>接到「翻譯」按鈕</h2><div class="k">讓 send 真的動起來</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// 這裡的 langA、langB、result 是 CH05 用</span>
+  <div class="body">
+    <p>📂 一樣放在 <span class="filechip">static/js/app.js</span> 的 <code>// ===== 2. 翻譯 =====</code> 這一區裡（接在剛剛的 <code>translate()</code> 後面）。</p>
+    <div class="info-box">🔌 <b>接線</b>：這顆「打字翻譯鈕」按下去，就是呼叫上面的 <code>translate()</code>。之後 <b>CH07 的麥克風</b>（聽到的字）、<b>CH10 的面對面</b>都會重用同一個 <code>translate()</code>——不用重寫，把不同來源的文字接到「已經會翻的函式」上就好。這就是疊加：新功能接到舊功能。</div>
+    <div class="term"><button class="copy" onclick="cp(this)">複製</button>
+      <pre><span class="cm">// 這裡的 langA、langB、result 是 CH05 用</span>
 <span class="cm">// document.getElementById 取得的元素，沿用即可</span>
 document.getElementById('send').onclick = async () =&gt; {
   const text = document.getElementById('text').value.trim();
@@ -278,6 +288,7 @@ document.getElementById('send').onclick = async () =&gt; {
     alert(e.message);
   }
 };</pre></div>
+  </div>
 </section>
 
 <section class="slide cs">
@@ -394,6 +405,42 @@ document.getElementById('send').onclick = async () =&gt; {
     <li>把 temperature 從 0.3 改成 0.9，翻同一句，感覺差異。</li>
     <li>故意把金鑰改錯，看錯誤處理有沒有「優雅地失敗」。</li>
   </ul>
+</section>
+
+<!-- C：此刻全貌 -->
+<section class="slide cs">
+  <div class="sh"><h2>🗺️ 此刻你的 app.js 全貌</h2><div class="k">對一下你的檔案，區塊有沒有對上</div></div>
+  <div class="body">
+    <p>做完這章，你的 10 區骨架應該長這樣（本章新增的用 ⭐ 標出來）：</p>
+    <table class="tbl">
+      <tr><th>區</th><th>內容</th><th>狀態</th></tr>
+      <tr><td>1 設定與語言</td><td>語言清單、設定</td><td>✅ CH05</td></tr>
+      <tr><td>2 翻譯</td><td><code>translate()</code>、翻譯鈕綁定</td><td>⭐ 這章新增</td></tr>
+      <tr><td>3 語音辨識 STT</td><td><code>Recognizer</code></td><td>⬜ CH07</td></tr>
+      <tr><td>4 朗讀 TTS</td><td><code>speak()</code></td><td>⬜ CH08</td></tr>
+      <tr><td>5 即時語音</td><td>Gemini Live</td><td>⬜ CH09</td></tr>
+      <tr><td>6 面對面</td><td>上下對開翻轉</td><td>⬜ CH10</td></tr>
+      <tr><td>7 拍照 / 檔案</td><td>影像、檔案翻譯</td><td>⬜ CH11–12</td></tr>
+      <tr><td>8 匯率 / 天氣 / 助手</td><td>旅遊小工具</td><td>⬜ CH13–15</td></tr>
+      <tr><td>9 設定面板 / 密碼 / 換風格</td><td>設定與外觀</td><td>⬜ CH16–17</td></tr>
+      <tr><td>10 啟動</td><td>初始化、綁定按鈕</td><td>✅ CH05</td></tr>
+    </table>
+    <div class="ok-box">👉 如果你的第 2 區有 <code>translate()</code>、且跟上面對得上，就代表這章做對了。對不上？用下一頁的「本章完成檔」下載對照。</div>
+  </div>
+</section>
+
+<!-- D：本章存檔點 -->
+<section class="slide cs">
+  <div class="sh"><h2>💾 存檔點：下載本章完整專案</h2><div class="k">做壞了不怕，抓乾淨的檔就好</div></div>
+  <div class="body">
+    <div class="cg">
+      <div class="cc"><div class="ico">⏮️</div><h3>本章起點</h3><p>CH05 完成時的完整專案。若你 CH05 做壞了，下載這個當起點再做 CH06。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH05')">💾 下載 CH05 完成檔（本章起點）</button></div>
+      <div class="cc"><div class="ico">✅</div><h3>本章完成</h3><p>做完 CH06 的完整專案（含文字翻譯）。拿來跟你自己的對照，或存起來。</p>
+        <button class="dlbtn" onclick="dlCheckpoint('CH06')">💾 下載 CH06 完成檔</button></div>
+    </div>
+    <div class="info-box">🎮 每一章都有這兩顆「存檔點」，你永遠有一個能跑的乾淨版本可以回去。</div>
+  </div>
 </section>
 
 <section class="slide cs">
