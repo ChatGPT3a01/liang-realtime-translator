@@ -400,7 +400,7 @@ def handle_disconnect():
   <div class="body">
     <span class="step-tag">步驟 5／5</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：按下「即時」後，開麥克風、把聲音<b>降到 16kHz PCM</b>，用 socket 一份份送出去。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段加在即時模式區塊。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段<b>貼在檔案最下面</b>（接在其他函式後面就好）。</p>
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>請在 app.js 寫 startLive()：用 getUserMedia 開麥克風，

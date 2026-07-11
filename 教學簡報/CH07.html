@@ -103,7 +103,7 @@
   <div class="body">
     <span class="step-tag">步驟 1／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個好用的「聽寫器」<code>Recognizer</code>。點一下開始聽、逐字稿即時顯示；<b>再點一下</b>停止，把整段文字交出去翻譯。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段<b>貼在檔案中段的「STT 區塊」</b>（其他函式的旁邊即可，順序不影響）。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，把這段<b>貼在檔案最下面</b>（接在其他函式後面就好）。<span class="note">💡 JavaScript 的函式貼在檔案哪個位置都能運作，所以「貼最下面」最不會出錯，不用煩惱順序。</span></p>
     <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
       <pre>用瀏覽器內建的 Web Speech API，幫我寫一個 Recognizer class：
@@ -238,7 +238,7 @@ class Recognizer {
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這兩個小函式（貼上去）</h2><div class="k">貼進 static/js/app.js 的 STT 區塊上方</div></div>
+  <div class="sh"><h2>步驟二：AI 會給你這兩個小函式（貼上去）</h2><div class="k">貼進 static/js/app.js 最下面</div></div>
   <div class="body">
     <p>💬 <b>對 AI 這樣說</b>：</p>
     <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
@@ -302,7 +302,7 @@ function convForBcp(bcp, text){
   <div class="body">
     <span class="step-tag">步驟 3／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：先做出一個「單人模式的聽寫器」<code>sRecognizer</code>，設定好「即時顯示」與「講完翻譯」要做的事；再把它接到畫面上的 🎤 麥克風按鈕。</div>
-    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，貼在單人模式的區塊（翻譯按鈕那段的<b>附近</b>）。</p>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，一樣<b>貼在檔案最下面</b>（接在其他函式後面就好）。</p>
     <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
       <pre><span class="cm">// 單人模式的聽寫器：設定「顯示」「翻譯」「按鈕變色」三件事</span>
 const sRecognizer = new Recognizer({
