@@ -8,6 +8,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="assets/project-template.js"></script>
 <script src="assets/checkpoints.js"></script>
+<script src="assets/vibe-gen-data.js"></script>
+<script src="assets/vibe-sim.js"></script>
 </head>
 <body>
 
@@ -443,6 +445,27 @@ document.getElementById('send').onclick = async () =&gt; {
         <button class="dlbtn" onclick="dlCheckpoint('CH06')">💾 下載 CH06 完成檔</button></div>
     </div>
     <div class="info-box">🎮 每一章都有這兩顆「存檔點」，你永遠有一個能跑的乾淨版本可以回去。</div>
+  </div>
+</section>
+
+
+<!-- VIBE:providers_ch06 -->
+<section class="slide cs">
+  <div class="sh"><h2>🧩 動手生成 · 一段一段疊出來</h2><div class="k">用「一個目標、一段提示詞」的生成器，把檔案疊出來</div></div>
+  <div class="body">
+    <p>下面這個生成器把整個檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
+    <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的。</div>
+    <div class="vsim" data-gen="providers_ch06"></div>
+  </div>
+</section>
+
+<!-- VIBE:app_ch06 -->
+<section class="slide cs">
+  <div class="sh"><h2>🧩 動手生成 · 一段一段疊出來</h2><div class="k">用「一個目標、一段提示詞」的生成器，把檔案疊出來</div></div>
+  <div class="body">
+    <p>下面這個生成器把整個檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
+    <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的。</div>
+    <div class="vsim" data-gen="app_ch06"></div>
   </div>
 </section>
 

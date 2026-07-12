@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibe 逐段生成器 · 手感預覽（providers.py）</title>
+<link rel="stylesheet" href="assets/slides.css">
+<!-- 先載資料檔，再載引擎 -->
+<script src="assets/vibe-gen-data.js"></script>
+<script src="assets/vibe-sim.js" defer></script>
+<style>
+  /* 這是獨立預覽頁，把主題色帶進來（正式章節由 slides.js 自動設定） */
+  :root{--p:#4A90D9;--gold:#F5A623}
+  body{background:#0f0c29;overflow:auto}
+  .wrap{max-width:1160px;margin:0 auto;padding:30px 20px 80px}
+  .demo-head{color:#fff;text-align:center;margin-bottom:20px}
+  .demo-head h1{font-size:30px;font-weight:900}
+  .demo-head h1 .g{color:var(--gold)}
+  .demo-head p{color:#cfc9e8;font-size:16px;margin-top:8px;line-height:1.6}
+  .demopanel{background:#f8f9fa;border-radius:16px;padding:26px 26px 30px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .demopanel .sh{max-width:none;margin-bottom:16px}
+  .demopanel .sh h2{font-size:28px}
+  .demopanel .note{margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="demo-head">
+    <h1>🧩 Vibe <span class="g">逐段生成器</span> · 手感預覽</h1>
+    <p>示範檔案：<b>providers.py</b>（翻譯核心）。一個目標、一段建議提示詞，複製→（可改）→送出→併入，一塊塊疊出整個檔案。<br>
+       這裡「不真的呼叫 AI」，送出後直接吐出和老師成品一致的標準解答，確保全班程式相同。</p>
+  </div>
+
+  <div class="demopanel">
+    <div class="sh"><h2>把 providers.py 疊出來</h2><div class="k">試試：複製提示詞、隨手加一句自己的話、按送出</div></div>
+
+    <!-- ↓↓↓ 這一行就是要放進正式章節的「掛載點」，其餘全自動 ↓↓↓ -->
+    <div class="vsim" data-gen="providers_ch06"></div>
+
+    <p class="note">正式上線時，這個區塊會嵌在 <b>CH06</b> 底部，舊的「完整可複製程式」頁全部保留當對照。</p>
+  </div>
+</div>
+</body>
+</html>
