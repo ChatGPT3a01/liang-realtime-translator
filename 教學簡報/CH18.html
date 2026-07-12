@@ -24,6 +24,38 @@
 </section>
 
 <section class="slide cs">
+  <div class="sh"><h2>先搞懂：Render 是什麼？</h2><div class="k">別急著操作，先懂它在做什麼</div></div>
+  <div class="body">
+    <p><b>Render 是一台「幫你 24 小時開著、專門跑你程式」的雲端電腦。</b>你把 App 交給它，它就一直幫你執行，並給你一個永久網址，全世界都連得到。</p>
+    <div class="ok-box">🏠 打個比方：你的 App 到目前為止都只在<b>你自己的筆電</b>上跑（<code>python app.py</code>）。但筆電一關機、或你人不在家，App 就斷線了。Render 就像幫你<b>租一台永遠不關機的電腦</b>放你的 App——你去睡覺、去日本，它照樣在線上。</div>
+    <div class="info-box" style="margin-top:12px">💡 這類「幫你跑後端程式 + 給你網址」的雲端平台有很多（Render、Railway、Fly.io…），我們挑 <b>Render</b>，因為它<b>免費方案夠用、用 GitHub 登入、設定最簡單</b>。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>為什麼不能像簡報一樣直接丟上去？</h2><div class="k">「靜態檔案」 vs 「會執行的伺服器」</div></div>
+  <div class="body">
+    <p>你的 App 分成兩半，關鍵差別在<b>後端</b>：</p>
+    <div class="cg c2" style="margin:12px 0">
+      <div class="cc"><div class="ico">🖼️</div><h3>前端＝靜態檔案</h3><p>畫面（HTML／CSS／JS）。像一張海報，<b>放著就好、不會動</b>。放哪都行。</p></div>
+      <div class="cc"><div class="ico">🐍</div><h3>後端＝會執行的程式</h3><p><code>app.py</code> 是 Python 伺服器，要<b>一直執行</b>：收翻譯請求、呼叫 Gemini、查天氣、保管金鑰。</p></div>
+    </div>
+    <p>因為你的 App <b>有一個需要「一直執行 Python」的後端</b>，就不能丟到只會放靜態檔的地方——<b>必須放在「能跑 Python」的主機，也就是 Render。</b></p>
+    <div class="warn-box">🧭 <b>今天的實例</b>：老師的「教學簡報」是純靜態檔，所以放 <b>Netlify</b>；但這支「翻譯 App」有 Python 後端，要放 <b>Render</b>。兩個平台用途不同，別搞混囉。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>Render 幫你做的三件事</h2><div class="k">你只要按幾個鈕，它自動完成</div></div>
+  <div class="cg c3 body">
+    <div class="cc"><div class="ico">📥</div><h3>① 抓程式碼</h3><p>從你的 GitHub 倉庫自動下載最新程式。</p></div>
+    <div class="cc"><div class="ico">📦</div><h3>② 裝套件</h3><p>照 <code>requirements.txt</code> 跑 <code>pip install</code>，把 Flask 等裝好。</p></div>
+    <div class="cc"><div class="ico">🚀</div><h3>③ 跑起來給網址</h3><p>執行 <code>python app.py</code>，給你 <code>https://xxx.onrender.com</code>。</p></div>
+  </div>
+  <div class="ok-box body" style="margin-top:14px">📄 這三件事其實就寫在待會的 <code>render.yaml</code> 裡（buildCommand＝裝套件、startCommand＝跑起來）。看不懂沒關係，Render 會照著做。</div>
+</section>
+
+<section class="slide cs">
   <div class="sh"><h2>部署流程總覽</h2><div class="k">三步驟</div></div>
   <div class="term body"><pre><span class="out">你的電腦（程式碼）
    ① 上傳 → GitHub（雲端倉庫）
