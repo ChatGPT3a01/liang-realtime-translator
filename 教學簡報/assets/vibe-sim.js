@@ -51,6 +51,15 @@
       border-radius:10px;padding:12px 14px;font-family:'Fira Code',Consolas,monospace;font-size:14.5px;
       line-height:1.6;color:#1a1a2e;background:#fbfbfe}
     .vsim textarea.vs-prompt:focus{outline:2px solid var(--p,#4A90D9);border-color:transparent}
+    .vsim textarea.vs-prompt.vs-prompt-tall{min-height:220px}
+    /* 參考程式輸入框（第 2 段起，由使用者自己貼上上一段成果） */
+    .vsim textarea.vs-ref{min-height:150px;background:#f6f7fb;border-color:#b9c6e8}
+    .vsim textarea.vs-ref:focus{outline:2px solid var(--gold,#F5A623)}
+    .vsim .vs-hint-need{font-size:12.5px;color:#a06a00;margin:6px 0 2px}
+    /* 第 2 段起：說明「先貼參考程式＋提示詞建議」的對話框提示 */
+    .vsim .vs-chatnote{font-size:13.5px;color:#274690;background:#eef3ff;border:1px solid #c3d3f5;
+      border-radius:8px;padding:8px 11px;margin-bottom:10px;line-height:1.55}
+    .vsim .vs-chatnote b{color:#1a3a8a}
     .vsim .vs-send{margin-top:10px;background:linear-gradient(135deg,#27AE60,#2ECC71);color:#fff;border:none;
       border-radius:10px;padding:11px 26px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit}
     .vsim .vs-send:hover{filter:brightness(1.06)}
@@ -63,6 +72,8 @@
       font-family:'Fira Code',Consolas,monospace;font-size:14px;line-height:1.6;white-space:pre-wrap;
       word-break:break-word;max-height:340px;overflow:auto;min-height:40px}
     .vsim pre.vs-output .cur{color:var(--gold,#F5A623);animation:vsblink 1s steps(1) infinite}
+    /* 前面已完成、被「貼進對話框」的程式：以較暗色呈現，凸顯 AI 是在其基礎上續寫 */
+    .vsim pre.vs-output .vs-prev{color:#7a7a90}
     @keyframes vsblink{50%{opacity:0}}
     .vsim .vs-think{color:#9aa4b2;font-family:'Fira Code',Consolas,monospace;font-size:14px}
     .vsim .vs-skip{font-size:12.5px;color:#8a8a9a;margin-top:5px}
@@ -190,15 +201,47 @@
         '<span class="num">目標 ' + (state.idx + 1) + '</span>　' + esc(g.title)));
       if (g.note) stage.appendChild(el('div', 'vs-goal-note', esc(g.note)));
 
-      // 提示詞區
+      // 這一段之前已疊好的程式（標準解答）；第 2 段起要「使用者自己上傳參考程式」
+      const prevCode = assembled();
+      const isFirst = state.idx === 0;
+
+      // --- 第 2 段起：① 參考程式（由使用者自己貼上／帶入上一段生成的程式）---
+      let refBox = null;
+      if (!isFirst) {
+        stage.appendChild(el('div', 'vs-chatnote',
+          '💬 就像真的在接續開發：<b>先把你上一段生成好的程式當「參考程式」貼進來</b>，' +
+          '再複製下面的提示詞建議、送出，AI 就會在你的參考程式上繼續，回傳到這一段為止的完整程式。'));
+
+        const refLbl = el('div', 'vs-lbl', '① 參考程式（貼上你上一段生成好的程式）<span class="sp"></span>');
+        const btnFill = el('button', 'vs-mini', '⬆️ 帶入上一段成果');
+        refLbl.appendChild(btnFill);
+        stage.appendChild(refLbl);
+
+        refBox = el('textarea', 'vs-prompt vs-ref');
+        refBox.spellcheck = false;
+        refBox.placeholder = '在這裡貼上你上一段生成好的程式…（或按右上角「帶入上一段成果」）';
+        stage.appendChild(refBox);
+
+        btnFill.onclick = function () {
+          refBox.value = prevCode;
+          btnFill.textContent = '已帶入 ✓';
+          refBox.dispatchEvent(new Event('input'));
+          setTimeout(() => (btnFill.textContent = '⬆️ 帶入上一段成果'), 1200);
+        };
+      }
+
+      // --- ② 提示詞建議（可複製、可小改，貼進對話框）---
       const lbl = el('div', 'vs-lbl',
-        '💡 建議提示詞（可自己改，改完再送出）<span class="sp"></span>');
+        (isFirst ? '💡 提示詞建議（複製、可小改，再送出）'
+                 : '② 提示詞建議（複製、可小改，貼進對話框）') +
+        '<span class="sp"></span>');
       const btnCopy = el('button', 'vs-mini', '複製提示詞');
       lbl.appendChild(btnCopy);
       stage.appendChild(lbl);
 
+      const promptText = g.prompt;
       const ta = el('textarea', 'vs-prompt');
-      ta.value = g.prompt;
+      ta.value = promptText;
       ta.spellcheck = false;
       stage.appendChild(ta);
 
@@ -210,6 +253,16 @@
       };
 
       const btnSend = el('button', 'vs-send', '送出 ▶');
+      // 第 2 段起：沒貼上參考程式不能送出（讓使用者確實做這個動作、才有參與感）
+      function syncSendEnabled() {
+        if (isFirst) return;
+        btnSend.disabled = !(refBox && refBox.value.trim());
+      }
+      if (!isFirst) {
+        refBox.addEventListener('input', syncSendEnabled);
+        syncSendEnabled();
+        stage.appendChild(el('div', 'vs-hint-need', '＊送出前，請先貼上／帶入「參考程式」。'));
+      }
       stage.appendChild(btnSend);
 
       const outWrap = el('div', 'vs-out-wrap');
@@ -217,19 +270,22 @@
       stage.appendChild(outWrap);
 
       btnSend.onclick = function () {
+        if (!isFirst && !(refBox && refBox.value.trim())) return;   // 保險
         btnSend.disabled = true;
         ta.disabled = true;
+        if (refBox) refBox.disabled = true;
         outWrap.hidden = false;
         outWrap.innerHTML = '';
 
-        // 若學員在建議提示詞之外自己加了字，貼心回應一下（但程式仍輸出標準解答）
-        const extra = extractExtra(ta.value, g.prompt);
+        // 若學員在建議內容之外自己加了字，貼心回應一下（但程式仍輸出標準解答）
+        const extra = extractExtra(ta.value, promptText);
         if (extra) {
           outWrap.appendChild(el('div', 'vs-added',
             '📎 已收到你的補充：「' + esc(extra.slice(0, 60)) + (extra.length > 60 ? '…' : '') +
             '」　（教學版會輸出標準解答，確保全班一致）'));
         }
-        outWrap.appendChild(el('div', 'vs-lbl', '🤖 生成結果'));
+        outWrap.appendChild(el('div', 'vs-lbl',
+          isFirst ? '🤖 生成結果' : '🤖 生成結果（在你的參考程式上續寫 · 到這一段為止的完整程式）'));
         const think = el('div', 'vs-think', '🤔 Vibe 生成中');
         outWrap.appendChild(think);
 
@@ -243,10 +299,12 @@
         setTimeout(() => {
           clearInterval(thinkTimer);
           think.remove();
-          typeCode(outWrap, g.code, () => {
-            // 打完 → 出現「併入」鈕
-            const acc = el('button', 'vs-accept', '✅ 併入 ' + gen.file + '，下一個目標');
-            if (state.idx === gen.goals.length - 1) acc.textContent = '✅ 併入 ' + gen.file + '，完成！';
+          // 第 2 段起：先秀出「目前的程式」(灰)，再逐字打出這段新增的部分；
+          // 打完即為「到目前為止的完整程式」
+          typeCumulative(outWrap, isFirst ? '' : prevCode, g.code, () => {
+            const last = state.idx === gen.goals.length - 1;
+            const acc = el('button', 'vs-accept',
+              last ? '✅ 採用這份程式，完成！' : '✅ 採用這份程式，下一段');
             outWrap.appendChild(acc);
             acc.onclick = function () {
               state.parts.push(g.code);
@@ -284,22 +342,35 @@
   }
 
   // ---------- 4. 逐字打字動畫（可點擊略過） ----------
-  function typeCode(wrap, code, onDone) {
+  //   prevCode：這段之前已完成、被「貼進對話框」的程式，先直接印出來（灰色），
+  //             代表 AI 是在你貼上的程式基礎上「續寫」；新的一段才逐字打出。
+  //   打完後 pre 的內容 = 到這一段為止的完整程式。
+  function typeCumulative(wrap, prevCode, code, onDone) {
     const pre = el('pre', 'vs-output', '');
     wrap.appendChild(pre);
     const skip = el('div', 'vs-skip', '（正在輸入…點一下程式框可略過動畫）');
     wrap.appendChild(skip);
 
+    // 前綴用和 assembled() 相同的段落間隔（\n\n\n），確保「灰底舊碼 + 新碼」= 完整檔
+    const prefix = prevCode ? '<span class="vs-prev">' + esc(prevCode) + '</span>\n\n\n' : '';
+
+    // 刻意放慢，做出「AI 正在串流吐程式」的感覺（可點框略過）：
+    //   每段約 2.6～7 秒，長段落也不會拖太久；短段落至少看得到過程。
+    const INTERVAL = 24;                                   // 每個 tick 的毫秒
+    const durationMs = Math.min(7000, Math.max(2600, code.length * 8));
+    const totalTicks = Math.max(1, durationMs / INTERVAL);
+    const step = Math.max(1, Math.round(code.length / totalTicks));
+
     let i = 0;
-    const step = Math.max(3, Math.round(code.length / 90)); // 讓長短段落都約 1 秒打完
     let finished = false;
 
     function finish() {
       if (finished) return;
       finished = true;
       clearInterval(timer);
-      pre.innerHTML = esc(code);
+      pre.innerHTML = prefix + esc(code);
       skip.remove();
+      pre.scrollTop = pre.scrollHeight;
       if (onDone) onDone();
     }
     pre.onclick = finish;
@@ -307,10 +378,10 @@
     const timer = setInterval(() => {
       i += step;
       if (i >= code.length) { finish(); return; }
-      // 已打出的部分 + 閃爍游標
-      pre.innerHTML = esc(code.slice(0, i)) + '<span class="cur">▋</span>';
+      // 灰色舊碼 + 已打出的新碼 + 閃爍游標
+      pre.innerHTML = prefix + esc(code.slice(0, i)) + '<span class="cur">▋</span>';
       pre.scrollTop = pre.scrollHeight;
-    }, 16);
+    }, INTERVAL);
   }
 
   // ---------- 5. 找出學員在建議提示詞之外自己加的字 ----------
