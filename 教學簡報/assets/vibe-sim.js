@@ -30,6 +30,12 @@
     .vsim .vs-prog{font-size:14px;font-weight:800;color:#fff;background:var(--p,#4A90D9);
       border-radius:20px;padding:4px 12px;white-space:nowrap}
     .vsim .vs-intro{font-size:16px;color:#5a5a72;line-height:1.6;margin:2px 0 12px}
+    /* 固定顯示的「怎麼操作」三步驟 */
+    .vsim .vs-how{font-size:14.5px;color:#234;background:#eef3fb;border:1px solid var(--p,#4A90D9);
+      border-radius:10px;padding:10px 14px;margin:0 0 14px;line-height:1.7}
+    .vsim .vs-how b{color:var(--p,#4A90D9)}
+    .vsim .vs-how .n{display:inline-block;min-width:20px;height:20px;line-height:20px;text-align:center;
+      background:var(--p,#4A90D9);color:#fff;border-radius:50%;font-size:12px;font-weight:900;margin-right:4px}
     /* 目標進度圓點 */
     .vsim .vs-dots{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
     .vsim .vs-dots .d{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
@@ -128,6 +134,13 @@
     host.appendChild(head);
 
     if (gen.intro) host.appendChild(el('div', 'vs-intro', esc(gen.intro)));
+
+    // 固定顯示「怎麼操作」三步驟，讓學員一眼看懂流程（不必先點才知道）
+    host.appendChild(el('div', 'vs-how',
+      '<b>怎麼操作（一段一段疊）：</b><br>' +
+      '<span class="n">1</span>複製下面的<b>提示詞建議</b>（可自己小改）→ 貼進對話框 → 按<b>送出</b>。<br>' +
+      '<span class="n">2</span><b>第 2 段起</b>：先把你<b>上一段生成好的程式</b>貼上／按「帶入上一段成果」放進<b>參考程式</b>框，再送出。<br>' +
+      '<span class="n">3</span>生成後按<b>「採用」</b>把這段疊進檔案；全部做完就能<b>下載</b>整個檔案。'));
 
     const dots = el('div', 'vs-dots');
     host.appendChild(dots);
