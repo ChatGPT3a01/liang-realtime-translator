@@ -150,6 +150,14 @@ body.bg-10 .cs .mock{border-color:#000}
 .dots{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:100;max-width:78vw;flex-wrap:wrap;justify-content:center}
 .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer}.dot.active{background:var(--gold);transform:scale(1.3)}
 .pageno{position:fixed;bottom:14px;right:18px;color:rgba(255,255,255,.7);font-size:13px;font-family:monospace;z-index:100}
+/* 最後一頁才出現：前往下一章 / 回總覽 的明顯超連結按鈕（右下、pageno 上方） */
+.next-ch-btn{position:fixed;bottom:38px;right:14px;z-index:101;background:var(--p,#4A90D9);color:#fff;
+  text-decoration:none;font-weight:900;font-size:15px;padding:10px 20px;border-radius:24px;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);animation:nextchpulse 1.6s ease-in-out infinite}
+.next-ch-btn:hover{filter:brightness(1.1)}
+@keyframes nextchpulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.nav-btn.to-next-ch{background:var(--p);opacity:1;animation:nextchpulse 1.6s ease-in-out infinite}
+@media(max-width:640px){.next-ch-btn{bottom:34px;right:12px;font-size:13px;padding:8px 15px}}
 .endbtns{margin-top:34px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
 .endbtns .b{padding:14px 28px;border-radius:12px;font-size:17px;font-weight:900;cursor:pointer;text-decoration:none;border:none}
 .endbtns .home{background:linear-gradient(135deg,#555,#888);color:#fff}

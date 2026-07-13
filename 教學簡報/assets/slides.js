@@ -42,8 +42,17 @@
 
   // 上下頁
   var prev = mk('button', 'nav-btn prev-btn', '◀'); prev.onclick = function () { ch(-1); };
-  var next = mk('button', 'nav-btn next-btn', '▶'); next.onclick = function () { ch(1); };
+  var next = mk('button', 'nav-btn next-btn', '▶');
+  next.onclick = function () {
+    if (cur === slides.length - 1 && cfg.next) { location.href = cfg.next; return; }  // 最後一頁 ▶ → 下一章
+    ch(1);
+  };
   document.body.appendChild(prev); document.body.appendChild(next);
+  // 只在最後一頁出現的「下一章 / 回總覽」超連結按鈕
+  var nextCh = mk('a', 'next-ch-btn', '');
+  nextCh.style.display = 'none';
+  if (cfg.next) nextCh.href = cfg.next;
+  document.body.appendChild(nextCh);
   var dotsEl = mk('div', 'dots', ''); document.body.appendChild(dotsEl);
   var pageno = mk('div', 'pageno', ''); document.body.appendChild(pageno);
   function mk(t, c, x) { var e = document.createElement(t); e.className = c; e.textContent = x; return e; }
@@ -53,7 +62,19 @@
   function upd() {
     dotsEl.querySelectorAll('.dot').forEach(function (d, i) { d.classList.toggle('active', i === cur); });
     pageno.textContent = (cur + 1) + ' / ' + slides.length;
-    prev.disabled = (cur === 0); next.disabled = (cur === slides.length - 1);
+    prev.disabled = (cur === 0);
+    var onLast = (cur === slides.length - 1);
+    // 最後一頁：▶ 改成前往下一章（沒有 cfg.next 才停用）；並顯示明顯的超連結按鈕
+    next.disabled = onLast && !cfg.next;
+    if (onLast && cfg.next) {
+      next.classList.add('to-next-ch');
+      nextCh.style.display = '';
+      nextCh.textContent = (cfg.next === 'index.html') ? '🏠 回課程總覽' : '下一章 ▶';
+      nextCh.title = cfg.next;
+    } else {
+      next.classList.remove('to-next-ch');
+      nextCh.style.display = 'none';
+    }
   }
   window.go = function (i) { if (i < 0 || i >= slides.length) return; slides[cur].classList.remove('active'); cur = i; slides[cur].classList.add('active'); slides[cur].scrollTop = 0; upd(); };
   window.ch = function (d) { go(cur + d); };
