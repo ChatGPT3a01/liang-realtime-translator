@@ -23,6 +23,4 @@ node_modules/
 
 # 使用卡含金鑰，不上傳
 *.pdf
-# 例外：CH01 離線安裝 Codex 的圖解步驟（純安裝截圖、無金鑰，簡報下載連結需要）
-!教學簡報/assets/codex-offline-install.pdf
 _ckpt_work/

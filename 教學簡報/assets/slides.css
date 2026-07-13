@@ -97,7 +97,6 @@ code{background:rgba(0,0,0,.08);padding:1px 7px;border-radius:6px;font-family:'F
 .shot .cam{font-size:32px;display:block;margin-bottom:6px}
 .img-box{text-align:center}
 .img-box img{max-width:100%;max-height:340px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
-.img-box img.pdfshot{max-height:74vh;border:1px solid #d6d6e2}   /* 圖解步驟截圖：放大到幾乎滿版方便閱讀 */
 .img-box .hint{font-size:14px;color:var(--muted);margin-top:6px}
 
 /* 步驟鷹架：每一步都要說清楚「做什麼／哪個檔案／對 AI 說什麼／貼哪裡／預期／除錯」 */
