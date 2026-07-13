@@ -22,7 +22,7 @@
   function injectStyleOnce() {
     if (document.getElementById('vsim-style')) return;
     const css = `
-    .vsim{width:100%;max-width:1120px;margin:10px 0;background:#fff;
+    .vsim{width:100%;max-width:var(--cw,1180px);margin:10px 0;background:#fff;
       border:2px solid var(--p,#4A90D9);border-radius:16px;padding:18px 20px;
       box-shadow:0 6px 18px rgba(0,0,0,.08);font-family:inherit}
     .vsim .vs-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}

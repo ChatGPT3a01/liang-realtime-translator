@@ -2,7 +2,10 @@
    亮言課程 · 共用簡報樣式（所有 CHxx 共用）
    Part 主題色以 --p 帶入（由 slides.js 依 SLIDE_CFG.part 設定）
    ============================================================ */
-:root{--p:#4A90D9;--gold:#F5A623;--ink:#1a1a2e;--muted:#5a5a72;--cs:#f8f9fa}
+:root{--p:#4A90D9;--gold:#F5A623;--ink:#1a1a2e;--muted:#5a5a72;--cs:#f8f9fa;
+  /* 內容寬度：隨視窗縮放（大螢幕最寬 1400，其餘吃滿版但左右各留 75px 給導覽箭頭），
+     減少左右大留白、又不會被 ◀▶ 壓到字；手機另在 @media 覆寫 */
+  --cw:min(1400px,calc(100vw - 150px))}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans TC',system-ui,'Microsoft JhengHei',sans-serif;background:#0f0c29;overflow:hidden}
 
@@ -17,7 +20,7 @@ body{font-family:'Noto Sans TC',system-ui,'Microsoft JhengHei',sans-serif;backgr
 
 /* 投影片 */
 .slide{position:fixed;top:48px;left:0;right:0;height:calc(100vh - 48px);display:none;flex-direction:column;
-  justify-content:center;align-items:center;padding:40px 48px;overflow-y:auto}
+  justify-content:center;align-items:center;padding:40px clamp(18px,3vw,44px);overflow-y:auto}
 .slide.active{display:flex;animation:fade .35s ease}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .cover{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);color:#fff;text-align:center}
@@ -29,46 +32,46 @@ body{font-family:'Noto Sans TC',system-ui,'Microsoft JhengHei',sans-serif;backgr
 .cover h2{font-size:26px;font-weight:400;color:#cfc9e8;margin-bottom:8px}
 .cover .tag{display:inline-block;background:rgba(245,166,35,.15);border:1px solid var(--gold);color:var(--gold);padding:6px 18px;border-radius:20px;font-size:16px;font-weight:700;margin-bottom:24px}
 .cover .by{position:absolute;bottom:26px;right:34px;color:#a99fd0;font-size:15px;text-align:right}
-.sh{width:100%;max-width:1120px;margin-bottom:22px}
+.sh{width:100%;max-width:var(--cw);margin-bottom:22px}
 .sh h2{font-size:36px;font-weight:900;color:var(--ink);border-left:8px solid var(--p);padding-left:16px}
 .sh .k{color:var(--muted);font-size:18px;margin-top:8px;padding-left:18px}
-.body{width:100%;max-width:1120px}
+.body{width:100%;max-width:var(--cw)}
 .cs p{font-size:22px;line-height:1.75;margin-bottom:14px}.cs li{font-size:22px;line-height:1.7}
 .note{font-size:18px;color:var(--muted)}.big{font-size:26px;font-weight:700}
 code{background:rgba(0,0,0,.08);padding:1px 7px;border-radius:6px;font-family:'Fira Code',Consolas,monospace;font-size:.92em}
 
 /* 兩欄 / 概念卡 */
-.tc{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:1120px;align-items:start}
-.cg{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;width:100%;max-width:1120px}
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:var(--cw);align-items:start}
+.cg{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;width:100%;max-width:var(--cw)}
 .cg.c3{grid-template-columns:repeat(3,1fr)}
 .cg.c4{grid-template-columns:repeat(4,1fr)}
 .cc{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 4px 14px rgba(0,0,0,.08);border-top:4px solid var(--p)}
 .cc .ico{font-size:30px}.cc h3{font-size:20px;margin:6px 0 4px;color:var(--ink)}.cc p{font-size:16px;color:var(--muted);margin:0}
 
 /* 步驟清單 */
-.sl{list-style:none;counter-reset:s;max-width:1120px;width:100%}
+.sl{list-style:none;counter-reset:s;max-width:var(--cw);width:100%}
 .sl li{counter-increment:s;position:relative;padding:12px 0 12px 52px;font-size:22px;border-bottom:1px dashed #dcdce6}
 .sl li::before{content:counter(s);position:absolute;left:0;top:10px;width:34px;height:34px;background:var(--p);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px}
 
 /* 色塊 */
-.box{border-radius:12px;padding:16px 20px;margin:12px 0;font-size:20px;width:100%;max-width:1120px}
+.box{border-radius:12px;padding:16px 20px;margin:12px 0;font-size:20px;width:100%;max-width:var(--cw)}
 .warn-box{background:#fff8e1;border:2px solid var(--gold);color:#7a5c00}
 .ok-box{background:#e8f8ee;border:2px solid #27AE60;color:#1c6b3f}
 .info-box{background:#eef3fb;border:2px solid var(--p);color:#234}
 
 /* 里程碑「可用的小成品」框 */
-.milestone{width:100%;max-width:1120px;border-radius:14px;padding:18px 22px;margin:10px 0;
+.milestone{width:100%;max-width:var(--cw);border-radius:14px;padding:18px 22px;margin:10px 0;
   background:linear-gradient(135deg,#e8f8ee,#f0fbf4);border:2px solid #27AE60;color:#1c6b3f}
 .milestone .mh{font-size:20px;font-weight:900;display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .milestone p{font-size:19px;margin:0;color:#256b46}
 
 /* 提示詞方塊（vibe coding） */
-.prompt{background:#1e1e2e;border:1px solid #39395a;border-radius:12px;padding:16px 18px;width:100%;max-width:1120px;position:relative;margin:8px 0}
+.prompt{background:#1e1e2e;border:1px solid #39395a;border-radius:12px;padding:16px 18px;width:100%;max-width:var(--cw);position:relative;margin:8px 0}
 .prompt .lbl{color:var(--gold);font-size:14px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .prompt pre{color:#e6e6f0;font-family:'Fira Code',Consolas,monospace;font-size:18px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
 
 /* 終端機 */
-.term{background:#1e1e2e;border:1px solid #39395a;border-radius:12px;padding:16px 18px;width:100%;max-width:1120px;position:relative;margin:8px 0}
+.term{background:#1e1e2e;border:1px solid #39395a;border-radius:12px;padding:16px 18px;width:100%;max-width:var(--cw);position:relative;margin:8px 0}
 .term .lbl{color:var(--gold);font-size:14px;font-weight:700;margin-bottom:8px}
 .term pre{color:#e6e6f0;font-family:'Fira Code',Consolas,monospace;font-size:18px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
 .term .cm{color:#7ee787}.term .out{color:#9aa4b2}
@@ -76,7 +79,7 @@ code{background:rgba(0,0,0,.08);padding:1px 7px;border-radius:6px;font-family:'F
 .copy:hover{background:var(--p)}
 
 /* 生成器元件（填欄位 → 產生程式碼/設定，可複製或下載） */
-.gen{width:100%;max-width:1120px;background:#fff;border:2px solid var(--p);border-radius:16px;padding:20px 22px;margin:8px 0;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.gen{width:100%;max-width:var(--cw);background:#fff;border:2px solid var(--p);border-radius:16px;padding:20px 22px;margin:8px 0;box-shadow:0 6px 18px rgba(0,0,0,.08)}
 .gen .gh{font-size:20px;font-weight:900;color:var(--p);display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .gen .field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
 .gen label{font-size:15px;font-weight:700;color:var(--ink)}
@@ -102,7 +105,7 @@ code{background:rgba(0,0,0,.08);padding:1px 7px;border-radius:6px;font-family:'F
 .prompt .lbl,.term .lbl{margin-bottom:8px}
 
 /* 手機模擬截圖（無真實截圖時用；模擬 App 深紫金畫面） */
-.mockrow{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;align-items:flex-start;width:100%;max-width:1120px}
+.mockrow{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;align-items:flex-start;width:100%;max-width:var(--cw)}
 .mock{width:290px;max-width:86vw;margin:12px auto;background:linear-gradient(160deg,#1a1030,#2a1a4a 55%,#3a2560);
   border:9px solid #0c0a1a;border-radius:30px;padding:16px 14px 20px;box-shadow:0 10px 34px rgba(0,0,0,.45);color:#f3eefb}
 .mock .m-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#b9a9d6;margin-bottom:10px}
@@ -138,9 +141,9 @@ body.bg-10 .cs .mock{border-color:#000}
 .dlbtn:hover{filter:brightness(1.08)}
 
 /* 表格 / 目標 */
-.tbl{width:100%;max-width:1120px;border-collapse:collapse;font-size:19px}
+.tbl{width:100%;max-width:var(--cw);border-collapse:collapse;font-size:19px}
 .tbl th,.tbl td{border:1px solid #d6d6e2;padding:10px 14px;text-align:left}.tbl th{background:var(--p);color:#fff}.tbl tr:nth-child(even){background:#fff}
-.goals{list-style:none;max-width:1120px;width:100%}
+.goals{list-style:none;max-width:var(--cw);width:100%}
 .goals li{font-size:22px;padding:8px 0 8px 36px;position:relative}.goals li::before{content:'✅';position:absolute;left:0}
 
 /* 導覽（由 slides.js 注入） */
@@ -200,11 +203,24 @@ body.bg-10 .cs .cc p,body.bg-10 .cs .goals li{color:#c7c7db}
 body.bg-10 .cs .sl li{border-color:#3a3a4a}
 body.bg-10 .cs .tbl th,body.bg-10 .cs .tbl td{border-color:#3a3a4a}
 
+/* 平板／小筆電：3–4 欄卡片先收成 2 欄，避免擠成一團 */
+@media(max-width:1024px){
+  .slide{padding:32px clamp(16px,2.6vw,32px)}
+  .cg.c3,.cg.c4{grid-template-columns:repeat(2,1fr)}
+  .sh h2{font-size:32px}
+}
 @media(max-width:640px){
-  .slide{padding:24px 18px}.cover h1{font-size:34px}.sh h2{font-size:26px}
-  .tc,.cg,.cg.c3,.gen .grid2{grid-template-columns:1fr}.cs p,.cs li{font-size:19px}.tb-title{display:none}
-  /* 手機：頂部列太擠會把「⚙ 設定」擠出畫面而點不到。隱藏次要的 YouTube／社團／✉ 連結，
-     只留 首頁＋⚙設定＋全螢幕，確保設定鈕一定點得到。 */
+  .slide{padding:24px 14px}.cover h1{font-size:34px}.sh h2{font-size:26px}
+  .tc,.cg,.cg.c3,.cg.c4,.gen .grid2{grid-template-columns:1fr}.cs p,.cs li{font-size:19px}.tb-title{display:none}
+  /* 手機：內容近滿版（左右各 12px）；導覽箭頭移到底部角落，避免壓到閱讀內容 */
+  :root{--cw:calc(100vw - 24px)}
+  .nav-btn{top:auto;bottom:12px;transform:none;width:44px;height:44px;font-size:20px;border-width:2px}
+  .nav-btn:hover{background:var(--p);transform:none}
+  .prev-btn{left:10px}.next-btn{right:10px}
+  .dots{display:none}                                   /* 手機省略底部圓點，避免與箭頭擠成一團 */
+  .pageno{left:50%;right:auto;transform:translateX(-50%);bottom:20px}
+  .next-ch-btn{bottom:64px;right:12px}                  /* 末頁「下一章」鍵移到底部箭頭上方 */
+  /* 頂部列太擠會把「⚙ 設定」擠出畫面而點不到，只留 首頁＋⚙設定＋全螢幕 */
   .top-bar .tb-btn[target="_blank"],.top-bar .tb-btn[href^="mailto"]{display:none}
   .top-bar{padding:0 10px;gap:6px}.tb-btn{padding:5px 9px;font-size:12px}
   .panel{width:min(260px,92vw)}
