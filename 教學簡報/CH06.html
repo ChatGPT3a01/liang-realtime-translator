@@ -388,23 +388,6 @@ document.getElementById('send').onclick = async () =&gt; {
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>🎁 翻譯指令生成器</h2><div class="k">選來源/目標語言，產生 system 指令</div></div>
-  <div class="gen body">
-    <div class="gh">⚙️ 產生翻譯 system 指令</div>
-    <div class="grid2">
-      <div class="field"><label>來源語言</label><input id="t_src" placeholder="Traditional Chinese 或 auto"></div>
-      <div class="field"><label>目標語言</label><input id="t_tgt" placeholder="English"></div>
-    </div>
-    <div class="btns">
-      <button onclick="genTr()">⚙️ 產生指令</button>
-      <button class="alt" onclick="cp(this)">📋 複製</button>
-    </div>
-    <div class="out" id="t_out">填語言後按「產生指令」，這裡會出現可放進 build_prompt 的 system 指令…</div>
-    <div class="hint">把產生的字串當成 system_instruction，翻譯品質更穩、更聽話。</div>
-  </div>
-</section>
-
-<section class="slide cs">
   <div class="sh"><h2>動手練習</h2><div class="k">加深印象</div></div>
   <ul class="sl body">
     <li>用生成器產生一個「日文 → 繁中」的指令，貼進 build_prompt 試試。</li>

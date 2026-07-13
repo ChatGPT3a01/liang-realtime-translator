@@ -43,21 +43,6 @@
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>用提示詞生出骨架</h2><div class="k">先看我們會怎麼「叫」AI 做</div></div>
-  <div class="prompt body">
-    <div class="lbl">💬 提示詞</div>
-    <button class="copy" onclick="cp(this)">複製</button>
-    <pre>請用 Python Flask 幫我建立最小網站骨架：
-1. app.py：首頁 / 回傳「Hello 亮言」；另做 /api/health 回傳 JSON {"ok": true}。
-2. 用 python-dotenv 讀取 .env（之後放金鑰）。
-3. requirements.txt 列出需要套件。
-4. 告訴我如何安裝、執行、用瀏覽器看結果。
-我是新手，請附完整程式碼與步驟。</pre>
-  </div>
-  <p class="note body">下一頁就是它會產生的 app.py。我們直接看、直接用。</p>
-</section>
-
-<section class="slide cs">
   <div class="sh"><h2>app.py（骨架：先分好 10 區）</h2><div class="k">整支檔案先畫好格子，之後每章填一格</div></div>
   <div class="term body">
     <button class="copy" onclick="cp(this)">複製</button>
@@ -212,24 +197,6 @@ python-dotenv</span></pre>
       <pre><span class="cm"># 之後在需要的地方這樣取用</span>
 API_KEY = os.getenv('GEMINI_API_KEY')</pre></div>
     <p class="note">現在骨架還用不到金鑰，但管線已經接好，CH06 串翻譯時就直接用。</p>
-  </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>🎁 app.py 骨架生成器</h2><div class="k">改個訊息與埠號，幫你產生 app.py</div></div>
-  <div class="gen body">
-    <div class="gh">⚙️ 產生 app.py 骨架</div>
-    <div class="grid2">
-      <div class="field"><label>首頁要顯示的文字</label><input id="a_msg" placeholder="Hello 亮言！我的翻譯 App 開工了 🚀"></div>
-      <div class="field"><label>埠號 Port</label><input id="a_port" placeholder="5001"></div>
-    </div>
-    <div class="btns">
-      <button onclick="genApp()">⚙️ 產生 app.py</button>
-      <button class="alt" onclick="cp(this)">📋 複製</button>
-      <button class="alt" onclick="dlApp()">⬇ 下載 app.py</button>
-    </div>
-    <div class="out" id="a_out">按「產生 app.py」，這裡會出現可直接存檔的程式碼…</div>
-    <div class="hint">下載後存成專案根目錄的 <b>app.py</b>，再 <code>python app.py</code> 就能跑。</div>
   </div>
 </section>
 

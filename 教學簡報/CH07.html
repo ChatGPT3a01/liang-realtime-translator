@@ -444,21 +444,6 @@ $('s_mic').addEventListener('click', ()=&gt;{
 </section>
 
 <!-- 生成器（保留原本語言清單生成器） -->
-<section class="slide cs">
-  <div class="sh"><h2>🎁 語言清單生成器</h2><div class="k">輸入代碼，產生含 label / name / bcp 的 LANGS 陣列</div></div>
-  <div class="gen body">
-    <div class="gh">⚙️ 產生語言清單</div>
-    <div class="field"><label>要支援哪些語言？（用逗號分隔代碼：zh-TW, en, ja, ko, th, vi…）</label>
-      <input id="l_codes" placeholder="zh-TW, en, ja, ko"></div>
-    <div class="btns">
-      <button onclick="genLangs()">⚙️ 產生 LANGS</button>
-      <button class="alt" onclick="cp(this)">📋 複製</button>
-      <button class="alt" onclick="dlLangs()">⬇ 下載</button>
-    </div>
-    <div class="out" id="l_out">輸入語言代碼後按產生，這裡會出現含 label / name / bcp 的 LANGS 陣列…</div>
-    <div class="hint">把產生的 LANGS 放到 app.js，翻譯與語音辨識都用同一份語言設定（<code>bcp</code> 給辨識器、<code>name</code> 給翻譯）。</div>
-  </div>
-</section>
 
 <!-- C：此刻全貌 -->
 <section class="slide cs">
