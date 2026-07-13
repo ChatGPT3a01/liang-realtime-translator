@@ -136,6 +136,15 @@ body.bg-10 .cs .mock{border-color:#000}
 .browser .b-hi{outline:3px solid var(--gold);outline-offset:3px}
 .browser .b-key{font-family:'Fira Code',Consolas,monospace;background:#f2f2f7;border:1px dashed #bbb;border-radius:6px;padding:6px 10px;font-size:13px;color:#555}
 
+/* 開啟獨立生成器頁的按鈕（取代內嵌生成器） */
+.gen-launch{width:100%;max-width:var(--cw);margin:12px 0;text-align:center}
+.gen-launch-btn{display:inline-block;background:linear-gradient(135deg,var(--p),#6aa9e6);color:#fff;
+  text-decoration:none;font-size:21px;font-weight:900;padding:17px 36px;border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.16);transition:.15s}
+.gen-launch-btn:hover{filter:brightness(1.08);transform:translateY(-2px)}
+.gen-launch-hint{font-size:15px;color:var(--muted);margin-top:10px;line-height:1.6}
+body.bg-10 .cs .gen-launch-hint{color:#c7c7db}
+
 /* D：階段存檔點下載鈕 */
 .dlbtn{background:var(--p);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px;font-family:inherit}
 .dlbtn:hover{filter:brightness(1.08)}

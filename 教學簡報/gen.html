@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>亮言課程 · 逐段生成器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--p:#4A90D9;--gold:#F5A623;--muted:#5a5a72;--cw:min(1100px,92vw)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans TC',system-ui,'Microsoft JhengHei',sans-serif;
+    background:linear-gradient(160deg,#0f0c29,#302b63 55%,#24243e);min-height:100vh;color:#1a1a2e}
+  .g-top{position:sticky;top:0;background:rgba(10,8,30,.95);backdrop-filter:blur(10px);color:#fff;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;z-index:10;
+    border-bottom:1px solid rgba(255,255,255,.12)}
+  .g-top .t{font-weight:900;font-size:16px;display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .g-top .t small{color:var(--gold);font-weight:700}
+  .g-top a{color:#fff;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
+    border-radius:20px;padding:7px 14px;font-size:14px;font-weight:700;white-space:nowrap}
+  .g-top a:hover{background:rgba(255,255,255,.22)}
+  .g-wrap{max-width:1160px;margin:0 auto;padding:20px 16px 70px}
+  .g-lead{color:#e9e6f7;font-size:15px;line-height:1.7;margin:2px 4px 14px}
+  #host{margin-top:4px}
+  .g-miss{background:#fff;border-radius:12px;padding:26px;color:#c0392b;font-weight:700;text-align:center;font-size:17px}
+</style>
+<script src="assets/vibe-gen-data.js"></script>
+<script src="assets/vibe-gen-data-fe.js"></script>
+</head>
+<body>
+  <div class="g-top">
+    <div class="t">🧩 逐段生成器 <small id="gfile"></small></div>
+    <a href="#" id="backlink">← 回簡報</a>
+  </div>
+  <div class="g-wrap">
+    <div class="g-lead">在這裡把這個檔案一段一段疊出來：複製提示詞建議 → 貼進對話框 →（第 2 段起先貼上「參考程式」）→ 送出 → 採用 → 完成可下載。做完直接關掉這個分頁回到簡報即可。</div>
+    <div id="host"></div>
+  </div>
+  <script>
+    (function () {
+      var id = new URLSearchParams(location.search).get('id') || '';
+      var g = (window.VIBE_GENERATORS || {})[id];
+      if (g) { document.getElementById('gfile').textContent = '· ' + g.file; document.title = '生成器 · ' + g.file; }
+      var host = document.createElement('div');
+      if (id) { host.className = 'vsim'; host.setAttribute('data-gen', id); }
+      else { host.className = 'g-miss'; host.textContent = '缺少生成器代碼（網址要帶 ?id=…）'; }
+      document.getElementById('host').appendChild(host);
+      // 「回簡報」：有上一頁就回上一頁，否則嘗試關閉分頁
+      document.getElementById('backlink').addEventListener('click', function (e) {
+        e.preventDefault();
+        if (history.length > 1) history.back(); else window.close();
+      });
+    })();
+  </script>
+  <script src="assets/vibe-sim.js"></script>
+</body>
+</html>
