@@ -376,9 +376,9 @@
     const prefix = prevCode ? '<span class="vs-prev">' + esc(prevCode) + '</span>\n\n\n' : '';
 
     // 刻意放慢，做出「AI 正在串流吐程式」的臨場感（可點框略過）：
-    //   放慢為原速的 2.5 倍，每段約 6.5～17.5 秒；短段落至少看得到過程。
+    //   放慢為原速的 5 倍，每段約 13～35 秒；短段落至少看得到過程。
     const INTERVAL = 30;                                   // 每個 tick 的毫秒
-    const durationMs = Math.min(17500, Math.max(6500, code.length * 20));
+    const durationMs = Math.min(35000, Math.max(13000, code.length * 40));
     const totalTicks = Math.max(1, durationMs / INTERVAL);
     const step = Math.max(1, Math.round(code.length / totalTicks));
 
