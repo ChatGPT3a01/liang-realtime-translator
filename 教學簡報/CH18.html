@@ -88,7 +88,7 @@
       <div class="out" id="req_out">按「看內容」預覽，或直接下載放進根目錄…</div>
       <div class="gh" style="margin-top:16px">⚙️ render.yaml（填服務名 → 產生）</div>
       <div class="field"><label>服務名稱</label><input id="r_name" placeholder="liang-translator"></div>
-      <div class="field"><label>要哪些環境變數？（逗號分隔）</label><input id="r_env" placeholder="GEMINI_API_KEY, TAVILY_API_KEY"></div>
+      <div class="field"><label>要哪些環境變數？（逗號分隔）</label><input id="r_env" placeholder="GEMINI_API_KEY, TAVILY_API_KEY, OPENAI_API_KEY"></div>
       <div class="btns">
         <button onclick="genRy()">⚙️ 產生</button>
         <button class="alt" onclick="dlRy()">⬇ 下載 render.yaml</button>
@@ -187,8 +187,10 @@
       <tr><th>Key</th><th>Value</th></tr>
       <tr><td>GEMINI_API_KEY</td><td>你的 Gemini 金鑰</td></tr>
       <tr><td>TAVILY_API_KEY</td><td>你的 Tavily 金鑰（選填）</td></tr>
+      <tr><td>OPENAI_API_KEY</td><td>你的 OpenAI／Groq／DeepSeek 金鑰（<b>選填</b>；填了整站訪客免自填就能用 OpenAI 相容服務）</td></tr>
     </table>
     <div class="ok-box" style="margin-top:10px">🔐 這就是為什麼程式用 os.getenv()——它會來這裡讀，金鑰不出現在程式碼或 GitHub。</div>
+    <div class="info-box" style="margin-top:8px">💡 加了 <code>OPENAI_API_KEY</code> 這步驟跟 Gemini 完全一樣：New → Key/Value → Save。填了它，App 選「OpenAI 相容」時金鑰欄可留空（伺服器共用）。⚠️ OpenAI 是付費 API，記得去 OpenAI 帳戶設 Usage limit。</div>
   </div>
 </section>
 
