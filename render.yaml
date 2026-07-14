@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: liang-translator
+    name: aliang-translator
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
