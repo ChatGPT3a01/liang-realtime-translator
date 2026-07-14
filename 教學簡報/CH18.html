@@ -193,9 +193,9 @@
     <p>往下找到 <b>Environment Variables</b>，把金鑰一組一組加進去：</p>
     <table class="tbl">
       <tr><th>Key</th><th>Value</th></tr>
-      <tr><td>GEMINI_API_KEY</td><td>你的 Gemini 金鑰</td></tr>
-      <tr><td>TAVILY_API_KEY</td><td>你的 Tavily 金鑰（選填）</td></tr>
-      <tr><td>OPENAI_API_KEY</td><td>你的 OpenAI／Groq／DeepSeek 金鑰（<b>選填</b>；填了整站訪客免自填就能用 OpenAI 相容服務）</td></tr>
+      <tr><td>GEMINI_API_KEY</td><td>你的 Gemini 金鑰（申請：<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>）</td></tr>
+      <tr><td>TAVILY_API_KEY</td><td>你的 Tavily 金鑰（<b>選填</b>；申請：<a href="https://app.tavily.com" target="_blank" rel="noopener">app.tavily.com</a>）</td></tr>
+      <tr><td>OPENAI_API_KEY</td><td>OpenAI／Groq／DeepSeek 金鑰（<b>選填</b>；申請：<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>，付費，記得設 Usage limit）</td></tr>
     </table>
     <div class="ok-box" style="margin-top:10px">🔐 這就是為什麼程式用 os.getenv()——它會來這裡讀，金鑰不出現在程式碼或 GitHub。</div>
     <div class="info-box" style="margin-top:8px">💡 加了 <code>OPENAI_API_KEY</code> 這步驟跟 Gemini 完全一樣：New → Key/Value → Save。填了它，App 選「OpenAI 相容」時金鑰欄可留空（伺服器共用）。⚠️ OpenAI 是付費 API，記得去 OpenAI 帳戶設 Usage limit。</div>

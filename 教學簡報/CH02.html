@@ -292,6 +292,21 @@ TAVILY_API_KEY = 你的Tavily金鑰
 </section>
 
 <section class="slide cs">
+  <div class="sh"><h2>（選填）OpenAI 相容金鑰</h2><div class="k">想用 OpenAI／Groq／DeepSeek 才需要</div></div>
+  <div class="body">
+    <p>翻譯預設用 <b>Gemini</b>（免費額度大）就很夠。若你想改用或加裝 <b>OpenAI／Groq／DeepSeek</b> 等相容服務，才需要它們的金鑰。</p>
+    <table class="tbl">
+      <tr><th>服務</th><th>去哪申請</th><th>備註</th></tr>
+      <tr><td>OpenAI</td><td><code>platform.openai.com</code> → API keys → Create</td><td>API <b>要付費</b>，記得設 Usage limit</td></tr>
+      <tr><td>Groq</td><td><code>console.groq.com</code> → API Keys</td><td>免費、速度快</td></tr>
+      <tr><td>DeepSeek</td><td><code>platform.deepseek.com</code></td><td>便宜</td></tr>
+    </table>
+    <div class="info-box">🔌 拿到後兩種填法：① 下載執行後在 App 右上 <b>⚙️ 設定</b> 選「OpenAI 相容」填（每人各自、存自己瀏覽器）；② 想整站共用，部署時填進 Render 環境變數 <code>OPENAI_API_KEY</code>（CH18）。</div>
+    <div class="warn-box">⚠️ OpenAI 的 <b>API 要付費</b>（跟免費的 ChatGPT 網頁不同）。務必到帳戶設每月 Usage limit，避免帳單爆掉。只想免費就用 Gemini 或 Groq。</div>
+  </div>
+</section>
+
+<section class="slide cs">
   <div class="sh"><h2>（選填）OpenWeatherMap</h2><div class="k">想要另一種天氣來源才需要</div></div>
   <div class="body">
     <p>天氣預設用免金鑰的 Open-Meteo 就很好。若你想改用 <b>OpenWeatherMap</b> 當來源，可到 openweathermap.org 免費申請一把 API Key，填到設定即可。</p>
