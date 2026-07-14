@@ -263,17 +263,19 @@
 <section class="slide cs">
   <div class="sh"><h2>🤖 進階亮點：讓 Codex 幫你上 GitHub</h2><div class="k">重複的終端機工作，交給你裝好的 AI agent</div></div>
   <div class="body">
-    <div class="info-box">你在 CH01 裝的 <b>Codex CLI</b>（終端機 AI）會自己下指令、改檔案。上 GitHub 這種重複工作，可以整段交給它——這就是「用 AI agent 幫你做事」的精神。</div>
-    <p>📂 用終端機在<b>專案資料夾</b>裡輸入 <code>codex</code> 啟動，然後貼這段：</p>
-    <div class="prompt"><button class="copy" onclick="cp(this)">複製</button><pre>我這個資料夾是一個 Flask 專案，要部署上線。請幫我：
+    <div class="info-box">你在 CH01 裝的 <b>Codex CLI</b>（終端機 AI）能自己下指令、改檔案。上 GitHub 這種重複工作可以整段交給它——這就是「用 AI agent 幫你做事」。</div>
+    <div class="warn-box"><b>前置（各做一次就好）：</b><br>① 第一次在終端機打 <code>codex</code>，它會要你用 <b>ChatGPT 帳號登入</b>（點瀏覽器授權）。<br>② 先到 <b>github.com</b> 按 <b>New</b> 建一個<b>空的 repo</b>（例：my-translator，選 Private），把它的網址複製下來。</div>
+    <p>📂 用終端機在<b>專案資料夾</b>裡輸入 <code>codex</code> 啟動，然後貼這段（把網址換成你剛建的）：</p>
+    <div class="prompt"><button class="copy" onclick="cp(this)">複製</button><pre>我這個資料夾是一個 Flask 專案，要上 GitHub。請幫我：
 1. 確認 .gitignore 有排除 .env（金鑰絕不能上傳）。
 2. 把 render.yaml 的服務名改成「我的名字-translator」這種獨一無二的名字。
-3. git init、把專案 commit。
-4. 用 GitHub CLI（沒裝就先幫我裝 gh）在我的 GitHub 建一個新的 private repo 並 push 上去。
-5. 最後告訴我 repo 網址，以及接下來到 Render 網頁要按哪些鈕、填哪些環境變數。
-我是新手，過程中要我做的（例如 gh 登入、授權）請一步一步講清楚。</pre></div>
-    <div class="warn-box">🔐 <b>Render 那一步（連結 repo、填金鑰、Deploy）建議你自己在網頁後台做</b>——金鑰不要經過 AI／指令繞一圈，最安全。Codex 幫你把「程式上 GitHub」搞定就很省事了。</div>
-    <div class="ok-box">💡 這頁是<b>選配的進階玩法</b>。不想用 Codex 也沒關係，照前面「網頁上傳 / 一鍵生成器」一樣能完成。</div>
+3. git init、把整個專案 commit。
+4. 加上遠端 https://github.com/我的帳號/my-translator.git，然後 push。
+   （第一次 push 會自動跳瀏覽器要我登入 GitHub，我會照做。）
+5. push 成功後，告訴我接下來到 Render 網頁要按哪些鈕、填哪些環境變數。
+我是新手，每一步要我做的請講清楚。</pre></div>
+    <div class="warn-box">🔐 <b>Render 那步（連結 repo、填金鑰、Deploy）自己在網頁後台做</b>——金鑰不要經過 AI／指令繞一圈最安全。</div>
+    <div class="ok-box">💡 選配進階玩法。第一次 push 的瀏覽器登入是 <b>Git 內建功能（Git Credential Manager）</b>，不用另外裝或授權什麼外掛。不想用 Codex，照前面「網頁上傳／一鍵生成器」一樣能完成。</div>
   </div>
 </section>
 
