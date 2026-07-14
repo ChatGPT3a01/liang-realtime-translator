@@ -131,18 +131,47 @@ if (-not (Install-AntigravityCli)) {
 }
 Write-Ui ''
 
-Write-Ui 'Google Antigravity（桌面 IDE，選配）' Cyan
-Write-Ui 'Google Antigravity 請由官方下載頁安裝，以確保取得正確的 Windows x64 或 ARM64 版本：' White
-Write-Ui 'https://antigravity.google/download' DarkGray
-Start-Process 'https://antigravity.google/download'
+Write-Ui 'Google Antigravity（桌面 IDE）' Cyan
+if (-not (Install-WingetPackage -Name 'Google Antigravity IDE' -Id 'Google.Antigravity')) {
+    if (-not (Install-WingetPackage -Name 'Google Antigravity IDE（備援 ID）' -Id 'Google.AntigravityIDE')) {
+        [void]$failed.Add('Google Antigravity IDE')
+    }
+}
 
 Write-Ui ''
-Write-Ui 'Codex 桌面板（進階／選配）' Cyan
-Write-Ui 'OpenAI 官方桌面版目前僅 macOS；Windows 沒有官方桌面版。終端機版 Codex CLI 上面已幫你裝好。' White
-Write-Ui '若你（在老師說明後）想要 Windows 桌面板，可到這個「社群非官方重build」的 releases 頁，下載 Codex-win-x64 的 zip，解壓即用：' White
-Write-Ui 'https://github.com/Haleclipse/CodexDesktop-Rebuild/releases' DarkGray
-Write-Ui '⚠️ 這是社群版、非 OpenAI 官方，會經手你的金鑰與程式碼，請自行斟酌是否安裝。' Yellow
-Start-Process 'https://github.com/Haleclipse/CodexDesktop-Rebuild/releases'
+Write-Ui 'Codex 桌面板（社群版，老師已審過）' Cyan
+Write-Ui '從社群 releases 自動下載 Windows 版並解壓安裝（檔案約 600MB，請耐心等候）...' Yellow
+try {
+    $rel = Invoke-RestMethod 'https://api.github.com/repos/Haleclipse/CodexDesktop-Rebuild/releases/latest' -Headers @{ 'User-Agent' = 'liang-installer' }
+    $asset = $rel.assets | Where-Object { $_.name -like 'Codex-win-x64-*.zip' } | Select-Object -First 1
+    if (-not $asset) { throw '找不到 Windows 版資產（Codex-win-x64-*.zip）' }
+    $zipPath = Join-Path $env:TEMP $asset.name
+    $destDir = Join-Path $env:LOCALAPPDATA 'CodexDesktop'
+    Write-Ui ('下載：' + $asset.name) White
+    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zipPath -UseBasicParsing
+    if (Test-Path $destDir) { Remove-Item $destDir -Recurse -Force -ErrorAction SilentlyContinue }
+    New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+    Write-Ui '解壓中...' White
+    Expand-Archive -Path $zipPath -DestinationPath $destDir -Force
+    Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
+    $exe = Get-ChildItem -Path $destDir -Recurse -Filter '*.exe' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -notmatch 'unins|update|crash|helper|setup|elevate' } | Select-Object -First 1
+    if ($exe) {
+        $ws = New-Object -ComObject WScript.Shell
+        foreach ($lnkDir in @([Environment]::GetFolderPath('Desktop'), (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'))) {
+            try {
+                $lnk = $ws.CreateShortcut((Join-Path $lnkDir 'Codex 桌面板.lnk'))
+                $lnk.TargetPath = $exe.FullName; $lnk.WorkingDirectory = $exe.DirectoryName; $lnk.Save()
+            } catch {}
+        }
+        Write-Ui ('Codex 桌面板安裝完成，桌面與開始功能表已建立捷徑。主程式：' + $exe.FullName) Green
+    } else {
+        Write-Ui ('已解壓到：' + $destDir + '，但找不到主程式 exe，請手動進資料夾開啟。') Yellow
+    }
+} catch {
+    Write-Ui ('Codex 桌面板安裝失敗：' + $_.Exception.Message) Red
+    [void]$failed.Add('Codex 桌面板')
+}
 
 Write-Ui ''
 Write-Ui 'CLAW 小龍蝦' Cyan

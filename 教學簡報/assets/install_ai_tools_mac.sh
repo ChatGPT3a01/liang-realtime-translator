@@ -29,16 +29,33 @@ echo ""
 say "安裝中：Google Antigravity CLI（官方，指令 agy）" "$YELLOW"
 curl -fsSL https://antigravity.google/cli/install.sh | bash || FAILED+=("Antigravity CLI")
 echo ""
-say "Google Antigravity（桌面 IDE，選配）：請由官方頁下載對應版本（Apple 晶片 / Intel）：" "$CYAN"
-say "https://antigravity.google/download" ""
-open "https://antigravity.google/download" 2>/dev/null
+say "安裝中：Google Antigravity（桌面 IDE）" "$YELLOW"
+inc antigravity
 echo ""
-say "Codex 桌面板（進階／選配）" "$CYAN"
-say "OpenAI 官方桌面版僅 macOS 但未上架 Homebrew；終端機版 Codex 上面已裝好。" ""
-say "若你（在老師說明後）想要桌面板，可到這個社群 releases 頁下載 mac 的 .dmg：" ""
-say "https://github.com/Haleclipse/CodexDesktop-Rebuild/releases" ""
-say "⚠️ 這是社群版、非 OpenAI 官方，會經手你的金鑰與程式碼，請自行斟酌。" "$YELLOW"
-open "https://github.com/Haleclipse/CodexDesktop-Rebuild/releases" 2>/dev/null
+say "安裝中：Codex 桌面板（社群版，老師已審過）— 檔案約 600MB，請耐心等候..." "$YELLOW"
+CDX_TMP=$(mktemp -d)
+if [ "$(uname -m)" = "arm64" ]; then CDX_PAT="Codex-mac-arm64"; else CDX_PAT="Codex-mac-x64"; fi
+CDX_URL=$(curl -fsSL https://api.github.com/repos/Haleclipse/CodexDesktop-Rebuild/releases/latest | grep browser_download_url | grep "$CDX_PAT" | head -1 | cut -d'"' -f4)
+if [ -n "$CDX_URL" ]; then
+  say "下載：$(basename "$CDX_URL")" ""
+  if curl -fL "$CDX_URL" -o "$CDX_TMP/codex.dmg"; then
+    MP=$(hdiutil attach "$CDX_TMP/codex.dmg" -nobrowse -noautoopen 2>/dev/null | grep -o '/Volumes/.*' | tail -1)
+    APP=$(find "$MP" -maxdepth 1 -name "*.app" 2>/dev/null | head -1)
+    if [ -n "$APP" ]; then
+      rm -rf "/Applications/$(basename "$APP")" 2>/dev/null
+      cp -R "$APP" /Applications/ && xattr -dr com.apple.quarantine "/Applications/$(basename "$APP")" 2>/dev/null \
+        && say "Codex 桌面板已安裝到「應用程式」。" "$GREEN" || { say "Codex 桌面板複製失敗。" "$RED"; FAILED+=("Codex 桌面板"); }
+    else
+      say "掛載 dmg 後找不到 App。" "$RED"; FAILED+=("Codex 桌面板")
+    fi
+    [ -n "$MP" ] && hdiutil detach "$MP" >/dev/null 2>&1
+  else
+    say "Codex 桌面板下載失敗。" "$RED"; FAILED+=("Codex 桌面板")
+  fi
+else
+  say "找不到 Codex 桌面板 mac 資產，略過。" "$RED"; FAILED+=("Codex 桌面板")
+fi
+rm -rf "$CDX_TMP"
 echo ""
 say "安裝後測試指令（在終端機輸入）：" "$CYAN"
 echo "  node --version"; echo "  git --version"; echo "  python3 --version"
