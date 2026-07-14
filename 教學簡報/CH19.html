@@ -98,8 +98,9 @@
       </div>
     </div>
 
-    <div class="field"><label>③ 服務名稱（給 Render 用的英文小寫名字）</label>
-      <input id="P_svc" placeholder="例如 my-translator（留空就用 my-translator）"></div>
+    <div class="field"><label>③ 服務名稱（＝你的網址，要獨一無二！）</label>
+      <input id="P_svc" placeholder="例如 amy-translator、你的名字-translator（英文小寫）">
+      <div class="hint">🌐 <b>這個名字就是你的網址</b>：<code>你填的名字.onrender.com</code>。因為 Render 全站唯一，<b>務必取跟老師（liang-translator）和同學都不同</b>的名字（建議加你的名字）。放心——<b>你是部署到自己的 Render 帳號，跟老師、同學完全獨立，不會共用</b>。這個名字會自動寫進你下載的 render.yaml。</div></div>
 
     <div class="grid2">
       <div class="field"><label>④ Gemini 金鑰（翻譯要用，建議先填）</label><input id="P_gem" placeholder="AIza…">
@@ -206,6 +207,9 @@ function projectFiles(){
   if(brand && brand!=='亮言'){
     for(var k2 in files){ if(typeof files[k2]==='string'){ files[k2]=files[k2].split('亮言').join(brand); } }
   }
+  // 服務名：把 render.yaml 的 name 換成學員自己的，避免全班或跟老師撞名（你的網址＝這個名字.onrender.com，全 Render 唯一）
+  var svc=((document.getElementById('P_svc')||{}).value||'my-translator').trim().toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/^-+|-+$/g,'')||'my-translator';
+  if(files['render.yaml']){ files['render.yaml']=files['render.yaml'].split('name: liang-translator').join('name: '+svc); }
   files['.env']=studentEnv();
   return files;
 }

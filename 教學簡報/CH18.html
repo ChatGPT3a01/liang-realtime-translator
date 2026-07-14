@@ -87,8 +87,15 @@
       </div>
       <div class="out" id="req_out">按「看內容」預覽，或直接下載放進根目錄…</div>
       <div class="gh" style="margin-top:16px">⚙️ render.yaml（填服務名 → 產生）</div>
-      <div class="field"><label>服務名稱</label><input id="r_name" placeholder="liang-translator"></div>
-      <div class="field"><label>要哪些環境變數？（逗號分隔）</label><input id="r_env" placeholder="GEMINI_API_KEY, TAVILY_API_KEY, OPENAI_API_KEY"></div>
+      <div class="field"><label>服務名稱（＝你的網址，要獨一無二）</label><input id="r_name" placeholder="你的名字-translator（英文小寫，別用 liang-translator）">
+        <div class="note" style="font-size:12px;color:#5a5a72;margin-top:4px">🌐 這名字就是你的網址 <code>xxx.onrender.com</code>，Render 全站唯一——取跟老師/同學都不同的（建議加你的名字）。你部署在自己的帳號，不會共用老師的。</div></div>
+      <div class="field"><label>要哪些環境變數？（勾選你會用到的金鑰名稱）</label>
+        <div id="r_env" style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:6px">
+          <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" value="GEMINI_API_KEY" checked disabled> GEMINI_API_KEY（翻譯必要）</label>
+          <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" value="TAVILY_API_KEY"> TAVILY_API_KEY（選填·助手上網）</label>
+          <label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" value="OPENAI_API_KEY"> OPENAI_API_KEY（選填·OpenAI 相容）</label>
+        </div>
+        <div class="note" style="font-size:12px;color:#5a5a72;margin-top:5px">💡 這裡只是「宣告金鑰名稱」（值到 Render 後台再填）。天氣（Open-Meteo）、匯率（ER-API）都<b>免金鑰</b>，不用列。</div></div>
       <div class="btns">
         <button onclick="genRy()">⚙️ 產生</button>
         <button class="alt" onclick="dlRy()">⬇ 下載 render.yaml</button>
@@ -287,7 +294,8 @@ function showReq(){document.getElementById('req_out').textContent=REQ_TXT;}
 function dlReq(){downloadText('requirements.txt',REQ_TXT);}
 function genRy(){
   var name=(document.getElementById('r_name').value||'liang-translator').trim();
-  var envs=(document.getElementById('r_env').value||'GEMINI_API_KEY, TAVILY_API_KEY').split(',').map(function(s){return s.trim()}).filter(Boolean);
+  var envs=Array.prototype.slice.call(document.querySelectorAll('#r_env input:checked')).map(function(c){return c.value;});
+  if(!envs.length) envs=['GEMINI_API_KEY'];
   var envLines=envs.map(function(k){return "      - key: "+k+"\n        sync: false";}).join("\n");
   var y="services:\n  - type: web\n    name: "+name+"\n    runtime: python\n    plan: free\n"+
     "    buildCommand: pip install -r requirements.txt\n    startCommand: python app.py\n"+
