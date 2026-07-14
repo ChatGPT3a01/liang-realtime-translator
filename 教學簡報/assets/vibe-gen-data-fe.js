@@ -223,6 +223,12 @@ window.VIBE_GENERATORS = Object.assign(window.VIBE_GENERATORS || {}, {
         "note": "一鍵中斷雲端與瀏覽器正在播放的語音，避免重疊。",
         "prompt": "幫我寫一個「停止所有朗讀」的功能，\n把雲端語音和瀏覽器語音都中斷，避免上一句還在念、新的一句又疊上去。請加中文註解。",
         "code": "// 停止所有朗讀（雲端 Web Audio + 瀏覽器 TTS）\nfunction stopAllAudio() {\n    audioSources.forEach(s => { try { s.onended = null; s.stop(); } catch (e) {} });\n    audioSources = [];\n    nextTime = 0;\n    if (synth) { try { synth.cancel(); } catch (e) {} }\n    const cb = onAllAudioEnd; onAllAudioEnd = null; cb?.();\n}\nif (synth) synth.onvoiceschanged = () => synth.getVoices();"
+      },
+      {
+        "title": "播放語音（雲端朗讀與即時共用）",
+        "note": "把 PCM 語音資料接起來、排隊播放；本章雲端朗讀與下一章即時語音都用它。",
+        "prompt": "幫我寫一個功能，把語音資料（24kHz PCM）轉成可播放的聲音，\n一段接一段排隊播出來，播完會回呼通知。這個播放函式雲端朗讀和之後 CH09 的即時語音都會用到。請加中文註解。",
+        "code": "// 播放 Gemini Live 原生語音 (24kHz PCM 16-bit)\nlet playCtx = null, nextTime = 0;\nlet audioSources = [];      // 進行中的 Web Audio 節點（供停止用）\nlet onAllAudioEnd = null;   // 全部播放結束時的回呼（供「停止」鈕重置狀態）\nfunction playLiveAudio(data) {\n    try {\n        if (!playCtx) playCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });\n        if (playCtx.state === 'suspended') playCtx.resume();   // 手機須解鎖後才有聲音\n        const int16 = new Int16Array(data);\n        const f32 = new Float32Array(int16.length);\n        for (let i = 0; i < int16.length; i++) f32[i] = int16[i] / 32768;\n        const buf = playCtx.createBuffer(1, f32.length, 24000);\n        buf.getChannelData(0).set(f32);\n        const src = playCtx.createBufferSource();\n        src.buffer = buf; src.connect(playCtx.destination);\n        const now = playCtx.currentTime;\n        if (nextTime < now) nextTime = now;\n        src.start(nextTime); nextTime += buf.duration;\n        audioSources.push(src);\n        src.onended = () => {\n            audioSources = audioSources.filter(s => s !== src);\n            if (audioSources.length === 0) { const cb = onAllAudioEnd; onAllAudioEnd = null; cb?.(); }\n        };\n    } catch (e) { console.warn('play audio error', e); }\n}"
       }
     ]
   },
@@ -236,12 +242,6 @@ window.VIBE_GENERATORS = Object.assign(window.VIBE_GENERATORS || {}, {
         "note": "建立即時連線，收翻譯字幕與伺服器回應；載入失敗也不影響逐句功能。",
         "prompt": "幫我用 socket.io 跟後端建立「即時連線」：\n連上時亮綠燈、斷線時滅燈，收到翻譯文字就顯示、收到語音就播放。\n如果連線函式庫沒載入，也要保證逐句翻譯功能還能用。請加中文註解。",
         "code": "/* =========================================================\n   Gemini Live 即時模式 (socket 串流)\n   ========================================================= */\n// socket.io 由 CDN 載入；若載入失敗，仍要保證「文字/逐句」功能可用\nlet socket = null;\ntry {\n    if (typeof io === 'function') {\n        socket = io({ transports: ['websocket', 'polling'] });\n        socket.on('connect', () => statusDot.classList.add('connected'));\n        socket.on('disconnect', () => { statusDot.classList.remove('connected'); if (liveOn) stopLive(); });\n        socket.on('error', (d) => toast('伺服器：' + (d.msg || 'error')));\n    } else {\n        console.warn('socket.io 未載入，Gemini Live 即時模式停用');\n    }\n} catch (e) { console.warn('socket.io init 失敗', e); }\n\nlet liveOn = false, audioCtx, liveProcessor, liveInput, liveStream;\nlet livePending = '';\nif (socket) {\n    socket.on('text_response', (d) => { if (d.text) { livePending += d.text; setResult(sResult, livePending); } });\n    socket.on('turn_complete', () => {\n        // 即時模式由 Gemini 直接吐語音（audio_response 播放），不需再用瀏覽器 TTS，避免雙重朗讀\n        if (livePending.trim()) pushHistory('(即時語音)', livePending.trim());\n        livePending = '';\n    });\n    socket.on('audio_response', (data) => { playLiveAudio(data); });\n}"
-      },
-      {
-        "title": "播放原生語音",
-        "note": "把伺服器傳來的 PCM 語音資料接起來、排隊播放。",
-        "prompt": "幫我寫一個功能，把後端即時傳來的語音資料（24kHz PCM）轉成可播放的聲音，\n一段接一段排隊播出來，播完會回呼通知。請加中文註解。",
-        "code": "// 播放 Gemini Live 原生語音 (24kHz PCM 16-bit)\nlet playCtx = null, nextTime = 0;\nlet audioSources = [];      // 進行中的 Web Audio 節點（供停止用）\nlet onAllAudioEnd = null;   // 全部播放結束時的回呼（供「停止」鈕重置狀態）\nfunction playLiveAudio(data) {\n    try {\n        if (!playCtx) playCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });\n        if (playCtx.state === 'suspended') playCtx.resume();   // 手機須解鎖後才有聲音\n        const int16 = new Int16Array(data);\n        const f32 = new Float32Array(int16.length);\n        for (let i = 0; i < int16.length; i++) f32[i] = int16[i] / 32768;\n        const buf = playCtx.createBuffer(1, f32.length, 24000);\n        buf.getChannelData(0).set(f32);\n        const src = playCtx.createBufferSource();\n        src.buffer = buf; src.connect(playCtx.destination);\n        const now = playCtx.currentTime;\n        if (nextTime < now) nextTime = now;\n        src.start(nextTime); nextTime += buf.duration;\n        audioSources.push(src);\n        src.onended = () => {\n            audioSources = audioSources.filter(s => s !== src);\n            if (audioSources.length === 0) { const cb = onAllAudioEnd; onAllAudioEnd = null; cb?.(); }\n        };\n    } catch (e) { console.warn('play audio error', e); }\n}"
       },
       {
         "title": "開始／結束即時串流",

@@ -26,7 +26,7 @@
 <section class="slide cs">
   <div class="sh"><h2>先回顧：我們現在有什麼</h2><div class="k">站在前面章節的成果上，再往上加一層</div></div>
   <div class="body">
-    <p>到上一章為止，你的「亮言」已經會：<b>打字翻譯、語音翻譯、即時口譯、面對面對話、拍照翻譯、上傳檔案、天氣與旅遊問答</b>，而且已經<b>部署到網路上</b>，有一個可以分享的網址。</p>
+    <p>到上一章為止，你的「亮言」已經會：<b>打字翻譯、語音翻譯、即時口譯、面對面對話、拍照翻譯、上傳檔案、天氣與旅遊問答</b>，而且都能在<b>本機</b>跑起來（<code>python app.py</code>）。（上線到網路、拿到可分享網址是下一章 CH18 的事，現在還沒部署。）</p>
     <p>但現在它還只是一個「網頁」——每次都要打開瀏覽器、輸入網址、在一堆分頁裡找它。</p>
     <div class="info-box">🧩 本章只加一塊：讓這個網頁能<b>「裝進手機主畫面」</b>，點一下圖示就全螢幕開啟，用起來像原生 App。核心功能一行都不改。</div>
   </div>
@@ -34,50 +34,50 @@
 
 <!-- VIBE:app_ch16 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 一段一段疊出來</h2><div class="k">用「一個目標、一段提示詞」的生成器，把檔案疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 後端（app.py）</h2><div class="k">用生成器把 app.py 一段段疊出來</div></div>
   <div class="body">
     <p>下面這個生成器把整個檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=app_ch16" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=app_ch16" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
 <!-- VIBE:sw_ch16 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 前端（畫面／互動）</h2><div class="k">用「一個目標、一段提示詞」的生成器，把前端檔案一段段疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 離線背景（sw.js）</h2><div class="k">用生成器把 sw.js 一段段疊出來</div></div>
   <div class="body">
     <p>這個生成器把整個前端檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的，之後才不會你能跑我不能跑。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=sw_ch16" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=sw_ch16" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
 <!-- VIBE:manifest_ch16 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 前端（畫面／互動）</h2><div class="k">用「一個目標、一段提示詞」的生成器，把前端檔案一段段疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · App 身分證（manifest.json）</h2><div class="k">用生成器把 manifest.json 一段段疊出來</div></div>
   <div class="body">
     <p>這個生成器把整個前端檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的，之後才不會你能跑我不能跑。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=manifest_ch16" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=manifest_ch16" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
 <!-- VIBE:appjs_ch16 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 前端（畫面／互動）</h2><div class="k">用「一個目標、一段提示詞」的生成器，把前端檔案一段段疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 前端（app.js）</h2><div class="k">用生成器把 app.js 一段段疊出來</div></div>
   <div class="body">
     <p>這個生成器把整個前端檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的，之後才不會你能跑我不能跑。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=appjs_ch16" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=appjs_ch16" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 畫面（index.html）</h2><div class="k">用生成器把本章要加到 templates/index.html 的部分疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 畫面（index.html）</h2><div class="k">用生成器把 index.html 一段段疊出來</div></div>
   <div class="body">
     <p>這個生成器把本章對 <b>templates/index.html</b> 的新增內容拆成小目標：複製提示詞 →（可自己加幾句）→ 送出 → 採用，一塊塊疊出來，最後可下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的都一樣。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=index_ch16" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開：複製提示詞 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=index_ch16" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
@@ -300,7 +300,6 @@
   <div class="sh"><h2>版本號 +1 到底發生什麼</h2><div class="k">看懂就不會再被卡住</div></div>
   <div class="body">
     <p>瀏覽器判斷「Service Worker 有沒有更新」，靠的是 <code>sw.js</code> 這個檔<b>內容變了沒</b>。你把 <code>CACHE</code> 從 v11 改成 v12，檔案內容就變了 → 瀏覽器認定「有新版」→ 觸發 <code>install</code> → <code>skipWaiting</code> 立即接手 → <code>activate</code> 時<b>清掉所有舊快取</b>。</p>
-    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
     <div class="info-box">🧹 想手動強制清乾淨（電腦測試時）：F12 → Application → 左邊 Service Workers 按 <b>Unregister</b>，再到 Storage 按 <b>Clear site data</b>，然後重整。</div>
   </div>
 </section>
@@ -441,19 +440,6 @@
   </div>
 </section>
 
-<script>
-function genMan(){
-  var n=(document.getElementById('m_name').value||'亮言 · 即時翻譯');
-  var s=(document.getElementById('m_short').value||'亮言翻譯');
-  var th=document.getElementById('m_theme').value, bg=document.getElementById('m_bg').value;
-  var j={name:n,short_name:s,start_url:'/',display:'standalone',orientation:'portrait',
-    background_color:bg,theme_color:th,
-    icons:[{src:'/static/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any maskable'},
-           {src:'/static/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
-  document.getElementById('m_out').textContent=JSON.stringify(j,null,2);
-}
-function dlMan(){genMan();downloadText('manifest.json',document.getElementById('m_out').textContent);}
-</script>
 <script>window.SLIDE_CFG={title:'CH16 · PWA 手機安裝與離線',part:'#E74C3C',next:'CH17.html'}</script>
 <script src="assets/slides.js"></script>
 </body>

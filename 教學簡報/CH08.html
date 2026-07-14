@@ -34,21 +34,21 @@
 
 <!-- VIBE:app_ch08 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 一段一段疊出來</h2><div class="k">用「一個目標、一段提示詞」的生成器，把檔案疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 後端（app.py）</h2><div class="k">用生成器把 app.py 一段段疊出來</div></div>
   <div class="body">
     <p>下面這個生成器把整個檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=app_ch08" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=app_ch08" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
 <!-- VIBE:appjs_ch08 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 前端（畫面／互動）</h2><div class="k">用「一個目標、一段提示詞」的生成器，把前端檔案一段段疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 前端（app.js）</h2><div class="k">用生成器把 app.js 一段段疊出來</div></div>
   <div class="body">
     <p>這個生成器把整個前端檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的，之後才不會你能跑我不能跑。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=appjs_ch08" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=appjs_ch08" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
@@ -91,7 +91,7 @@
   <div class="sh"><h2>白話觀念：Gemini 回的「PCM」是什麼</h2><div class="k">不是 MP3，是「生」的聲音資料</div></div>
   <div class="body">
     <p>我們平常聽的 MP3 是「壓縮過、打包好」的音樂檔。Gemini 雲端 TTS 回給我們的是更原始的 <b>PCM</b>——你可以想成「還沒裝進盒子的裸聲音資料」：一長串代表聲音高低起伏的數字（24kHz、16 位元）。</p>
-    <p>好處是瀏覽器可以直接餵給喇叭播、<b>不用等整段下載解碼</b>，反應快。代價是我們要自己用一點程式把這串數字「送進喇叭」——這段程式其實你在 CH09 即時語音就用過同一個（<code>playLiveAudio</code>），這章直接沿用。</p>
+    <p>好處是瀏覽器可以直接餵給喇叭播、<b>不用等整段下載解碼</b>，反應快。代價是我們要自己用一點程式把這串數字「送進喇叭」——這個播放函式 <code>playLiveAudio</code> 我們<b>這一章一起做</b>，下一章 CH09 即時語音會再沿用它。</p>
     <div class="info-box">🔎 記住三個關鍵字就好：<b>24kHz</b>（每秒 2.4 萬個取樣）、<b>16 位元</b>（每個取樣的精細度）、<b>PCM</b>（沒壓縮的裸音訊）。看不懂沒關係，照抄能跑。</div>
   </div>
 </section>
@@ -105,7 +105,7 @@
     <tr><td><span class="filechip">static/js/app.js</span></td><td><code>// ===== 4. 朗讀 TTS =====</code> 區：新增 <code>speak()</code>（主朗讀）、<code>browserSpeak()</code>（後備）、<code>stopAllAudio()</code>（停止）、<code>ensureAudioUnlocked()</code>（手機解鎖）</td></tr>
     <tr><td><span class="filechip">static/js/app.js</span></td><td>翻譯成功後加一行 <code>speak(...)</code>，讓它自動念</td></tr>
   </table>
-  <div class="info-box">📂 主要就這兩個檔。播放用的 <code>playLiveAudio()</code> 是 CH09 即時語音就寫好的同一個函式，這章直接沿用。</div>
+  <div class="info-box">📂 主要就這兩個檔。播放用的 <code>playLiveAudio()</code> 就在本章的 app.js 生成器裡一起做（下一章 CH09 即時語音會沿用它）。</div>
 </section>
 
 <!-- ===== 步驟一：後端 /api/tts ===== -->
@@ -161,7 +161,7 @@
     <tr><td><code>stopAllAudio()</code></td><td><b>先中斷上一句</b>——這行是重點，下一張專門講</td></tr>
     <tr><td><code>fetch('/api/tts', ...)</code></td><td>把文字送到步驟一做的那道門，要一段語音回來</td></tr>
     <tr><td><code>buf.byteLength &gt; 44</code></td><td>確認真的拿到有內容的音訊（太短代表是空的/壞的）</td></tr>
-    <tr><td><code>playLiveAudio(buf)</code></td><td>把語音播出來（沿用 CH09 的播放函式）</td></tr>
+    <tr><td><code>playLiveAudio(buf)</code></td><td>把語音播出來（本章做的播放函式，CH09 也沿用）</td></tr>
     <tr><td><code>browserSpeak(text, bcp, onEnd)</code></td><td>雲端這條路走不通時的<b>後備</b>：改用瀏覽器念</td></tr>
   </table>
   <div class="info-box">💡 <code>bcp</code> 是語言代碼（像 <code>ja-JP</code>、<code>en-US</code>），瀏覽器後備要靠它才知道用哪國語音念。</div>
@@ -305,7 +305,7 @@
 <section class="slide cs">
   <div class="sh"><h2>🗺️ 此刻你的 app.js 全貌</h2><div class="k">對一下你的檔案，區塊有沒有對上</div></div>
   <div class="body">
-    <p>做完這章，你的 9 區骨架應該長這樣（本章新增的用 ⭐ 標出來）：</p>
+    <p>做完這章，你的 10 區骨架應該長這樣（本章新增的用 ⭐ 標出來）：</p>
     <table class="tbl">
       <tr><th>區</th><th>內容</th><th>狀態</th></tr>
       <tr><td>1 設定與語言</td><td>語言清單、設定</td><td>✅</td></tr>
@@ -365,17 +365,6 @@
   </div>
 </section>
 
-<script>
-function genTts(){
-  var v=(document.getElementById('v_name').value||'Kore').split('（')[0];
-  var code=
-"speech_config=types.SpeechConfig(\n"+
-"    voice_config=types.VoiceConfig(\n"+
-"        prebuilt_voice_config=types.PrebuiltVoiceConfig(\n"+
-"            voice_name='"+v+"')))";
-  document.getElementById('v_out').textContent=code;
-}
-</script>
 <script>window.SLIDE_CFG={title:'CH08 · 語音朗讀 TTS',part:'#E67E22',next:'CH09.html'}</script>
 <script src="assets/slides.js"></script>
 </body>

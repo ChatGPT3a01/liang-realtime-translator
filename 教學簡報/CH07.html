@@ -34,20 +34,20 @@
 
 <!-- VIBE:appjs_ch07 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 前端（畫面／互動）</h2><div class="k">用「一個目標、一段提示詞」的生成器，把前端檔案一段段疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 前端（app.js）</h2><div class="k">用生成器把 app.js 一段段疊出來</div></div>
   <div class="body">
     <p>這個生成器把整個前端檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的，之後才不會你能跑我不能跑。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=appjs_ch07" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=appjs_ch07" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 畫面（index.html）</h2><div class="k">用生成器把本章要加到 templates/index.html 的部分疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 畫面（index.html）</h2><div class="k">用生成器把 index.html 一段段疊出來</div></div>
   <div class="body">
     <p>這個生成器把本章對 <b>templates/index.html</b> 的新增內容拆成小目標：複製提示詞 →（可自己加幾句）→ 送出 → 採用，一塊塊疊出來，最後可下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的都一樣。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=index_ch07" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開：複製提示詞 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=index_ch07" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
@@ -109,7 +109,7 @@
       <tr><td>日文</td><td><code>ja-JP</code></td></tr>
       <tr><td>韓文</td><td><code>ko-KR</code></td></tr>
     </table>
-    <div class="info-box">🗂️ 我們在 CH06 已經有一份 <code>LANGS</code> 清單，每個語言都存了一個 <code>bcp</code> 欄位（例如 <code>zh-TW</code>）。語音辨識要用時，直接從那份清單拿，不必另外背。</div>
+    <div class="info-box">🗂️ 語音辨識要用 BCP-47 語言碼（例如 <code>zh-TW</code>）。這章我們把 CH06 的語言對照升級成含 <code>bcp</code> 欄位的 <code>LANGS</code> 清單（用本章前端生成器產出），辨識時直接從清單拿。</div>
   </div>
 </section>
 
@@ -405,20 +405,6 @@
   </div>
 </section>
 
-<script>
-function genLangs(){
-  var meta={
-    'zh-TW':['繁體中文','Traditional Chinese','zh-TW'],'zh-CN':['简体中文','Simplified Chinese','zh-CN'],
-    'en':['English','English','en-US'],'ja':['日本語','Japanese','ja-JP'],'ko':['한국어','Korean','ko-KR'],
-    'th':['ไทย','Thai','th-TH'],'vi':['Tiếng Việt','Vietnamese','vi-VN'],'id':['Indonesia','Indonesian','id-ID'],
-    'fr':['Français','French','fr-FR'],'de':['Deutsch','German','de-DE'],'es':['Español','Spanish','es-ES']
-  };
-  var codes=(document.getElementById('l_codes').value||'zh-TW, en, ja, ko').split(',').map(function(s){return s.trim()}).filter(Boolean);
-  var rows=codes.map(function(c){var m=meta[c]||[c,c,c];return "  { id:'"+c+"', label:'"+m[0]+"', name:'"+m[1]+"', bcp:'"+m[2]+"' },";});
-  document.getElementById('l_out').textContent="const LANGS = [\n"+rows.join("\n")+"\n];";
-}
-function dlLangs(){genLangs();downloadText('langs.js',document.getElementById('l_out').textContent);}
-</script>
 <script>window.SLIDE_CFG={title:'CH07 · 語音辨識 STT',part:'#E67E22',next:'CH08.html'}</script>
 <script src="assets/slides.js"></script>
 </body>

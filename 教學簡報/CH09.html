@@ -34,21 +34,21 @@
 
 <!-- VIBE:app_ch09 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 一段一段疊出來</h2><div class="k">用「一個目標、一段提示詞」的生成器，把檔案疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 後端（app.py）</h2><div class="k">用生成器把 app.py 一段段疊出來</div></div>
   <div class="body">
     <p>下面這個生成器把整個檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=app_ch09" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=app_ch09" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
 <!-- VIBE:appjs_ch09 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 前端（畫面／互動）</h2><div class="k">用「一個目標、一段提示詞」的生成器，把前端檔案一段段疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 前端（app.js）</h2><div class="k">用生成器把 app.js 一段段疊出來</div></div>
   <div class="body">
     <p>這個生成器把整個前端檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的，之後才不會你能跑我不能跑。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=appjs_ch09" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=appjs_ch09" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
@@ -133,7 +133,17 @@
     <div class="term body"><div class="lbl">requirements.txt 增加</div><button class="copy" onclick="cp(this)">複製</button>
       <pre><span class="out">flask-socketio
 simple-websocket</span></pre></div>
-    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
+    <div class="info-box">💡 這是套件清單，直接把上面兩行加進 <code>requirements.txt</code> 存檔即可（用 <code>pip install -r requirements.txt</code> 安裝）。</div>
+  </div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>步驟二：把伺服器「電話線」接上</h2><div class="k">在 app.py 啟用 SocketIO</div></div>
+  <div class="body">
+    <span class="step-tag">步驟 2／5</span>
+    <div class="info-box">🎯 <b>這一步要做什麼</b>：讓 <code>app.py</code> 建立一個 SocketIO 物件，並在最後用 <code>socketio.run</code> 啟動（取代原本的 <code>app.run</code>），順便加一個即時語音模型常數。</div>
+    <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，import 區加一行、建立 app 的地方加設定、最底下啟動改一下。<span class="note">💡 之後的 GeminiSession 與 socket 事件也都放這一區。</span></p>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器（app.py）</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
 </section>
 
@@ -423,17 +433,6 @@ socket.emit('audio_in', pcm.buffer);</pre></div>
   </div>
 </section>
 
-<script>
-function genLive(){
-  var a=(document.getElementById('lv_a').value||'Chinese').trim();
-  var b=(document.getElementById('lv_b').value||'English').trim();
-  var out="You are a real-time voice translator. Your ONLY job is to translate speech.\n"+
-    "- When you hear "+a+", translate it to "+b+" and reply in "+b+".\n"+
-    "- When you hear "+b+", translate it to "+a+" and reply in "+a+".\n"+
-    "Output ONLY the translation. No greeting or explanation. Speak naturally.";
-  document.getElementById('lv_out').textContent=out;
-}
-</script>
 <script>window.SLIDE_CFG={title:'CH09 · Gemini Live 即時語音',part:'#E67E22',next:'CH10.html'}</script>
 <script src="assets/slides.js"></script>
 </body>

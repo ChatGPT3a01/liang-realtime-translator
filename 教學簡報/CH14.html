@@ -33,30 +33,30 @@
 
 <!-- VIBE:app_ch14 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 一段一段疊出來</h2><div class="k">用「一個目標、一段提示詞」的生成器，把檔案疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 後端（app.py）</h2><div class="k">用生成器把 app.py 一段段疊出來</div></div>
   <div class="body">
     <p>下面這個生成器把整個檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=app_ch14" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=app_ch14" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
 <!-- VIBE:appjs_ch14 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 前端（畫面／互動）</h2><div class="k">用「一個目標、一段提示詞」的生成器，把前端檔案一段段疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 前端（app.js）</h2><div class="k">用生成器把 app.js 一段段疊出來</div></div>
   <div class="body">
     <p>這個生成器把整個前端檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的，之後才不會你能跑我不能跑。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=appjs_ch14" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=appjs_ch14" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 畫面（index.html）</h2><div class="k">用生成器把本章要加到 templates/index.html 的部分疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 畫面（index.html）</h2><div class="k">用生成器把 index.html 一段段疊出來</div></div>
   <div class="body">
     <p>這個生成器把本章對 <b>templates/index.html</b> 的新增內容拆成小目標：複製提示詞 →（可自己加幾句）→ 送出 → 採用，一塊塊疊出來，最後可下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的都一樣。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=index_ch14" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開：複製提示詞 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=index_ch14" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
@@ -395,17 +395,6 @@
   </div>
 </section>
 
-<script>
-function genW(){
-  var meta={'那霸':[26.21,127.68,'那霸，日本'],'台北':[25.03,121.57,'台北，台灣'],'台中':[24.15,120.67,'台中，台灣'],
-    '高雄':[22.63,120.30,'高雄，台灣'],'東京':[35.69,139.69,'東京，日本'],'大阪':[34.69,135.50,'大阪，日本'],
-    '京都':[35.01,135.77,'京都，日本'],'首爾':[37.57,126.98,'首爾，韓國'],'曼谷':[13.76,100.50,'曼谷，泰國'],
-    '新加坡':[1.35,103.82,'新加坡'],'香港':[22.32,114.17,'香港']};
-  var cities=(document.getElementById('w_cities').value||'那霸, 台北, 東京, 首爾, 曼谷').split(',').map(function(s){return s.trim()}).filter(Boolean);
-  var rows=cities.map(function(c){var m=meta[c];return m?("  '"+c+"': ("+m[0]+", "+m[1]+", '"+m[2]+"'),"):("  # '"+c+"': (緯度, 經度, '顯示名'),  # 請自行查座標");});
-  document.getElementById('w_out').textContent="COMMON_PLACES = {\n"+rows.join("\n")+"\n}";
-}
-</script>
 <script>window.SLIDE_CFG={title:'CH14 · 天氣查詢',part:'#8E44AD',next:'CH15.html'}</script>
 <script src="assets/slides.js"></script>
 </body>

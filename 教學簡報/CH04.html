@@ -27,11 +27,11 @@
 
 <!-- VIBE:app_ch04 -->
 <section class="slide cs">
-  <div class="sh"><h2>🧩 動手生成 · 一段一段疊出來</h2><div class="k">用「一個目標、一段提示詞」的生成器，把檔案疊出來</div></div>
+  <div class="sh"><h2>🧩 動手生成 · 後端（app.py）</h2><div class="k">用生成器把 app.py 一段段疊出來</div></div>
   <div class="body">
     <p>下面這個生成器把整個檔案拆成幾個小目標。每個目標都有一段<b>建議提示詞</b>：複製 →（可自己加幾句）→ 貼到框裡 → 按「送出」，就會生出該段程式，一塊塊「併入」，最後湊出完整檔案，可直接下載。</p>
     <div class="info-box">💡 送出後得到的程式，和老師成品一致——全班疊出來的檔案都一樣，不會各寫各的。</div>
-    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=app_ch04" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 → 貼參考程式 → 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
+    <div class="gen-launch"><a class="gen-launch-btn" href="gen.html?id=app_ch04" target="_blank" rel="noopener">🚀 開啟生成器（新分頁 · 全螢幕操作）</a><div class="gen-launch-hint">在新分頁打開這一段的生成器：複製提示詞 →（第 2 段起先貼上一段成果）→ 送出 → 採用 → 下載，完成後關掉分頁回到簡報即可。</div></div>
   </div>
 </section>
 
@@ -253,30 +253,6 @@ __pycache__/
   </div>
 </section>
 
-<script>
-function genApp(){
-  var msg=(document.getElementById('a_msg').value||'Hello 亮言！我的翻譯 App 開工了 🚀').replace(/'/g,"\\'");
-  var port=(document.getElementById('a_port').value||'5001').trim().replace(/[^0-9]/g,'')||'5001';
-  var code=
-"# app.py — 最小 Flask 骨架\n"+
-"import os\n"+
-"from flask import Flask, jsonify\n"+
-"from dotenv import load_dotenv\n\n"+
-"load_dotenv()\n"+
-"app = Flask(__name__)\n\n"+
-"@app.route('/')\n"+
-"def index():\n"+
-"    return '"+msg+"'\n\n"+
-"@app.route('/api/health')\n"+
-"def health():\n"+
-"    return jsonify({'ok': True})\n\n"+
-"if __name__ == '__main__':\n"+
-"    port = int(os.getenv('PORT', '"+port+"'))\n"+
-"    app.run(host='0.0.0.0', port=port, debug=True)\n";
-  document.getElementById('a_out').textContent=code;
-}
-function dlApp(){genApp();downloadText('app.py',document.getElementById('a_out').textContent);}
-</script>
 <script>window.SLIDE_CFG={title:'CH04 · Flask 後端骨架',part:'#27AE60',next:'CH05.html'}</script>
 <script src="assets/slides.js"></script>
 </body>
