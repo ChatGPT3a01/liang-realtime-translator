@@ -129,7 +129,8 @@
   };
   // 一鍵下載
   window.downloadText = function (filename, text) {
-    var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    // 用 octet-stream，避免瀏覽器對 .env 這種「開頭是點、無副檔名」的檔自動補成 .env.txt
+    var blob = new Blob([text], { type: 'application/octet-stream' });
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   };
