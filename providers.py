@@ -245,13 +245,14 @@ def translate(data: dict) -> dict:
 
     try:
         if provider == "openai":
-            api_key = data.get("api_key") or ""
+            # 前端未給金鑰時，後備讀伺服器環境變數（讓「伺服器共用 OpenAI 金鑰」成立；有給就照舊）
+            api_key = data.get("api_key") or os.getenv("OPENAI_API_KEY") or ""
             if not api_key:
                 return {"ok": False, "error": "OpenAI 相容供應商需要 API Key"}
             out = translate_openai(
-                base_url=data.get("base_url", ""),
+                base_url=data.get("base_url", "") or os.getenv("OPENAI_BASE_URL", ""),
                 api_key=api_key,
-                model=data.get("model", ""),
+                model=data.get("model", "") or os.getenv("OPENAI_MODEL", ""),
                 system=system,
                 text=text,
             )

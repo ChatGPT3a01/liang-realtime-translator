@@ -108,46 +108,8 @@
     <span class="step-tag">步驟 1／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：在畫面加一個「面對面」區塊，裡面上下各一塊，每塊都有：語言選單、翻譯結果框、麥克風按鈕。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把這段<b>貼在原本單人畫面（<code>singleView</code>）那個區塊的後面</b>，先設成隱藏（<code>hidden</code>），等按了切換鈕才顯示。</p>
-    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>幫我在 index.html 加一個「面對面模式」區塊 &lt;section id="faceView"&gt;，
-先隱藏。裡面分上、下兩塊 face-panel：上塊 id 用 top、下塊用 bottom。
-每一塊都要有：語言選單、翻譯結果框、一顆麥克風「說話」按鈕。
-上塊元素 id 用 f_langTop / f_resultTop / f_micTop，
-下塊用 f_langBottom / f_resultBottom / f_micBottom。
-中間放一條分隔線寫「面對面 · 手機平放桌上」。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 templates/index.html</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">&lt;!-- ===== 面對面模式 ===== --&gt;</span>
-&lt;section id="faceView" class="view hidden"&gt;
-  <span class="cm">&lt;!-- 上半：翻轉 180°，給對面的人看 --&gt;</span>
-  &lt;div class="face-panel top" id="face_top"&gt;
-    &lt;div class="face-inner"&gt;
-      &lt;select class="lang-select" id="f_langTop"&gt;&lt;/select&gt;
-      &lt;div class="result-box face-result" id="f_resultTop"&gt;
-        &lt;span class="placeholder"&gt;對方語言的翻譯會顯示在這裡…&lt;/span&gt;
-      &lt;/div&gt;
-      &lt;button class="mic-btn face-mic" id="f_micTop"&gt;&lt;span class="mic-ico"&gt;🎤&lt;/span&gt; 說話&lt;/button&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;
-
-  &lt;div class="face-divider"&gt;&lt;span&gt;面對面 · 手機平放桌上&lt;/span&gt;&lt;/div&gt;
-
-  <span class="cm">&lt;!-- 下半：正常方向，給你看 --&gt;</span>
-  &lt;div class="face-panel bottom" id="face_bottom"&gt;
-    &lt;div class="face-inner"&gt;
-      &lt;select class="lang-select" id="f_langBottom"&gt;&lt;/select&gt;
-      &lt;div class="result-box face-result" id="f_resultBottom"&gt;
-        &lt;span class="placeholder"&gt;你的語言的翻譯會顯示在這裡…&lt;/span&gt;
-      &lt;/div&gt;
-      &lt;button class="mic-btn face-mic" id="f_micBottom"&gt;&lt;span class="mic-ico"&gt;🎤&lt;/span&gt; 說話&lt;/button&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;
-&lt;/section&gt;</pre></div>
 </section>
 
 <section class="slide cs">
@@ -171,34 +133,8 @@
     <span class="step-tag">步驟 2／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：讓畫面上下平分，並把<b>上半整塊轉 180°</b>，這樣坐你對面的人看就是正的。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/css/style.css</span>，把這段<b>貼在檔案裡任何一個樣式區塊後面</b>都可以。</p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>幫我寫面對面模式的 CSS：
-faceView 用 flex 直向排列、上下兩塊平分高度。
-每一塊 face-panel 裡面內容直向排列（選單、結果框、麥克風）。
-最重要：把上半 .face-panel.top 用 transform: rotate(180deg) 翻過來，
-讓坐我對面的人看是正的。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/css/style.css</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">/* ---------- 面對面模式 ---------- */</span>
-#faceView { padding: 0; }
-.face-panel { flex: 1; display: flex; padding: 16px; overflow: hidden; }
-.face-panel.top {
-  transform: rotate(180deg);              <span class="cm">/* ← 就是這一行：上半掉頭給對面看 */</span>
-  background: rgba(245,196,81,0.04);
-}
-.face-inner { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-.face-result { font-size: 1.4rem; }
-.face-mic { padding: 13px; font-size: .95rem; }
-.face-divider {
-  display: flex; align-items: center; justify-content: center;
-  padding: 6px 0; background: rgba(0,0,0,.2);
-}</pre></div>
-  <p class="note body">💡 <code>faceView</code> 本身用 flex 直向排列（沿用畫面的 <code>.view</code> 樣式），所以 <code>.face-panel</code> 的 <code>flex:1</code> 會讓上下兩塊自動平分高度。</p>
 </section>
 
 <section class="slide cs">
@@ -220,46 +156,8 @@ faceView 用 flex 直向排列、上下兩塊平分高度。
     <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個「幫某一塊裝上麥克風」的小工廠函式 <code>makeFaceSide()</code>——按麥克風→聽你講→翻成對面的語言→顯示在<b>對面那一框</b>並朗讀。上、下各呼叫一次就好。</div>
     <div class="info-box">🔌 <b>接線</b>：<code>makeFaceSide()</code> 裡面直接<b>重用</b> CH06 的 <code>translate()</code> 與 CH08 的 <code>speak()</code>——面對面只是把「聽到的字 → 翻譯 → 朗讀」這條線在<b>兩邊各接一次</b>，翻譯與朗讀<b>完全不用重寫</b>，只是換個麥克風、換個顯示框。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 <code>// ===== 6. 面對面 =====</code> 這一區，把它<b>貼在這一區裡</b>（接在 CH09 即時口譯的第 5 區後面、模式切換那段的前面）。<span class="note">💡 照著區塊名字放就對了，不用一行一行數行號。</span></p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>幫我寫 makeFaceSide(langSelId, resultBoxId, micBtnId, getTargetId)：
-用現成的 Recognizer 監聽這一塊的麥克風按鈕；
-講完停止後，把整段用 translate() 翻成對面的語言，
-顯示在「對面那一塊」的結果框，再用 speak() 朗讀出來。
-然後呼叫兩次：下塊 f_micBottom 翻到上塊、上塊 f_micTop 翻到下塊。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟三：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// ===== 面對面模式 =====</span>
-function makeFaceSide(langSelId, resultBoxId, micBtnId, getTargetId) {
-  const box = $(resultBoxId), btn = $(micBtnId);
-  const rec = new Recognizer({
-    bcp: byId($(langSelId).value).bcp,
-    onInterim: (t) =&gt; setResult(box, t, true),   <span class="cm">// 邊講邊顯示（暫時的）</span>
-    onDone: async (t) =&gt; {
-      const src = $(langSelId).value, tgt = getTargetId();
-      try {
-        const out = await translate(t, src, tgt);
-        <span class="cm">// 顯示在「對面那一側」的框</span>
-        const otherBox = (resultBoxId === 'f_resultBottom')
-          ? $('f_resultTop') : $('f_resultBottom');
-        setResult(otherBox, out);
-        speak(out, byId(tgt).bcp);            <span class="cm">// 念出來給對面聽</span>
-        pushHistory(t, out);
-      } catch (e) { toast(e.message); }
-    },
-    onState: (on) =&gt; btn.classList.toggle('listening', on),
-  });
-  btn.addEventListener('click', () =&gt; { rec.bcp = byId($(langSelId).value).bcp; rec.start(); });
-  return rec;
-}
-<span class="cm">// 下方(你)講 → 翻成上方語言 → 顯示在上方(翻轉給對面看)</span>
-makeFaceSide('f_langBottom', 'f_resultBottom', 'f_micBottom', () =&gt; $('f_langTop').value);
-<span class="cm">// 上方(對面)講 → 翻成下方語言 → 顯示在下方(給你看)</span>
-makeFaceSide('f_langTop', 'f_resultTop', 'f_micTop', () =&gt; $('f_langBottom').value);</pre></div>
 </section>
 
 <section class="slide cs">
@@ -309,25 +207,8 @@ makeFaceSide('f_langTop', 'f_resultTop', 'f_micTop', () =&gt; $('f_langBottom').
     <span class="step-tag">步驟 4／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：頂部放一顆鈕，按一下在「單人畫面」和「面對面畫面」之間切換，同時把另一個藏起來。</div>
     <p>📂 <b>打開這個檔案</b>：先在 <span class="filechip">templates/index.html</span> 頂部工具列放一顆 <code>id="modeBtn"</code> 的按鈕；切換邏輯寫在 <span class="filechip">static/js/app.js</span> 的 <code>// ===== 6. 面對面 =====</code> 區，<b>接在 makeFaceSide 那段後面</b>。</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">&lt;!-- index.html 頂部工具列 --&gt;</span>
-&lt;button class="icon-btn" id="modeBtn" title="切換模式"&gt;👤 單人&lt;/button&gt;</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟四：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// ===== 模式切換 =====</span>
-let mode = 'single';
-$('modeBtn').addEventListener('click', () =&gt; {
-  if (liveOn) stopLive();                         <span class="cm">// 若還在即時口譯，先停掉</span>
-  mode = mode === 'single' ? 'face' : 'single';   <span class="cm">// 兩種模式來回切</span>
-  $('singleView').classList.toggle('hidden', mode !== 'single');
-  $('faceView').classList.toggle('hidden', mode !== 'face');
-  $('modeBtn').textContent = mode === 'single' ? '👤 單人' : '👥 面對面';
-});</pre></div>
-  <p class="note body">💡 <code>liveOn</code> / <code>stopLive()</code> 是 CH09 即時口譯留下的東西——切模式前先把它停掉，避免麥克風還開著跑到別的畫面。</p>
 </section>
 
 <section class="slide cs">

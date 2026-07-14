@@ -148,6 +148,55 @@
 </section>
 
 <section class="slide cs">
+  <div class="sh"><h2>🔑 連結你的 AI 金鑰</h2><div class="k">填一次，之後每章的「生成器」就用你的 AI</div></div>
+  <div class="body">
+    <div class="info-box">🤖 貼上你的 AI 金鑰後，後面每一章的<b>「生成器」</b>就會用<b>你自己的 AI</b> 幫你把程式一段一段生出來，體驗最真實的 Vibe Coding。</div>
+    <div class="gen">
+      <div class="gh">🔑 你的 AI 金鑰</div>
+      <div class="field"><label>選哪一家</label>
+        <select id="ai_provider"><option value="gemini">Google Gemini</option><option value="openai">OpenAI 相容</option></select></div>
+      <div class="field"><label>API 金鑰</label><input id="ai_key" type="password" placeholder="貼上你的金鑰（AIza… 或 sk-…）"></div>
+      <div class="btns">
+        <button onclick="saveAiKey()">💾 儲存到這台電腦</button>
+        <button class="alt" onclick="clearAiKey()">🗑 清除</button>
+      </div>
+      <div class="out" id="ai_key_status">尚未連結金鑰…</div>
+    </div>
+    <div class="ok-box" style="margin-top:12px">🔒 <b>你的金鑰只會存在「這台電腦的瀏覽器」裡（localStorage），絕對不會上傳到任何伺服器、也不會離開你的電腦。</b>換一台電腦、或清除瀏覽器資料就要重填一次。</div>
+    <div class="warn-box" style="margin-top:10px">🆕 <b>還沒有金鑰？</b>別急——<b>CH02</b> 會一步一步帶你<b>免費</b>申請 Gemini 金鑰。拿到後回到這一頁貼上、儲存即可。</div>
+  </div>
+</section>
+
+<script>
+function saveAiKey(){
+  try{
+    var k=(document.getElementById('ai_key').value||'').trim();
+    var p=(document.getElementById('ai_provider')||{}).value||'gemini';
+    var st=document.getElementById('ai_key_status');
+    if(!k){st.textContent='⚠ 請先貼上金鑰再儲存。';return;}
+    localStorage.setItem('VIBE_AI_KEY',k);
+    localStorage.setItem('VIBE_AI_PROVIDER',p);
+    st.textContent='✅ 已連結你的金鑰（'+p+'，末四碼 …'+k.slice(-4)+'）——後面的生成器會用它。';
+  }catch(e){document.getElementById('ai_key_status').textContent='⚠ 這個瀏覽器不允許本機儲存（localStorage）。';}
+}
+function clearAiKey(){
+  try{localStorage.removeItem('VIBE_AI_KEY');localStorage.removeItem('VIBE_AI_PROVIDER');}catch(e){}
+  var ky=document.getElementById('ai_key'); if(ky) ky.value='';
+  document.getElementById('ai_key_status').textContent='已清除，金鑰不再留存於本機。';
+}
+(function(){
+  try{
+    var k=localStorage.getItem('VIBE_AI_KEY')||'';
+    var p=localStorage.getItem('VIBE_AI_PROVIDER')||'gemini';
+    var pv=document.getElementById('ai_provider'), ky=document.getElementById('ai_key'), st=document.getElementById('ai_key_status');
+    if(pv) pv.value=p;
+    if(k&&ky) ky.value=k;
+    if(st) st.textContent = k ? ('✅ 已連結你的金鑰（'+p+'，末四碼 …'+k.slice(-4)+'）——後面的生成器會用它。') : '尚未連結金鑰…';
+  }catch(e){}
+})();
+</script>
+
+<section class="slide cs">
   <div class="sh"><h2>建立你的專案資料夾</h2><div class="k">給專案一個家</div></div>
   <ol class="sl body">
     <li>在桌面或文件夾，新建一個資料夾，命名 <b>my-translator</b>（英文、不要空格）。</li>

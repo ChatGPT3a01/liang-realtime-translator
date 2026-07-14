@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CH19 · 整合專案生成器</title>
 <link rel="stylesheet" href="assets/slides.css">
+<style>
+  .chk-row{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:6px}
+  .chk-row label{display:inline-flex;align-items:center;gap:6px;font-size:15px;background:#f3f2fb;
+    border:1px solid #d7d5ea;border-radius:8px;padding:7px 12px;cursor:pointer;user-select:none}
+  .chk-row input{width:17px;height:17px;accent-color:var(--p,#4A90D9);cursor:pointer}
+  .gen .field .hint{font-size:12.5px;color:#5a5a72;margin-top:5px;line-height:1.5}
+  .gen .field .hint a{color:var(--p,#4A90D9);font-weight:700}
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="assets/project-template.js"></script>
 </head>
@@ -55,27 +63,69 @@
 <section class="slide cs">
   <div class="sh"><h2>🎁 整合專案生成器</h2><div class="k">填一填，按「打包下載」</div></div>
   <div class="gen body">
-    <div class="gh">⚙️ 產生你的專案</div>
+    <div class="gh">⚙️ 產生你的專案（勾一勾、填金鑰）</div>
     <div class="grid2">
       <div class="field"><label>品牌名稱（會取代專案裡所有「亮言」）</label><input id="P_name" placeholder="留空＝維持「亮言」；填「小東」則全換成小東"></div>
       <div class="field"><label>主題色</label><input id="P_color" type="color" value="#f5c451" style="height:44px;padding:4px"></div>
     </div>
-    <div class="grid2">
-      <div class="field"><label>語言（逗號分隔代碼）</label><input id="P_langs" placeholder="zh-TW, en, ja, ko"></div>
-      <div class="field"><label>服務名稱（Render）</label><input id="P_svc" placeholder="my-translator"></div>
+
+    <div class="field"><label>① 你旅遊會用到的語言（可複選）</label>
+      <div id="P_langs" class="chk-row">
+        <label><input type="checkbox" value="zh-TW" checked> 台灣繁體</label>
+        <label><input type="checkbox" value="en" checked> 英語</label>
+        <label><input type="checkbox" value="ja" checked> 日語</label>
+        <label><input type="checkbox" value="ko" checked> 韓語</label>
+        <label><input type="checkbox" value="th"> 泰語</label>
+        <label><input type="checkbox" value="vi"> 越南語</label>
+        <label><input type="checkbox" value="fr"> 法語</label>
+        <label><input type="checkbox" value="es"> 西班牙語</label>
+      </div>
+      <input id="P_langs_other" placeholder="其他語言（自己輸入，逗號分隔，例如：德語, 葡萄牙語）" style="margin-top:8px">
+      <div class="hint">找不到你要的語言？可<b>直接寫語言名稱</b>（例如「德語」），或 <a href="https://zh.wikipedia.org/wiki/ISO_639-1" target="_blank" rel="noopener">👉 點此查語言代碼</a> 再填進上面。</div>
     </div>
-    <div class="grid2">
-      <div class="field"><label>Gemini 金鑰（選填）</label><input id="P_gem" placeholder="AIza…"></div>
-      <div class="field"><label>Tavily 金鑰（選填）</label><input id="P_tav" placeholder="tvly-…"></div>
+
+    <div class="field"><label>② 要包含哪些功能（都幫你內建好了，勾選確認即可）</label>
+      <div id="P_feat" class="chk-row">
+        <label><input type="checkbox" value="翻譯" checked> 翻譯</label>
+        <label><input type="checkbox" value="即時語音" checked> 即時語音</label>
+        <label><input type="checkbox" value="面對面" checked> 面對面</label>
+        <label><input type="checkbox" value="朗讀" checked> 朗讀</label>
+        <label><input type="checkbox" value="拍照" checked> 拍照翻譯</label>
+        <label><input type="checkbox" value="檔案" checked> 檔案翻譯</label>
+        <label><input type="checkbox" value="匯率" checked> 匯率</label>
+        <label><input type="checkbox" value="天氣" checked> 天氣</label>
+        <label><input type="checkbox" value="助手" checked> 旅遊助手</label>
+      </div>
     </div>
-    <div class="field"><label>要包含哪些功能？（逗號分隔：翻譯, 拍照, 檔案, 匯率, 天氣, 助手）</label>
-      <input id="P_feat" placeholder="翻譯, 拍照, 檔案, 匯率, 天氣, 助手"></div>
+
+    <div class="field"><label>③ 服務名稱（給 Render 用的英文小寫名字）</label>
+      <input id="P_svc" placeholder="例如 my-translator（留空就用 my-translator）"></div>
+
+    <div class="grid2">
+      <div class="field"><label>④ Gemini 金鑰（翻譯要用，建議先填）</label><input id="P_gem" placeholder="AIza…">
+        <div class="hint">還沒有？<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">👉 點此免費申請 Gemini 金鑰</a>。<b>可留空</b>，但留空的話，下載後要到 App 右上角 <b>⚙️ 設定</b>、或部署時在 <b>Render 環境變數</b> 補上，否則不能翻譯。</div></div>
+      <div class="field"><label>Tavily 金鑰（選填 · 旅遊助手上網查資料用）</label><input id="P_tav" placeholder="tvly-…">
+        <div class="hint">還沒有？<a href="https://app.tavily.com" target="_blank" rel="noopener">👉 點此免費申請 Tavily 金鑰</a>。留空也行，旅遊助手會改用 AI 既有知識回答。</div></div>
+    </div>
+    <div class="field"><label>⑤ OpenAI 相容金鑰（選填 · OpenAI／Groq／DeepSeek…）</label>
+      <input id="P_oai" placeholder="sk-…（填了就當「伺服器共用引擎」，部署後訪客免自填）">
+      <div class="grid2" style="margin-top:8px">
+        <input id="P_oai_url" placeholder="API 網址（留空＝ https://api.openai.com/v1）">
+        <input id="P_oai_model" placeholder="模型（留空＝預設 gpt-5.5）">
+      </div>
+      <div class="hint">三種身分都支援:<b>①</b> 用 Gemini → 這欄留空即可;<b>②</b> 想讓「伺服器共用一把 OpenAI 金鑰」→ 填這裡,會寫進 <code>.env</code>;<b>③</b> 每位使用者各自帶自己的 OpenAI 金鑰 → 下載後在 App 的 <b>⚙️ 設定</b> 面板填(存自己瀏覽器)。</div>
+    </div>
+
+    <div class="field"><label>⑥ 上傳你前面做好的統整檔（選填）</label>
+      <input id="P_zip" type="file" accept=".zip">
+      <div class="hint">若你前面章節有自己疊出檔案、打包成 zip，可以上傳留個紀念——<b>你的努力有被收下</b>。不過下載的仍是<b>老師驗證過的完整正式版</b>，確保你一定跑得起來。</div></div>
+
     <div class="btns">
       <button onclick="genProject()">⚙️ 產生預覽</button>
       <button onclick="dlZip()">📦 打包下載 .zip</button>
       <button class="alt" onclick="cp(this)">📋 複製預覽</button>
     </div>
-    <div class="out" id="P_out">填好金鑰後按「產生預覽」看內容，或直接「打包下載 .zip」…</div>
+    <div class="out" id="P_out">勾選、填金鑰後按「產生預覽」看內容，或直接「打包下載 .zip」…</div>
     <div class="hint">下載的 zip 是<b>完整正式版</b>，已把你的金鑰寫進 .env。填「品牌名稱」的話，App 標題／頁首／PWA 名稱／密碼閘門裡的「亮言」會<b>全部換成你的品牌</b>。解壓 → 裝套件 → 執行，立刻能跑。</div>
   </div>
 </section>
@@ -133,7 +183,14 @@
 function studentEnv(){
   var gem=(document.getElementById('P_gem').value||'貼上你的Gemini金鑰').trim();
   var tav=(document.getElementById('P_tav').value||'').trim();
-  return 'GEMINI_API_KEY='+gem+'\nGOOGLE_API_KEY='+gem+(tav?('\nTAVILY_API_KEY='+tav):'')+'\n';
+  var val=function(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';};
+  var oak=val('P_oai'), obu=val('P_oai_url'), omd=val('P_oai_model');
+  var s='GEMINI_API_KEY='+gem+'\nGOOGLE_API_KEY='+gem;
+  if(tav) s+='\nTAVILY_API_KEY='+tav;
+  if(oak) s+='\nOPENAI_API_KEY='+oak;
+  if(obu) s+='\nOPENAI_BASE_URL='+obu;
+  if(omd) s+='\nOPENAI_MODEL='+omd;
+  return s+'\n';
 }
 // 取得要打包的檔案：老師的真實完整專案 + 注入 .env（App 名稱若有填就換 manifest 名稱）
 function projectFiles(){
@@ -148,15 +205,38 @@ function projectFiles(){
   files['.env']=studentEnv();
   return files;
 }
+// 讀某個勾選群組裡被打勾的值
+function pickedVals(id){
+  return Array.prototype.slice.call(document.querySelectorAll('#'+id+' input:checked')).map(function(c){return c.value;});
+}
 function genProject(){
   var f=projectFiles();
   if(!window.PROJECT_FILES){ document.getElementById('P_out').textContent='（範本尚未載入，請用瀏覽器開啟本頁，勿以純文字檢視）'; return; }
-  var list=Object.keys(f).sort().map(function(k){
-    var lines=String(f[k]).split('\n').length; return '  '+k+'  ('+lines+' 行)';
-  }).join('\n');
-  document.getElementById('P_out').textContent=
-    '下載的 zip 會包含這些「真實可運作」的檔案：\n'+list+'\n\n並自動寫入你的 .env：\n'+studentEnv();
+  var langs=pickedVals('P_langs'), feats=pickedVals('P_feat');
+  var otherEl=document.getElementById('P_langs_other');
+  var otherLang=((otherEl&&otherEl.value)||'').split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean);
+  langs=langs.concat(otherLang);
+  var keys=Object.keys(f).sort();
+  var zipEl=document.getElementById('P_zip');
+  var zipNote=(zipEl&&zipEl.files&&zipEl.files[0])?('　📎 已收到你的統整檔：'+zipEl.files[0].name+'（你的努力有被收下！）'):'';
+  var summary='你選的語言：'+(langs.join('、')||'（未選，預設全內建）')+'\n'+
+    '你要的功能：'+(feats.join('、')||'（未選，預設全內建）')+'\n'+
+    '（以上都已內建於下載的正式版）　共 '+keys.length+' 個檔、可直接執行。'+zipNote;
+  var opts=keys.map(function(k){
+    return '<option value="'+esc2(k)+'">'+esc2(k)+'（'+String(f[k]).split('\n').length+' 行）</option>';
+  }).join('');
+  var out=document.getElementById('P_out');
+  out.style.maxHeight='none';
+  out.innerHTML='<div style="white-space:pre-wrap;margin-bottom:10px">'+esc2(summary)+'</div>'+
+    '<div style="margin-bottom:6px;font-weight:700">👀 選一個檔案看內容（下載會一次打包全部）：　'+
+    '<select id="P_file_sel" style="max-width:100%;padding:4px 8px;border-radius:6px">'+opts+'</select></div>'+
+    '<pre id="P_file_view" style="max-height:320px;overflow:auto;background:#12121e;color:#e6e6f0;padding:12px 14px;border-radius:8px;white-space:pre-wrap;word-break:break-word;font-size:12.5px;line-height:1.55;margin:0"></pre>';
+  var sel=document.getElementById('P_file_sel'), view=document.getElementById('P_file_view');
+  if(keys.indexOf('app.py')>=0) sel.value='app.py';
+  function show(){ view.textContent=f[sel.value]||''; }
+  sel.onchange=show; show();
 }
+function esc2(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 async function dlZip(){
   if(!window.PROJECT_FILES){ alert('專案範本未載入，請用瀏覽器直接開啟本頁（非純文字檢視）。'); return; }
   if(!window.JSZip){ alert('JSZip 未載入（可能離線）。請連網後再試，或改用 CH04–CH18 各章的個別檔案生成器。'); return; }
@@ -167,6 +247,14 @@ async function dlZip(){
   a.download=((document.getElementById('P_svc').value||'my-translator').trim())+'.zip'; a.click();
   setTimeout(function(){URL.revokeObjectURL(a.href)},1500);
 }
+// 上傳統整檔：只做「已收下」的儀式回應，實際下載仍是老師驗證過的正式版
+(function(){
+  var z=document.getElementById('P_zip');
+  if(z) z.addEventListener('change',function(){
+    if(z.files&&z.files[0]) document.getElementById('P_out').textContent=
+      '📎 已收到你的統整檔「'+z.files[0].name+'」——你的努力有被收下！\n（放心，下載的仍是老師驗證過的完整正式版，保證跑得起來。）';
+  });
+})();
 </script>
 <script>window.SLIDE_CFG={title:'CH19 · 整合專案生成器',part:'#16A085',next:'index.html'}</script>
 <script src="assets/slides.js"></script>

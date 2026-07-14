@@ -119,67 +119,8 @@
     <span class="step-tag">步驟 1／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個 <code>_geocode()</code>，收到一個地名，回傳它的 <b>(緯度, 經度, 顯示名)</b>。先查內建的常見地點表，查不到再上網問。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 <code># ===== 7. 天氣 API =====</code> 這一區，把 AI 給你的表格與函式<b>貼在這一區裡</b>（<code>_geocode</code>、<code>_weather_advice</code>、<code>api_weather</code> 都放這區）。<span class="note">💡 照分區名字放，不用煩惱貼哪一行。</span></p>
-    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>請在 app.py 新增一個 _geocode(place) 函式，把中文地名換成 (緯度, 經度, 顯示名)：
-先查一個內建的常見旅遊地點字典 COMMON_PLACES（那霸、台北、東京…先命中）；
-查不到再打 OpenStreetMap 的 Nominatim（免金鑰、中文佳，記得帶 User-Agent）；
-還是查不到就用 Open-Meteo 的 geocoding 當最後備援；三者都查無就回 None。
-我是新手，請附完整程式碼與逐段說明。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟一：AI 會給你這段（1／2 常見地點表）</h2><div class="k">貼進 app.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py — 常見旅遊地點（中文名 → 座標＋顯示名）</span>
-<span class="cm"># 熱門地點先命中，保證精準，避免地理編碼誤配</span>
-COMMON_PLACES = {
-    "台北": (25.033, 121.565, "台北，台灣"),
-    "台中": (24.147, 120.673, "台中，台灣"),
-    "高雄": (22.627, 120.301, "高雄，台灣"),
-    "那霸": (26.212, 127.681, "那霸，日本"),
-    "沖繩": (26.212, 127.681, "沖繩，日本"),
-    "東京": (35.690, 139.692, "東京，日本"),
-    "大阪": (34.694, 135.502, "大阪，日本"),
-    "首爾": (37.567, 126.978, "首爾，韓國"),
-    "曼谷": (13.756, 100.502, "曼谷，泰國"),
-    <span class="cm"># … 其餘城市同理，可用本章最後的生成器補</span>
-}</pre></div>
-  <p class="note body">💡 這張表就是「白名單」：常去的城市直接寫死座標，最準也最快。</p>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟一：AI 會給你這段（2／2 地理編碼函式）</h2><div class="k">貼進 app.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py — 內建字典 → Nominatim → Open-Meteo；查無回 None</span>
-def _geocode(place):
-    key = place.strip()
-    if key in COMMON_PLACES:                     <span class="cm"># ① 先查白名單</span>
-        return COMMON_PLACES[key]
-    try:                                         <span class="cm"># ② Nominatim（中文佳，須帶 User-Agent）</span>
-        r = requests.get("https://nominatim.openstreetmap.org/search",
-            params={"q": place, "format": "json", "limit": 1, "accept-language": "zh-TW"},
-            headers={"User-Agent": "liang-translator/1.0 (travel weather)"}, timeout=10)
-        d = r.json()
-        if d:
-            item = d[0]
-            disp = item.get("display_name", place).split(",")
-            name = disp[0].strip() + (("，" + disp[-1].strip()) if len(disp) &gt; 1 else "")
-            return float(item["lat"]), float(item["lon"]), name
-    except Exception as e:
-        logger.warning(f"nominatim failed: {e}")
-    try:                                         <span class="cm"># ③ Open-Meteo geocoding（最後備援）</span>
-        g = requests.get("https://geocoding-api.open-meteo.com/v1/search",
-            params={"name": place, "count": 1, "language": "zh"}, timeout=8).json()
-        results = g.get("results") or []
-        if results:
-            loc = results[0]
-            name = loc.get("name", place) + (("，" + loc["country"]) if loc.get("country") else "")
-            return loc["latitude"], loc["longitude"], name
-    except Exception as e:
-        logger.warning(f"open-meteo geocode failed: {e}")
-    return None</pre></div>
 </section>
 
 <section class="slide cs">
@@ -213,49 +154,8 @@ def _geocode(place):
     <span class="step-tag">步驟 2／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：Open-Meteo 回的是一個<b>數字代碼</b>（例如 0＝晴天）。做一張對照表把數字翻成中文，再寫一個 <code>_weather_advice()</code> 依天氣給建議。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，一樣放在 <code># ===== 7. 天氣 API =====</code> 這一區，兩張表<b>貼在 <code>_geocode()</code> 的上面／下面都可以</b>。</p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>請在 app.py 新增：
-一個 WMO_CODES 字典，把 Open-Meteo 的 weather_code 數字翻成「中文＋emoji」；
-一個 _weather_advice(code, temp, pop) 函式：
-下雨代碼或降雨機率≥50% 就提醒帶傘，溫度≥30 提醒防曬補水，≤12 提醒保暖，
-其餘回「天氣舒適」。可同時給多條建議，用「，」串起來。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這段（1／2 代碼表）</h2><div class="k">貼進 app.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py — WMO 天氣代碼 → 中文 + emoji</span>
-WMO_CODES = {
-    0: "晴天 ☀️", 1: "大致晴朗 🌤️", 2: "部分多雲 ⛅", 3: "陰天 ☁️",
-    45: "有霧 🌫️", 48: "凍霧 🌫️",
-    51: "毛毛雨 🌦️", 53: "毛毛雨 🌦️", 55: "毛毛雨 🌦️",
-    61: "小雨 🌧️", 63: "中雨 🌧️", 65: "大雨 🌧️",
-    71: "小雪 🌨️", 73: "中雪 🌨️", 75: "大雪 🌨️",
-    80: "陣雨 🌦️", 81: "陣雨 🌧️", 82: "強陣雨 ⛈️",
-    95: "雷陣雨 ⛈️", 96: "雷雨伴冰雹 ⛈️", 99: "強雷雨冰雹 ⛈️",
-}   <span class="cm"># 把冷冰冰的數字翻成看得懂的字</span></pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這段（2／2 帶傘建議）</h2><div class="k">貼進 app.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py — 依天氣代碼、溫度、降雨機率給建議</span>
-def _weather_advice(code, temp, pop):
-    tips = []
-    rainy = code in (51, 53, 55, 56, 57, 61, 63, 65, 66, 67,
-                     80, 81, 82, 95, 96, 99) or (pop is not None and pop &gt;= 50)
-    if rainy:
-        tips.append("☂️ 建議帶傘")           <span class="cm"># 下雨代碼 或 降雨機率≥50%</span>
-    if temp is not None:
-        if temp &gt;= 30:
-            tips.append("🧴 高溫，注意防曬補水")
-        elif temp &lt;= 12:
-            tips.append("🧥 偏冷，記得保暖")
-    if not tips:
-        tips.append("👍 天氣舒適，玩得開心")
-    return "，".join(tips)                    <span class="cm"># 多條建議用「，」串起來</span></pre></div>
 </section>
 
 <section class="slide cs">
@@ -279,58 +179,8 @@ def _weather_advice(code, temp, pop):
     <span class="step-tag">步驟 3／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/weather</code>。前端送地名（或經緯度）進來，後端地理編碼 → 問 Open-Meteo → 組好結果回傳。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，一樣放在 <code># ===== 7. 天氣 API =====</code> 這一區，端點<b>貼在 <code>_weather_advice()</code> 下面</b>（和其他 <code>@app.route</code> 放在一起）。</p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>請在 app.py 新增 /api/weather 端點（POST）：
-從 JSON 收 place（地名）或 lat/lon（目前位置）。
-有地名就先 _geocode() 轉座標，查無就回「找不到地點」。
-拿座標打 Open-Meteo forecast，取目前溫度、體感、濕度、weather_code、
-今日降雨機率與高低溫。用 WMO_CODES 翻成中文，用 _weather_advice() 算建議，
-最後回 JSON：place、temp、feels、humidity、desc、pop、hi、lo、advice。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟三：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py（省略選填的 OWM 備援）</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py</span>
-@app.route('/api/weather', methods=['POST'])
-def api_weather():
-    data = request.get_json(force=True, silent=True) or {}
-    place = (data.get('place') or '').strip()
-    lat, lon = data.get('lat'), data.get('lon')
-    name = place or "目前位置"
-    try:
-        if place:                              <span class="cm"># 有地名先地理編碼</span>
-            geo = _geocode(place)
-            if not geo:
-                return jsonify({"ok": False, "error": f"找不到地點「{place}」"}), 400
-            lat, lon, name = geo
-        if lat is None or lon is None:
-            return jsonify({"ok": False, "error": "缺少地點或座標"}), 400
-
-        w = requests.get("https://api.open-meteo.com/v1/forecast", params={
-            "latitude": lat, "longitude": lon,
-            "current": "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,precipitation",
-            "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max",
-            "timezone": "auto", "forecast_days": 1,
-        }, timeout=8).json()
-        cur, daily = w.get("current") or {}, w.get("daily") or {}
-        code = cur.get("weather_code")
-        temp = cur.get("temperature_2m")
-        pop = (daily.get("precipitation_probability_max") or [None])[0]
-        return jsonify({
-            "ok": True, "place": name, "temp": temp,
-            "feels": cur.get("apparent_temperature"),
-            "humidity": cur.get("relative_humidity_2m"),
-            "desc": WMO_CODES.get(code, "—"), "pop": pop,
-            "hi": (daily.get("temperature_2m_max") or [None])[0],
-            "lo": (daily.get("temperature_2m_min") or [None])[0],
-            "advice": _weather_advice(code, temp, pop),
-        })
-    except Exception as e:
-        logger.error(f"weather error: {e}")
-        return jsonify({"ok": False, "error": f"天氣查詢失敗：{type(e).__name__}"}), 400</pre></div>
 </section>
 
 <section class="slide cs">
@@ -354,56 +204,15 @@ def api_weather():
     <span class="step-tag">步驟 4／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：在功能區加一顆「🌤️ 天氣」按鈕，按了跳出一個小視窗，裡面有輸入框、「查詢」與「用目前位置」。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，按鈕放<b>在拍照／檔案那排功能區</b>，視窗放<b>在其他 modal 旁邊</b>。</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">&lt;!-- 功能區加一顆按鈕 --&gt;</span>
-&lt;button id="s_weather" class="tool-btn"&gt;🌤️ 天氣&lt;/button&gt;
-
-<span class="cm">&lt;!-- 天氣視窗 --&gt;</span>
-&lt;div class="modal hidden" id="weatherModal"&gt;
-  &lt;input type="text" id="wx_place" placeholder="例如：那霸、東京、台北…"&gt;
-  &lt;button class="primary" id="wx_go"&gt;查詢&lt;/button&gt;
-  &lt;button class="ghost" id="wx_geo"&gt;📍 用目前位置&lt;/button&gt;
-  &lt;div id="wx_result" class="wx-result hidden"&gt;&lt;/div&gt;
-  &lt;div id="wx_status" class="hint"&gt;&lt;/div&gt;
-&lt;/div&gt;</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>步驟四：前端查詢邏輯（貼進 app.js）</h2><div class="k">送地名 → 收結果 → 顯示</div></div>
+  <div class="sh"><h2>步驟四：前端查詢邏輯</h2><div class="k">送地名 → 收結果 → 顯示</div></div>
   <div class="info-box body">🔌 <b>接線</b>：天氣也是一個<b>獨立小工具</b>——前端「🌤️ 天氣」按鈕按下去開視窗，直接打 <code>/api/weather</code>（免金鑰的 Open-Meteo，後端先把地名轉座標再查），拿回溫度、天氣與帶傘建議顯示出來。它<b>不依賴</b>翻譯或 AI，自成一格。</div>
   <p class="note body">📂 這整段放在 <span class="filechip">static/js/app.js</span> 的 <code>// ===== 8. 匯率 / 天氣 / 助手 =====</code> 這一區（接在匯率後面，和助手放同一區）。</p>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// static/js/app.js — 送 payload 給後端，畫出結果</span>
-async function fetchWeather(payload) {
-  $('wx_status').textContent = '查詢中…';
-  try {
-    const res = await fetch('/api/weather', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, owm_key: cfg.owmkey || '' }),
-    });
-    const d = await res.json();
-    if (!d.ok) throw new Error(d.error || '查詢失敗');
-    $('wx_result').innerHTML =
-      `&lt;div class="wx-place"&gt;${d.place}&lt;/div&gt;` +
-      `&lt;div class="wx-temp"&gt;${Math.round(d.temp)}°C　${d.desc}&lt;/div&gt;` +
-      `&lt;div class="wx-advice"&gt;${d.advice}&lt;/div&gt;`;
-    $('wx_result').classList.remove('hidden');
-    $('wx_status').textContent = '';
-  } catch (e) { $('wx_status').textContent = '❌ ' + e.message; }
-}
-<span class="cm">// 按「查詢」→ 用地名查</span>
-$('wx_go').addEventListener('click', () =&gt; {
-  const p = $('wx_place').value.trim();
-  if (!p) { $('wx_status').textContent = '請輸入地點'; return; }
-  fetchWeather({ place: p });
-});
-<span class="cm">// 按「用目前位置」→ 瀏覽器定位，傳經緯度</span>
-$('wx_geo').addEventListener('click', () =&gt; {
-  navigator.geolocation.getCurrentPosition(
-    (pos) =&gt; fetchWeather({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-    () =&gt; { $('wx_status').textContent = '無法取得位置（請允許定位權限）'; });
-});</pre></div>
+  <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
 </section>
 
 <section class="slide cs">

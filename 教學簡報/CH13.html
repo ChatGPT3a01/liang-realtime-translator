@@ -127,67 +127,8 @@
     <span class="step-tag">步驟 1／3</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/currency</code>，前端把「來源幣別、目標幣別、金額」送進來，後端去查匯率、算好結果回傳。這一步就是本章的心臟。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 <code># ===== 6. 匯率 API =====</code> 這一區，把這個端點<b>貼在它下面</b>（和其他 <code>@app.route</code> 放在一起）。<span class="note">💡 照分區名字放，不用煩惱貼哪一行。</span></p>
-    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>請在 app.py 新增一個 /api/currency 端點（POST）：
-從 JSON 收 base（來源幣別）、target（目標幣別）、amount（金額）。
-幣別轉大寫；base 跟 target 一樣就直接回 rate=1。
-先打免金鑰的 open.er-api.com/v6/latest/{base} 取匯率（含 TWD）；
-若失敗或查不到，改打備援 api.frankfurter.app/latest（帶 from、to）。
-回傳 {ok, rate, result, date, source}，兩家都查不到就回 ok:false。
-兩次查詢都要用 try/except 包住，避免其中一家掛掉整個壞掉。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py — 匯率換算：免金鑰，主用 er-api，備援 frankfurter</span>
-<span class="cm"># 檔案上方要有 import requests（前面章節已加過）</span>
-@app.route('/api/currency', methods=['POST'])
-def api_currency():
-    data = request.get_json(force=True, silent=True) or {}
-    base = (data.get('base') or 'USD').upper()
-    target = (data.get('target') or 'TWD').upper()
-    try:
-        amount = float(data.get('amount', 1) or 1)
-    except (TypeError, ValueError):
-        amount = 1.0
-
-    if base == target:                                    <span class="cm"># 同幣別免查，直接回</span>
-        return jsonify({"ok": True, "base": base, "target": target,
-                        "amount": amount, "rate": 1.0, "result": amount,
-                        "date": "", "source": "same"})
-
-    <span class="cm"># 主：open.er-api.com（免金鑰，幣別多，含 TWD）</span>
-    try:
-        r = requests.get(f"https://open.er-api.com/v6/latest/{base}", timeout=8)
-        r.raise_for_status()
-        d = r.json()
-        rate = (d.get("rates") or {}).get(target)
-        if rate:
-            return jsonify({"ok": True, "base": base, "target": target,
-                "amount": amount, "rate": rate, "result": amount * rate,
-                "date": d.get("time_last_update_utc", ""), "source": "er-api"})
-    except Exception as e:
-        logger.warning(f"currency er-api failed: {e}")     <span class="cm"># 主來源掛了，往下退</span>
-
-    <span class="cm"># 備援：frankfurter.app（歐洲央行，無 TWD 等部分亞幣）</span>
-    try:
-        r = requests.get("https://api.frankfurter.app/latest",
-                         params={"from": base, "to": target}, timeout=8)
-        r.raise_for_status()
-        d = r.json()
-        rate = (d.get("rates") or {}).get(target)
-        if rate:
-            return jsonify({"ok": True, "base": base, "target": target,
-                "amount": amount, "rate": rate, "result": amount * rate,
-                "date": d.get("date", ""), "source": "frankfurter"})
-    except Exception as e:
-        logger.warning(f"currency frankfurter failed: {e}")
-
-    return jsonify({"ok": False,
-        "error": f"查不到 {base}→{target} 匯率（請確認幣別代碼）"}), 400</pre></div>
 </section>
 
 <section class="slide cs">
@@ -229,39 +170,8 @@ def api_currency():
     <span class="step-tag">步驟 2／3</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：在畫面上放一顆「💱 匯率」按鈕；再做一個平常藏起來、按了才跳出的<b>小視窗（Modal）</b>，裡面有金額輸入框、兩個幣別下拉、對調鈕、結果區。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>。按鈕放在<b>工具列</b>（和拍照、天氣那些按鈕一起）；小視窗放在<b>其他 Modal 的旁邊</b>。</p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>在 index.html 工具列加一顆 id="s_currency" 的「💱 匯率」按鈕。
-再做一個 id="currencyModal" 的隱藏小視窗，裡面放：
-金額輸入框 id="cur_amount"、來源幣別下拉 id="cur_from"、
-對調鈕 id="cur_swap"、目標幣別下拉 id="cur_to"、
-結果區 id="cur_result"、匯率與時間 id="cur_rate"、
-換算鈕 id="cur_convert"、關閉鈕 id="cur_close"。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這段（貼上去）</h2><div class="k">貼進 templates/index.html</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">&lt;!-- ① 工具列裡加這顆按鈕 --&gt;</span>
-&lt;button id="s_currency" class="tool-btn"&gt;💱 匯率&lt;/button&gt;
-
-<span class="cm">&lt;!-- ② 換算小視窗（平常 hidden，按鈕按了才顯示）--&gt;</span>
-&lt;div class="modal hidden" id="currencyModal"&gt;
-  &lt;div class="modal-box"&gt;
-    &lt;input type="number" id="cur_amount" value="1" min="0" step="any"&gt;
-    &lt;div class="cur-row"&gt;
-      &lt;select id="cur_from"&gt;&lt;/select&gt;
-      &lt;button id="cur_swap" title="對調幣別"&gt;⇄&lt;/button&gt;
-      &lt;select id="cur_to"&gt;&lt;/select&gt;
-    &lt;/div&gt;
-    &lt;div class="cur-result" id="cur_result"&gt;—&lt;/div&gt;
-    &lt;div class="cur-rate hint" id="cur_rate"&gt;&lt;/div&gt;
-    &lt;button id="cur_convert"&gt;換算&lt;/button&gt;
-    &lt;button id="cur_close"&gt;關閉&lt;/button&gt;
-  &lt;/div&gt;
-&lt;/div&gt;</pre></div>
-  <p class="note body">💡 兩個 <code>&lt;select&gt;</code> 先留空，幣別選項下一步用 JavaScript 自動填。<code>hidden</code> 讓視窗平常看不見。</p>
 </section>
 
 <section class="slide cs">
@@ -290,80 +200,8 @@ def api_currency():
     <div class="info-box">🎯 <b>這一步要做什麼</b>：先準備一份幣別清單填進兩個下拉；再寫一個 <code>doConvert()</code>，把金額、幣別送到 <code>/api/currency</code>，把回來的結果顯示出來。最後綁事件：改幣別或打金額就自動換算。</div>
     <div class="info-box">🔌 <b>接線</b>：匯率是一個<b>獨立小工具</b>——前端「💱 匯率」按鈕按下去開視窗，直接打 <code>/api/currency</code>（免金鑰的 ER-API／Frankfurter）拿匯率、顯示結果。它<b>不依賴</b>前面的翻譯或 AI，是自成一格的功能，所以整段程式碼自己接自己就好。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 <code>// ===== 8. 匯率 / 天氣 / 助手 =====</code> 這一區，把這整段<b>貼在它裡面</b>（和天氣、助手放同一區）。<span class="note">💡 照著骨架分區名字放就對了，不用想「貼哪」。</span></p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>在 app.js 做匯率換算：
-先建一份常用幣別清單 CURRENCIES（含 TWD/USD/JPY/KRW/EUR… 中文標籤），
-用它填滿 cur_from、cur_to 兩個下拉。
-寫 doConvert()：讀金額與兩個幣別，POST 到 /api/currency，
-成功就把「金額 換算結果」顯示在 cur_result，
-把「1 單位 ≈ 多少 · 更新時間」顯示在 cur_rate。
-綁事件：改幣別立刻換算，打金額用防抖延遲 350ms 再換算，
-對調鈕互換兩個幣別，按「💱 匯率」開視窗並先算一次。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟三：AI 會給你這段 (1／2)</h2><div class="k">幣別清單 + 填入下拉</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// static/js/app.js — 匯率換算（免金鑰：後端代理 ER-API / Frankfurter）</span>
-const CURRENCIES = [
-    { code: 'TWD', label: 'TWD 台幣' },
-    { code: 'USD', label: 'USD 美元' },
-    { code: 'JPY', label: 'JPY 日圓' },
-    { code: 'KRW', label: 'KRW 韓元' },
-    { code: 'CNY', label: 'CNY 人民幣' },
-    { code: 'EUR', label: 'EUR 歐元' },
-    { code: 'THB', label: 'THB 泰銖' },
-    { code: 'SGD', label: 'SGD 新加坡幣' },
-    <span class="cm">// …還可加 HKD、GBP、MYR、VND、AUD 等</span>
-];
-function fillCur(sel, code) {                       <span class="cm">// 把清單填成下拉選項</span>
-    sel.innerHTML = CURRENCIES
-        .map(c =&gt; `&lt;option value="${c.code}"&gt;${c.label}&lt;/option&gt;`).join('');
-    sel.value = code;                              <span class="cm">// 選回上次記住的幣別</span>
-}</pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟三：AI 會給你這段 (2／2)</h2><div class="k">換算 + 綁事件</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>let curTimer = null;
-async function doConvert() {
-    const amount = parseFloat($('cur_amount').value);
-    const from = $('cur_from').value, to = $('cur_to').value;
-    if (!isFinite(amount)) { $('cur_result').textContent = '請輸入金額'; return; }
-    $('cur_result').textContent = '換算中…';
-    try {
-        const res = await fetch('/api/currency', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ base: from, target: to, amount }),
-        });
-        const d = await res.json();
-        if (!d.ok) throw new Error(d.error || '查詢失敗');
-        $('cur_result').textContent = `${amount} ${from} = ${d.result.toFixed(2)} ${to}`;
-        const when = (d.date || '').replace(' (UTC)', '').slice(0, 16);
-        $('cur_rate').textContent = `1 ${from} ≈ ${d.rate.toFixed(4)} ${to}`
-            + (when ? `　·　${when}` : '');
-    } catch (e) { $('cur_result').textContent = '—'; toast(e.message); }
-}
-<span class="cm">// 打字用防抖：停手 350ms 才查，避免每按一鍵就打一次 API</span>
-function scheduleConvert() { clearTimeout(curTimer); curTimer = setTimeout(doConvert, 350); }
-
-$('s_currency').addEventListener('click', () =&gt; {   <span class="cm">// 開視窗</span>
-    fillCur($('cur_from'), cfg.cur_from); fillCur($('cur_to'), cfg.cur_to);
-    $('cur_amount').value = cfg.cur_amount || '1';
-    $('currencyModal').classList.remove('hidden');
-    doConvert();                                    <span class="cm">// 一開就先算一次</span>
-});
-$('cur_swap').addEventListener('click', () =&gt; {     <span class="cm">// 對調兩幣別</span>
-    const a = $('cur_from').value; $('cur_from').value = $('cur_to').value;
-    $('cur_to').value = a; doConvert();
-});
-$('cur_from').addEventListener('change', doConvert);
-$('cur_to').addEventListener('change', doConvert);
-$('cur_amount').addEventListener('input', scheduleConvert);   <span class="cm">// 打字即時算</span>
-$('cur_close').addEventListener('click', () =&gt; $('currencyModal').classList.add('hidden'));</pre></div>
 </section>
 
 <section class="slide cs">

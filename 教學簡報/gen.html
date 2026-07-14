@@ -30,6 +30,7 @@
 <body>
   <div class="g-top">
     <div class="t">🧩 逐段生成器 <small id="gfile"></small></div>
+    <span id="keybadge" style="color:#fff;font-size:13px;font-weight:700;background:rgba(39,174,96,.85);border-radius:20px;padding:6px 12px;white-space:nowrap"></span>
     <a href="#" id="backlink">← 回簡報</a>
   </div>
   <div class="g-wrap">
@@ -41,6 +42,15 @@
       var id = new URLSearchParams(location.search).get('id') || '';
       var g = (window.VIBE_GENERATORS || {})[id];
       if (g) { document.getElementById('gfile').textContent = '· ' + g.file; document.title = '生成器 · ' + g.file; }
+      // 顯示「已連結你的金鑰」徽章（金鑰在 CH01 存進 localStorage，只留本機）
+      try {
+        var badge = document.getElementById('keybadge');
+        var aik = localStorage.getItem('VIBE_AI_KEY') || '';
+        if (badge) {
+          if (aik) { badge.textContent = '🔑 已連結你的金鑰 …' + aik.slice(-4); }
+          else { badge.textContent = '🔑 未連結金鑰（CH01 可設定）'; badge.style.background = 'rgba(120,120,140,.75)'; }
+        }
+      } catch (e) {}
       var host = document.createElement('div');
       if (id) { host.className = 'vsim'; host.setAttribute('data-gen', id); }
       else { host.className = 'g-miss'; host.textContent = '缺少生成器代碼（網址要帶 ?id=…）'; }

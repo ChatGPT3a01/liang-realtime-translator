@@ -18,6 +18,7 @@
 <section class="slide cs">
   <div class="sh"><h2>這一章要做出什麼</h2><div class="k">從本機走向雲端</div></div>
   <div class="body">
+    <div class="warn-box" style="margin-bottom:12px">🆘 <b>前面做失敗、或手邊沒有完整專案？</b>別卡在這裡——先到 <b>CH19「整合專案生成器」</b>填一填、下載一份<b>完整可跑的專案</b>，再回來這一章部署。CH19 給的是老師驗證過的正式版，保證跑得起來。</div>
     <p>把專案上傳 GitHub、在 Render 建立服務、設定金鑰環境變數，得到一個<b>真實網址</b>。手機打開就能用、能裝到主畫面。</p>
     <div class="milestone"><div class="mh">🎁 本章小成品</div><p>一個公開網址（像 https://你的名字.onrender.com），走到哪打開都能用（密碼把關，只有你和授權的人進得來）。</p></div>
   </div>
@@ -73,33 +74,28 @@
   </div>
 </section>
 
+<!-- 部署設定生成器（取代原本的靜態貼碼；與全課程一致，程式一律用生成器產生） -->
 <section class="slide cs">
-  <div class="sh"><h2>requirements.txt（完整）</h2><div class="k">把用到的都列上</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="out">flask
-flask-socketio
-simple-websocket
-python-dotenv
-google-genai
-requests</span></pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>render.yaml</h2><div class="k">告訴 Render 怎麼跑</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># render.yaml</span>
-services:
-  - type: web
-    name: liang-translator
-    runtime: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
-    envVars:
-      - key: GEMINI_API_KEY
-        sync: false          <span class="cm"># 在 Render 儀表板填，不寫進 repo</span>
-      - key: TAVILY_API_KEY
-        sync: false</pre></div>
+  <div class="sh"><h2>🎁 部署設定生成器</h2><div class="k">requirements.txt 與 render.yaml，產生後下載，不用手打</div></div>
+  <div class="body">
+    <div class="info-box">💡 這兩個是「部署設定檔」（不是 App 程式）。用下面的生成器產生、下載，放進專案<b>根目錄</b>即可——內容和老師成品一致，不會各寫各的。</div>
+    <div class="gen">
+      <div class="gh">📦 requirements.txt（套件清單）</div>
+      <div class="btns">
+        <button onclick="dlReq()">⬇ 下載 requirements.txt</button>
+        <button class="alt" onclick="showReq()">👁 看內容</button>
+      </div>
+      <div class="out" id="req_out">按「看內容」預覽，或直接下載放進根目錄…</div>
+      <div class="gh" style="margin-top:16px">⚙️ render.yaml（填服務名 → 產生）</div>
+      <div class="field"><label>服務名稱</label><input id="r_name" placeholder="liang-translator"></div>
+      <div class="field"><label>要哪些環境變數？（逗號分隔）</label><input id="r_env" placeholder="GEMINI_API_KEY, TAVILY_API_KEY"></div>
+      <div class="btns">
+        <button onclick="genRy()">⚙️ 產生</button>
+        <button class="alt" onclick="dlRy()">⬇ 下載 render.yaml</button>
+      </div>
+      <div class="out" id="r_out">填好後按產生，這裡會出現 render.yaml…</div>
+    </div>
+  </div>
 </section>
 
 <section class="slide cs">
@@ -121,12 +117,35 @@ services:
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>① 上傳程式碼</h2><div class="k">兩種方式擇一</div></div>
-  <div class="tc body">
-    <div class="cc"><div class="ico">🖱️</div><h3>網頁上傳（新手）</h3><p>repo 頁 → Add file → Upload files → 把專案檔案拖進去 → Commit。</p></div>
-    <div class="cc"><div class="ico">⌨️</div><h3>用 Git 指令</h3><p>git init → add → commit → push。可請 AI 給你完整指令。</p></div>
+  <div class="sh"><h2>① 上傳程式碼 · 網頁上傳法（最適合新手）</h2><div class="k">不用學 Git 指令，用滑鼠拖檔就好</div></div>
+  <div class="body">
+    <div class="info-box">📦 <b>先準備好資料夾</b>：若你是用 CH19 生成器下載的 <code>.zip</code>，先<b>解壓縮</b>成一個資料夾（裡面有 app.py、providers.py、templates／、static／… 等）。等一下要上傳的就是這些檔。</div>
+    <ol class="sl">
+      <li>打開你剛建立的 repo 頁面（<code>github.com/你的帳號/liang-translator</code>）。</li>
+      <li>點畫面上的 <b>Add file</b> → <b>Upload files</b>。</li>
+      <li>把資料夾裡的檔案<b>全選、拖進</b>網頁那塊虛線框（<b>連 templates／、static／ 資料夾一起拖</b>，GitHub 會自動保留結構）。</li>
+      <li>下方綠色 <b>Commit changes</b> 按下去，等跑完，檔案就上去了。</li>
+    </ol>
   </div>
-  <div class="warn-box body" style="margin-top:12px">⚠️ 上傳前再次確認 .env <b>沒有</b>被傳上去（.gitignore 要生效）。金鑰外流事小，帳單爆掉事大。</div>
+  <div class="browser">
+    <div class="b-bar"><div class="b-dots"><i></i><i></i><i></i></div><div class="b-url">github.com/你的帳號/liang-translator/upload</div></div>
+    <div class="b-body">
+      <h5>Drag files here to add them to your repository</h5>
+      <div class="b-field">⬆ 把 app.py、providers.py、templates／、static／… 拖進這裡</div>
+      <span class="b-btn b-hi">Commit changes</span>
+    </div>
+  </div>
+  <div class="mock-cap">模擬畫面：GitHub 網頁上傳（示意，非真實截圖）</div>
+</section>
+
+<section class="slide cs">
+  <div class="sh"><h2>① 上傳前：千萬別把 .env 傳上去</h2><div class="k">金鑰外流事小，帳單爆掉事大</div></div>
+  <div class="body">
+    <div class="warn-box">🚨 <b>網頁上傳的人特別注意</b>：用「拖檔上傳」時，<b><code>.gitignore</code> 不會幫你擋 <code>.env</code></b>！（<code>.gitignore</code> 只在用 Git <b>指令</b>時才生效。）所以拖檔前，<b>手動把 <code>.env</code> 這個檔挑掉、不要拖進去</b>。</div>
+    <div class="info-box">🔑 <b>為什麼這麼嚴重</b>：<code>.env</code> 裡是你的 Gemini／Tavily 金鑰。傳上 GitHub 等於公開給全世界，可能被拿去亂用、把你的額度或帳單燒爆。金鑰正確的家是 Render 儀表板（下一步就教）。</div>
+    <div class="ok-box">✅ <b>上傳後自我檢查</b>：到 repo 的檔案列表看看<b>有沒有 <code>.env</code></b>。有的話 → 點進去 → 右上角垃圾桶 → Delete 刪掉。（<code>.env.example</code> 是空白範例、沒有金鑰，留著沒關係。）</div>
+    <div class="info-box">⌨️ <b>會用 Git 指令的人</b>：<code>git init → git add . → git commit → git push</code> 即可，此時 <code>.gitignore</code> 會自動排除 <code>.env</code>。不熟就用上面的網頁上傳法，或把這幾行貼給 AI 請它教你逐步操作。</div>
+  </div>
 </section>
 
 <section class="slide cs">
@@ -231,21 +250,6 @@ services:
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>🎁 render.yaml 生成器</h2><div class="k">填服務名，產生部署設定</div></div>
-  <div class="gen body">
-    <div class="gh">⚙️ 產生 render.yaml</div>
-    <div class="field"><label>服務名稱</label><input id="r_name" placeholder="liang-translator"></div>
-    <div class="field"><label>要哪些環境變數？（逗號分隔）</label><input id="r_env" placeholder="GEMINI_API_KEY, TAVILY_API_KEY"></div>
-    <div class="btns">
-      <button onclick="genRy()">⚙️ 產生</button>
-      <button class="alt" onclick="cp(this)">📋 複製</button>
-      <button class="alt" onclick="dlRy()">⬇ 下載</button>
-    </div>
-    <div class="out" id="r_out">填好後按產生，這裡會出現 render.yaml…</div>
-  </div>
-</section>
-
-<section class="slide cs">
   <div class="sh"><h2>本章驗收</h2><div class="k">你的 App 上線了</div></div>
   <ul class="goals body">
     <li>程式碼上傳 GitHub（.env 沒被上傳）。</li>
@@ -275,6 +279,9 @@ services:
 </section>
 
 <script>
+var REQ_TXT="flask\nflask-socketio\nsimple-websocket\npython-dotenv\ngoogle-genai\nrequests\n";
+function showReq(){document.getElementById('req_out').textContent=REQ_TXT;}
+function dlReq(){downloadText('requirements.txt',REQ_TXT);}
 function genRy(){
   var name=(document.getElementById('r_name').value||'liang-translator').trim();
   var envs=(document.getElementById('r_env').value||'GEMINI_API_KEY, TAVILY_API_KEY').split(',').map(function(s){return s.trim()}).filter(Boolean);

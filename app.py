@@ -171,14 +171,19 @@ IMAGE_EXTS = {'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif'}
 
 
 def _provider_cfg(src):
-    """從 request (json 或 form) 取出供應商設定。"""
+    """從 request (json 或 form) 取出供應商設定；OpenAI 若前端未給，後備讀環境變數。"""
     provider = (src.get('provider') or 'gemini').lower()
-    return {
+    cfg = {
         'provider': provider,
         'base_url': src.get('base_url') or '',
         'api_key': src.get('api_key') or '',
         'model': src.get('model') or '',
     }
+    if provider == 'openai':
+        cfg['api_key'] = cfg['api_key'] or os.getenv('OPENAI_API_KEY', '')
+        cfg['base_url'] = cfg['base_url'] or os.getenv('OPENAI_BASE_URL', '')
+        cfg['model'] = cfg['model'] or os.getenv('OPENAI_MODEL', '')
+    return cfg
 
 
 def _run_analyze(pc, target, force_gemini=False, **kw):

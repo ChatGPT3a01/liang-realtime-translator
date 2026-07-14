@@ -121,67 +121,8 @@
     <span class="step-tag">步驟 1／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個好用的「聽寫器」<code>Recognizer</code>。點一下開始聽、逐字稿即時顯示；<b>再點一下</b>停止，把整段文字交出去翻譯。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 CH05 建立的 <code>// ===== 3. 語音辨識 STT =====</code> 這一區，把這段<b>貼在它下面</b>。<span class="note">💡 這就是骨架分區的好處——不用想「貼哪」，照著區塊名字放就對了。</span></p>
-    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>用瀏覽器內建的 Web Speech API，幫我寫一個 Recognizer class：
-- 點一下開始聽，即時把逐字稿顯示出來（用一個 onInterim 回呼）。
-- 再點一下停止，把「整段」文字交出去（用一個 onDone 回呼）翻譯。
-- 講話會斷句，聽到一半自動續聽（onend 裡重新 start）。
-- 要處理麥克風權限被拒、瀏覽器不支援的情況（跳提示，不要當掉）。
-我是完全不會寫程式的新手，請附完整程式碼。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// app.js — STT（Web Speech API）</span>
-<span class="cm">// 拿瀏覽器內建的語音辨識；Chrome/Edge 用 webkit 前綴的那個</span>
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-function sttSupported(){ return !!SR; }
-
-class Recognizer {
-  constructor({ bcp, onInterim, onDone, onState }){
-    this.bcp=bcp; this.onInterim=onInterim; this.onDone=onDone; this.onState=onState;
-    this.active=false; this.rec=null; this.buffer='';
-  }
-  start(){
-    if(!SR){ toast('此瀏覽器不支援語音辨識，請改用文字輸入'); return; }
-    if(this.active){ this.stop(); return; }   <span class="cm">// 再點一下 = 停止並翻譯</span>
-    this.buffer='';                            <span class="cm">// 開始新的一段，清空累積</span>
-    const rec = new SR();
-    rec.lang=this.bcp; rec.interimResults=true; rec.continuous=true;
-    rec.onresult=(e)=&gt;{
-      let interim='';
-      for(let i=e.resultIndex; i&lt;e.results.length; i++){
-        const r=e.results[i];
-        if(r.isFinal) this.buffer += r[0].transcript;   <span class="cm">// 已確定的句段累積</span>
-        else interim += r[0].transcript;                <span class="cm">// 正在辨識的先暫放</span>
-      }
-      const shown=(this.buffer+interim).trim();
-      if(shown) this.onInterim?.(shown);                <span class="cm">// 即時顯示逐字稿</span>
-    };
-    rec.onerror=(e)=&gt;{
-      if(e.error==='no-speech'||e.error==='aborted') return;
-      if(e.error==='not-allowed') toast('麥克風權限被拒絕，請允許後重試');
-      else toast('語音辨識錯誤：'+e.error);
-    };
-    rec.onend=()=&gt;{ if(this.active){ try{ rec.start(); }catch{} } <span class="cm">// 自動續聽</span>
-                    else this.onState?.(false); };
-    this.rec=rec; this.active=true;
-    try{ rec.start(); this.onState?.(true); }
-    catch(e){ toast('無法啟動麥克風'); this.active=false; }
-  }
-  stop(){
-    this.active=false;
-    if(this.rec){ try{ this.rec.stop(); }catch{} }
-    this.onState?.(false);
-    const text=this.buffer.trim();   <span class="cm">// 講完了，整段一次交出去翻譯</span>
-    this.buffer='';
-    if(text) this.onDone?.(text);
-  }
-}</pre></div>
-  <p class="note body">💡 <code>toast()</code> 是專案裡「跳一條小提示」的小幫手，CH05 已經有了，直接用即可。這裡先<b>不做繁中簡轉繁</b>，那是步驟二專門要補的坑。</p>
 </section>
 
 <section class="slide cs">
@@ -247,37 +188,8 @@ class Recognizer {
   <div class="body">
     <div class="info-box">🎯 <b>這一步要做什麼</b>：引入一個叫 <b>OpenCC</b> 的免費工具（簡繁轉換專用），拿到辨識結果後，若是繁中就先「簡轉繁」再顯示。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把這行<b>貼在 <code>&lt;head&gt;</code> 裡</b>（其他 <code>&lt;script&gt;</code> 旁邊）。</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">&lt;!-- OpenCC：手機語音辨識常把國語轉成簡體，載入後把辨識結果轉回繁體 --&gt;</span>
-&lt;script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"&gt;&lt;/script&gt;</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
     <p class="note body">💡 這是從網路載入的公用工具（CDN），免安裝。載入後，全域會多一個 <code>window.OpenCC</code> 可以用。</p>
-  </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這兩個小函式（貼上去）</h2><div class="k">貼進 // ===== 3. 語音辨識 STT ===== 區</div></div>
-  <div class="body">
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>手機的國語語音辨識常回傳簡體字，即使 lang 設 zh-TW 也一樣。
-幫我用 OpenCC（window.OpenCC）寫一個 toTraditional(text) 把簡體轉繁體，
-第一次用到才建立轉換器（lazy），OpenCC 沒載入時原字輸出、不要報錯。
-再寫一個 convForBcp(bcp, text)：只有辨識語言是繁體中文(zh-TW/zh-HK)時才轉，其他語言原樣返回。</pre></div>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">// 手機（Android/Chrome）的國語辨識常回傳簡體字，即使 lang 設 zh-TW 也一樣。</span>
-<span class="cm">// 用 OpenCC 把辨識結果轉回繁體；OpenCC 未載入時原字輸出，不影響其他語言。</span>
-let _s2t=null, _s2tReady=false;
-function toTraditional(text){
-  if(!text) return text;
-  try{
-    if(!_s2tReady){ _s2tReady=true; if(window.OpenCC) _s2t=window.OpenCC.Converter({from:'cn', to:'tw'}); }
-    return _s2t ? _s2t(text) : text;
-  }catch(e){ return text; }
-}
-<span class="cm">// 只有辨識語言為繁體中文時才需要轉換</span>
-function convForBcp(bcp, text){
-  return (bcp==='zh-TW' || bcp==='zh-HK') ? toTraditional(text) : text;
-}</pre></div>
   </div>
 </section>
 
@@ -285,18 +197,7 @@ function convForBcp(bcp, text){
   <div class="sh"><h2>步驟二：把轉換接進 onresult</h2><div class="k">改 Recognizer 裡累積文字的那兩行</div></div>
   <div class="body">
     <p>📂 回到步驟一的 <code>Recognizer</code>，把 <code>onresult</code> 裡累積文字的兩行，各包一層 <code>convForBcp</code>：</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>rec.onresult=(e)=&gt;{
-  let interim='';
-  for(let i=e.resultIndex; i&lt;e.results.length; i++){
-    const r=e.results[i];
-    <span class="cm">// 繁中辨識先轉回繁體，避免手機回傳簡體字</span>
-    if(r.isFinal) this.buffer += convForBcp(this.bcp, r[0].transcript);
-    else          interim   += convForBcp(this.bcp, r[0].transcript);
-  }
-  const shown=(this.buffer+interim).trim();
-  if(shown) this.onInterim?.(shown);
-};</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
 </section>
 
@@ -321,41 +222,13 @@ function convForBcp(bcp, text){
     <div class="info-box">🎯 <b>這一步要做什麼</b>：先做出一個「單人模式的聽寫器」<code>sRecognizer</code>，設定好「即時顯示」與「講完翻譯」要做的事；再把它接到畫面上的 🎤 麥克風按鈕。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，一樣放在 <code>// ===== 3. 語音辨識 STT =====</code> 這一區裡（接在剛剛的 <code>Recognizer</code> 後面）。</p>
     <div class="info-box">🔌 <b>接線</b>：這個聽寫器聽到的整段文字，會交給 <b>CH06 做的 <code>translate()</code></b> 去翻譯——你<b>不用重寫翻譯</b>，只是把「聽到的字」接到「已經會翻的函式」上。這就是疊加：新功能接到舊功能。</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">// 單人模式的聽寫器：設定「顯示」「翻譯」「按鈕變色」三件事</span>
-const sRecognizer = new Recognizer({
-  bcp: byId(cfg.s_langA).bcp,                      <span class="cm">// 起始語言碼（來源語）</span>
-  onInterim: (t)=&gt; setResult(sResult, t, true),    <span class="cm">// 逐字稿即時顯示</span>
-  onDone: async (t)=&gt;{                             <span class="cm">// 按停後才進來：整段翻譯</span>
-    const a=$('s_langA').value, b=$('s_langB').value;
-    try{
-      setResult(sResult, '翻譯中…', true);
-      const out = await translate(t, a, b);         <span class="cm">// 沿用 CH06 的翻譯</span>
-      setResult(sResult, out);
-      speak(out, byId(b).bcp);                       <span class="cm">// 自動朗讀（CH08 深講）</span>
-      pushHistory(t, out);
-    }catch(e){ toast(e.message); setResult(sResult, '（翻譯失敗）'); }
-  },
-  onState: (on)=&gt; toggleMic($('s_mic'), on),        <span class="cm">// 聆聽時按鈕變色</span>
-});</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
 </section>
 
 <section class="slide cs">
   <div class="sh"><h2>步驟三：按鈕變色 + 綁定點擊</h2><div class="k">讓使用者看得出「正在聽」</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// 聆聽中把按鈕變色、換文字，讓使用者知道狀態</span>
-function toggleMic(btn, on){
-  btn.classList.toggle('listening', on);
-  const lbl = btn.querySelector('.mic-label');
-  if(lbl) lbl.textContent = on ? '🎙️ 說話中…說完再點一下翻譯' : '點一下開始說話';
-}
-
-<span class="cm">// 點麥克風：拿當下選的來源語言碼，開始/停止聽寫</span>
-$('s_mic').addEventListener('click', ()=&gt;{
-  sRecognizer.bcp = byId($('s_langA').value).bcp;   <span class="cm">// 每次都用最新選的語言</span>
-  sRecognizer.start();                               <span class="cm">// 沒在聽→開始；正在聽→停止</span>
-});</pre></div>
+  <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   <p class="note body">💡 <code>$('s_mic')</code> 抓的是 <span class="filechip">index.html</span> 裡那顆 <code>&lt;button id="s_mic"&gt;</code>；<code>byId(...)</code>／<code>$()</code>／<code>setResult()</code>／<code>speak()</code> 都是專案既有的小幫手，直接用。</p>
 </section>
 

@@ -116,40 +116,8 @@
     <span class="step-tag">步驟 1／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個函式 <code>analyze()</code>，收到一張圖，交給 Gemini 看，請它回「摘要＋翻譯」。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">providers.py</span>，把 AI 給你的函式<b>貼在檔案最下面</b>（其他函式的後面）。</p>
-    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>請在 providers.py 新增一個 analyze() 函式：
-參數有 api_key、target_name、text、file_bytes、mime_type。
-用 Gemini 的 gemini-3.5-flash 讀圖（file_bytes）或讀文字（text），
-要求它只回 JSON：{"summary": 用 target_name 語言摘要, "translation": 完整翻譯}。
-記得把 thinking 關掉（thinking_budget=0），避免 JSON 被截斷，最後做容錯解析。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 providers.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># providers.py — 貼在檔案最下面</span>
-<span class="cm"># file_bytes（圖片/PDF）或 text（純文字）擇一給</span>
-def analyze(api_key, target_name, text=None, file_bytes=None, mime_type=None):
-    from google import genai
-    from google.genai import types
-    client = genai.Client(api_key=api_key)
-    system = (f"Read the input. Write a concise summary in {target_name}, "
-              f"and a faithful full translation into {target_name}. "
-              'Respond ONLY as JSON: {"summary":"...","translation":"..."}')
-    parts = []
-    if file_bytes is not None:
-        parts.append(types.Part.from_bytes(data=file_bytes, mime_type=mime_type))
-    if text:
-        parts.append(text)
-    resp = client.models.generate_content(
-        model='gemini-3.5-flash',
-        contents=parts,
-        config=types.GenerateContentConfig(system_instruction=system,
-            response_mime_type='application/json', max_output_tokens=8192,
-            thinking_config=types.ThinkingConfig(thinking_budget=0)))   <span class="cm"># 關閉思考</span>
-    return parse_json(resp.text)   <span class="cm"># 容錯解析 summary/translation</span></pre></div>
 </section>
 
 <section class="slide cs">
@@ -181,33 +149,8 @@ def analyze(api_key, target_name, text=None, file_bytes=None, mime_type=None):
     <span class="step-tag">步驟 2／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/vision</code>，讓前端能把照片送進來，後端收下後叫剛剛的 <code>analyze()</code> 去讀。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 <code># ===== 5. 拍照 / 檔案 API =====</code> 這一區，把端點<b>貼在這一區裡</b>（跟其他 <code>@app.route</code> 分區放）。<span class="note">💡 前端有第 7 區、後端有第 5 區，拍照相關的程式各自歸位，之後 CH12 上傳檔案也放同一區。</span></p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>請在 app.py 新增一個 /api/vision 端點（POST）：
-從 JSON 收 image（dataURL 格式的照片）和 target（目標語言）。
-把 dataURL 前綴去掉、base64 解碼成圖片 bytes，
-呼叫 providers.analyze(金鑰, target, file_bytes=圖, mime_type=圖的類型)，
-最後把 {summary, translation} 回傳成 JSON。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py</span>
-import base64
-@app.route('/api/vision', methods=['POST'])
-def api_vision():
-    data = request.get_json(force=True) or {}
-    img = data.get('image','')            <span class="cm"># 前端送來的 dataURL</span>
-    target = data.get('target','Traditional Chinese (Taiwan)')
-    mime='image/jpeg'
-    if img.startswith('data:'):
-        head,img = img.split(',',1); mime = head.split(':')[1].split(';')[0]
-    raw = base64.b64decode(img)           <span class="cm"># 還原成圖片 bytes</span>
-    key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
-    res = providers.analyze(key, target, file_bytes=raw, mime_type=mime)
-    return jsonify({'ok':True, **res})</pre></div>
 </section>
 
 <section class="slide cs">
@@ -230,10 +173,7 @@ def api_vision():
     <span class="step-tag">步驟 3／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：在畫面加一顆「📷 拍照翻譯」，手機按了直接開後鏡頭。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把按鈕<b>放在麥克風按鈕下方的功能區</b>。</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">&lt;!-- 手機會直接開後鏡頭 --&gt;</span>
-&lt;input type="file" id="cam" accept="image/*" capture="environment" hidden&gt;
-&lt;button onclick="cam.click()"&gt;📷 拍照翻譯&lt;/button&gt;</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
 </section>
 
@@ -262,27 +202,8 @@ def api_vision():
     <span class="step-tag">步驟 4／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：拍完照後，前端先把照片縮小，送到 <code>/api/vision</code>，拿回摘要＋翻譯後顯示出來。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 <code>// ===== 7. 拍照 / 檔案 =====</code> 這一區，把這段<b>貼在它下面</b>。<span class="note">💡 照著區塊名字放就對了，不用想「貼哪」。</span></p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>照片選好後，先用 canvas 把它縮到最長邊 1568 像素（省流量、變快），
-再用 fetch POST 到 /api/vision，body 帶 image（縮好的 dataURL）和 target（目標語言）。
-拿到回應後，把 summary 和 translation 顯示在畫面上。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟四：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>cam.onchange = async (e)=&gt;{
-  const file = e.target.files[0]; if(!file) return;
-  const dataURL = await downscale(file, 1568);   <span class="cm">// 縮到最長邊 1568</span>
-  const res = await fetch('/api/vision', {method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ image:dataURL, target:'Traditional Chinese (Taiwan)' })});
-  const d = await res.json();
-  showResult(d.summary, d.translation);          <span class="cm">// 顯示摘要 + 翻譯</span>
-};</pre></div>
-  <p class="note body">💡 <code>downscale()</code> 和 <code>showResult()</code> 是兩個小幫手函式（下一張說明），AI 會一起幫你生出來。實際專案裡它們叫 <code>fileToDownscaledDataURL()</code> 與 <code>renderVision()</code>，作用一樣。</p>
 </section>
 
 <section class="slide cs">

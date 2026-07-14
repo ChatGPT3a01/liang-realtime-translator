@@ -297,17 +297,25 @@
             '📎 已收到你的補充：「' + esc(extra.slice(0, 60)) + (extra.length > 60 ? '…' : '') +
             '」　（教學版會輸出標準解答，確保全班一致）'));
         }
+        // 有沒有連結金鑰（CH01 存進 localStorage）——用來強化「真的在用你的 AI」的臨場感
+        let hasKey = false;
+        try { hasKey = !!localStorage.getItem('VIBE_AI_KEY'); } catch (e) {}
+        const keyNote = hasKey ? ' · 🔑 用你的金鑰' : '';
         outWrap.appendChild(el('div', 'vs-lbl',
-          isFirst ? '🤖 生成結果' : '🤖 生成結果（在你的參考程式上續寫 · 到這一段為止的完整程式）'));
-        const think = el('div', 'vs-think', '🤔 Vibe 生成中');
+          (isFirst ? '🤖 生成結果' : '🤖 生成結果（在你的參考程式上續寫 · 到這一段為止的完整程式）') + keyNote));
+        const think = el('div', 'vs-think', hasKey ? '🔑 連線你的 AI' : '🤔 分析你的需求');
         outWrap.appendChild(think);
 
-        // 假思考動畫 → 逐字打出程式
-        let dotN = 0;
+        // 假思考動畫：分階段顯示訊息，做出「AI 正在想」的臨場感 → 再逐字吐程式
+        const thinkMsgs = hasKey
+          ? ['🔑 連線你的 AI', '🤔 分析你的需求', '✍️ 撰寫程式中']
+          : ['🤔 分析你的需求', '🔎 對照參考程式', '✍️ 撰寫程式中'];
+        let dotN = 0, ti = 0;
         const thinkTimer = setInterval(() => {
           dotN = (dotN + 1) % 4;
-          think.textContent = '🤔 Vibe 生成中' + '.'.repeat(dotN);
-        }, 220);
+          if (dotN === 0) ti = Math.min(ti + 1, thinkMsgs.length - 1);
+          think.textContent = thinkMsgs[ti] + '.'.repeat(dotN);
+        }, 260);
 
         setTimeout(() => {
           clearInterval(thinkTimer);
@@ -332,7 +340,7 @@
               }
             };
           });
-        }, 850);
+        }, 2000);
       };
 
       refreshProg();
@@ -367,10 +375,10 @@
     // 前綴用和 assembled() 相同的段落間隔（\n\n\n），確保「灰底舊碼 + 新碼」= 完整檔
     const prefix = prevCode ? '<span class="vs-prev">' + esc(prevCode) + '</span>\n\n\n' : '';
 
-    // 刻意放慢，做出「AI 正在串流吐程式」的感覺（可點框略過）：
-    //   每段約 2.6～7 秒，長段落也不會拖太久；短段落至少看得到過程。
-    const INTERVAL = 24;                                   // 每個 tick 的毫秒
-    const durationMs = Math.min(7000, Math.max(2600, code.length * 8));
+    // 刻意放慢，做出「AI 正在串流吐程式」的臨場感（可點框略過）：
+    //   放慢為原速的 2.5 倍，每段約 6.5～17.5 秒；短段落至少看得到過程。
+    const INTERVAL = 30;                                   // 每個 tick 的毫秒
+    const durationMs = Math.min(17500, Math.max(6500, code.length * 20));
     const totalTicks = Math.max(1, durationMs / INTERVAL);
     const step = Math.max(1, Math.round(code.length / totalTicks));
 

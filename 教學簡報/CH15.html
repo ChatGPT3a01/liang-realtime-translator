@@ -142,27 +142,8 @@
     <span class="step-tag">步驟 1／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個小函式，把「金鑰＋問題」丟給 Tavily，拿回搜尋結果。它只負責「查」，不管「答」。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 <code># ===== 8. 旅遊助手 API =====</code> 這一區，把這個函式<b>貼在這一區裡</b>（放在 <code>/api/ask</code> 端點的上面）。<span class="note">💡 照著區塊名字放就對了，不用想「貼哪」。</span></p>
-    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>請在 app.py 新增一個小函式 _tavily_search(key, query)：
-用 requests.post 打 Tavily 的 https://api.tavily.com/search，
-帶上 api_key、query、max_results=5、include_answer=True、
-search_depth="basic"，逾時設 20 秒。
-成功就回傳它的 JSON（含 answer 與 results）。我是新手，請附完整程式碼。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py — 旅遊問答：可選 Tavily 上網搜尋</span>
-def _tavily_search(key, query, max_results=5):
-    r = requests.post("https://api.tavily.com/search", json={
-        "api_key": key, "query": query, "max_results": max_results,
-        "include_answer": True, "search_depth": "basic",
-    }, timeout=20)
-    r.raise_for_status()          <span class="cm"># 狀態碼不是 200 就丟例外</span>
-    return r.json()               <span class="cm"># 含 answer 與 results[title,url,content]</span></pre></div>
 </section>
 
 <section class="slide cs">
@@ -188,75 +169,8 @@ def _tavily_search(key, query, max_results=5):
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/ask</code>，收下問題，該搜尋就搜尋，再交給 AI 回答，最後把答案＋來源送回前端。這是本章的核心。</div>
     <div class="info-box">🔌 <b>接線</b>：助手回答用的是 <b>CH06 做的 <code>providers.generate()</code></b>——<b>跟翻譯同一套供應商設定</b>（你在設定裡選的 Gemini／OpenAI、金鑰、模型都直接沿用），不用另外接一次 AI。上網查詢是<b>可選</b>的：有 Tavily 金鑰就先查最新資料，<b>沒金鑰就退回純 AI 知識</b>作答。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，一樣在 <code># ===== 8. 旅遊助手 API =====</code> 區，把端點<b>貼在剛剛那個 <code>_tavily_search</code> 的下面</b>（跟其他 <code>@app.route</code> 分區放）。</p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>請在 app.py 新增 /api/ask 端點（POST）：
-從 JSON 收 question、target（回答語言）、tavily_key（選填）。
-若有 tavily_key（或環境變數 TAVILY_API_KEY）就先呼叫 _tavily_search，
-把 answer 和每筆 results 整理成「參考資料」文字，同時收集來源清單；
-searched 只有「真的有搜到東西」才算 True。
-接著組 system 指令（用 target 語言、有參考資料就優先採用），
-用 providers.generate() 交給 AI 回答（沿用我設定的供應商）。
-最後回傳 {ok, answer, sources, searched}。搜尋失敗要能自動退回純 AI。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這段（1／2 · 上網查）</h2><div class="k">貼進 app.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py</span>
-@app.route('/api/ask', methods=['POST'])
-def api_ask():
-    data = request.get_json(force=True, silent=True) or {}
-    question = (data.get('question') or '').strip()
-    if not question:
-        return jsonify({"ok": False, "error": "請輸入問題"}), 400
-    target = data.get('target') or 'Traditional Chinese (Taiwan)'
-    pc = _provider_cfg(data)                      <span class="cm"># 沿用你設定的供應商</span>
-    tavily_key = (data.get('tavily_key') or os.getenv('TAVILY_API_KEY') or '').strip()
-
-    <span class="cm"># 1) 有 Tavily 金鑰才上網查；失敗就略過，改用 AI 自身知識</span>
-    context, sources, searched, search_note = "", [], False, ""
-    if tavily_key:
-        try:
-            d = _tavily_search(tavily_key, question)
-            results = d.get("results") or []
-            if d.get("answer"):
-                context += f"Web summary: {d['answer']}\n"
-            for it in results:
-                context += f"- {it.get('title','')}: {it.get('content','')}\n"
-                sources.append({"title": it.get("title",""), "url": it.get("url","")})
-            searched = bool(results or d.get("answer"))   <span class="cm"># 真的有搜到才算已搜尋</span>
-        except Exception as e:
-            logger.warning(f"tavily failed: {e}")
-            search_note = "（即時搜尋暫時無法使用，改用 AI 既有知識回答）"</pre></div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這段（2／2 · 交給 AI 答）</h2><div class="k">接在上一段下面</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre>    <span class="cm"># 2) 交給 LLM 回答（走設定的供應商）</span>
-    system = (
-        "You are a helpful, concise travel assistant. "
-        f"Answer the user's question in {target}. "
-        "If web search context is provided, prefer those up-to-date facts and be specific; "
-        "otherwise answer from your own knowledge and flag uncertainty for time-sensitive details."
-    )
-    user = question if not context else f"Question: {question}\n\nWeb search context:\n{context}"
-    try:
-        if pc['provider'] == 'openai':
-            answer = providers.generate('openai', pc['api_key'], pc['model'], pc['base_url'], system, user)
-        else:
-            key = pc['api_key'] or API_KEY
-            answer = providers.generate('gemini', key, pc['model'], '', system, user)
-    except Exception as e:
-        logger.error(f"ask error: {e}")
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 400
-
-    return jsonify({"ok": True,
-        "answer": (answer or "") + (("\n\n" + search_note) if search_note else ""),
-        "sources": sources, "searched": searched})</pre></div>
-  <p class="note body">💡 這裡把原始碼略作精簡（省略幾個防呆判斷），核心流程完全一樣：查 → 組指令 → 呼叫 <code>generate()</code> → 回傳。</p>
 </section>
 
 <section class="slide cs">
@@ -294,13 +208,7 @@ def api_ask():
     <span class="step-tag">步驟 3／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：在畫面加一個小視窗，有「輸入問題的格子」「送出鈕」「顯示答案的地方」「顯示來源的地方」。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把這段<b>放進旅遊助手的彈窗（Modal）裡</b>。</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">&lt;!-- 旅遊問答框 --&gt;</span>
-&lt;textarea id="ask_q" placeholder="想問什麼旅遊問題？例如：淺草附近有什麼好吃的"&gt;&lt;/textarea&gt;
-&lt;button id="ask_go"&gt;送出&lt;/button&gt;
-&lt;div id="ask_status"&gt;&lt;/div&gt;              <span class="cm">&lt;!-- 顯示「思考中…」或「🌐 已參考即時搜尋」 --&gt;</span>
-&lt;div id="ask_answer" class="hidden"&gt;&lt;/div&gt; <span class="cm">&lt;!-- 答案顯示在這 --&gt;</span>
-&lt;div id="ask_sources"&gt;&lt;/div&gt;             <span class="cm">&lt;!-- 來源連結顯示在這 --&gt;</span></pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
 </section>
 
@@ -329,47 +237,8 @@ def api_ask():
     <span class="step-tag">步驟 4／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：按下送出後，把問題（連同金鑰、語言）POST 到 <code>/api/ask</code>，拿回答案後顯示，並把來源做成可點的連結。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 <code>// ===== 8. 匯率 / 天氣 / 助手 =====</code> 這一區，把這段<b>貼在它下面</b>（接在天氣那段後面）。<span class="note">💡 前端第 8 區、後端第 8 區，旅遊工具的程式各自歸位。</span></p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>寫一個 doAsk()：讀輸入框的問題，先顯示「思考中…」，
-用 fetch POST 到 /api/ask，body 帶 question、target（回答語言）、
-tavily_key（從設定 cfg.tavilykey）和供應商設定。
-拿到回應後：若 d.searched 就在狀態列標「🌐 已參考即時搜尋」，
-把 d.answer 顯示出來，並把 d.sources 每一筆做成可點的來源連結。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟四：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// static/js/app.js</span>
-async function doAsk() {
-  const q = $('ask_q').value.trim();
-  if (!q) { $('ask_status').textContent = '請輸入問題'; return; }
-  $('ask_answer').classList.add('hidden');
-  $('ask_status').textContent = (cfg.tavilykey ? '上網查詢並' : 'AI ') + '思考中…';
-  try {
-    const res = await fetch('/api/ask', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        question: q,
-        target: byId(cfg.s_langA).name,   <span class="cm">// 用你的語言回答</span>
-        tavily_key: cfg.tavilykey || '',  <span class="cm">// 選填的 Tavily 金鑰</span>
-        ...providerBody(),                <span class="cm">// 帶上供應商設定</span>
-      }),
-    });
-    const d = await res.json();
-    if (!d.ok) throw new Error(d.error || '查詢失敗');
-    $('ask_status').textContent = d.searched ? '🌐 已參考即時搜尋' : '';
-    $('ask_answer').textContent = d.answer || '（無回覆）';
-    $('ask_answer').classList.remove('hidden');
-    if (Array.isArray(d.sources) &amp;&amp; d.sources.length) {
-      $('ask_sources').innerHTML = '&lt;div class="src-title"&gt;來源&lt;/div&gt;' +
-        d.sources.map(s =&gt; `&lt;a href="${s.url}" target="_blank"&gt;${s.title || s.url}&lt;/a&gt;`).join('');
-    }
-  } catch (e) { $('ask_status').textContent = '❌ ' + e.message; }
-}
-$('ask_go').addEventListener('click', doAsk);</pre></div>
 </section>
 
 <section class="slide cs">

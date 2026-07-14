@@ -137,54 +137,8 @@ def analyze(provider, api_key, model, target_name,
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/file</code>，讓前端能把整個檔案交上來。後端收下後，<b>看是哪種檔</b>，再用對的方式叫 <code>analyze()</code> 去讀。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 CH11 建立的 <code># ===== 5. 拍照 / 檔案 API =====</code> 這一區，把 <code>/api/file</code> 端點<b>貼在它下面</b>（接在 CH11 的 <code>/api/vision</code> 後面）。<span class="note">💡 這就是骨架分區的好處——不用想「貼哪」，照著區塊名字放就對了。</span></p>
     <div class="info-box">🔌 <b>接線</b>：這道 <code>/api/file</code> 沿用 CH11 做好的 <b><code>providers.analyze()</code></b>，你<b>不用重寫 AI 邏輯</b>——只是多支援 <b>PDF</b> 與<b>純文字檔</b>兩種餵法。差別在收檔方式：前端這章用 <b>FormData 上傳</b>（跟 CH11 拍照用 JSON 上傳不同），所以後端改用 <code>request.files</code> 收檔。</div>
-    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>請在 app.py 新增一個 /api/file 端點（POST），用 multipart（FormData）接收上傳檔案：
-用 request.files.get('file') 拿檔案、request.form.get('target') 拿目標語言。
-限制 15MB，超過就回錯誤。
-依 MIME 與副檔名分流：
- - text/plain 或 .txt/.md/.csv → 讀成文字，用 text= 呼叫 analyze()
- - application/pdf 或 .pdf → 用 file_bytes= 呼叫，mime 設 application/pdf，並強制走 Gemini
- - image/* → 用 file_bytes= 呼叫，帶上圖片的 mime
-最後回 {ok, summary, translation}，並附上 filename。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py — 檔案大小上限與可接受的圖片副檔名</span>
-MAX_FILE_BYTES = 15 * 1024 * 1024   <span class="cm"># 15MB</span>
-IMAGE_EXTS = {'jpg','jpeg','png','webp','heic','heif','gif'}
-
-@app.route('/api/file', methods=['POST'])
-def api_file():
-    f = request.files.get('file')                 <span class="cm"># FormData 裡的檔案</span>
-    target = request.form.get('target') or 'Traditional Chinese (Taiwan)'
-    if not f: return jsonify({"ok":False,"error":"no file"}), 400
-    filename = f.filename or 'upload'
-    raw = f.read()                                 <span class="cm"># 讀成 bytes</span>
-    if not raw: return jsonify({"ok":False,"error":"空白檔案"}), 400
-    if len(raw) &gt; MAX_FILE_BYTES:
-        return jsonify({"ok":False,"error":"檔案過大（上限 15MB）"}), 400
-    mime = (f.mimetype or '').lower()
-    ext = filename.rsplit('.',1)[-1].lower() if '.' in filename else ''
-
-    if mime=='text/plain' or ext in ('txt','md','csv'):       <span class="cm"># ① 文字檔</span>
-        text = raw.decode('utf-8', errors='replace')
-        result, status = _run_analyze(pc, target, text=text)
-    elif mime=='application/pdf' or ext=='pdf':               <span class="cm"># ② PDF → 強制 Gemini</span>
-        result, status = _run_analyze(pc, target, force_gemini=True,
-                                      file_bytes=raw, mime_type='application/pdf')
-    elif mime.startswith('image/') or ext in IMAGE_EXTS:      <span class="cm"># ③ 圖片</span>
-        if not mime.startswith('image/'): mime = 'image/jpeg'
-        result, status = _run_analyze(pc, target, file_bytes=raw, mime_type=mime)
-    else:
-        return jsonify({"ok":False,"error":f"不支援的檔案類型：{mime or ext}"}), 400
-
-    result.setdefault("filename", filename)        <span class="cm"># 把檔名一起回傳</span>
-    return jsonify(result), status</pre></div>
-  <p class="note body">💡 <code>pc</code> 是「使用者選了哪家 AI」的設定；<code>_run_analyze()</code> 是個小幫手，負責挑金鑰、呼叫 <code>analyze()</code>、包好錯誤——下一張說明。</p>
 </section>
 
 <section class="slide cs">
@@ -218,12 +172,7 @@ def api_file():
     <span class="step-tag">步驟 2／3</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：在畫面加一顆「📎 上傳檔案」，按下去跳出系統的「選檔案」視窗，讓使用者挑圖片／PDF／文字檔。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">templates/index.html</span>，把按鈕<b>放在 CH11 那顆「📷 拍照翻譯」的旁邊</b>（同一排功能區）。</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">&lt;!-- 一顆漂亮按鈕 + 一個藏起來的檔案選擇框 --&gt;</span>
-&lt;button id="s_file" class="tool-btn"&gt;📎 上傳檔案&lt;/button&gt;
-
-&lt;input type="file" id="fileInput" hidden
-       accept="image/*,application/pdf,text/plain,.pdf,.txt,.md,.csv"&gt;</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
 </section>
 
@@ -252,42 +201,8 @@ def api_file():
     <span class="step-tag">步驟 3／3</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：使用者挑好檔後，前端判斷「是圖片還是別的」，圖片先縮小，其餘原樣，用 <b>FormData</b> 送到 <code>/api/file</code>，拿回摘要＋翻譯後顯示。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 CH11 建立的 <code>// ===== 7. 拍照 / 檔案 =====</code> 這一區，把這段<b>貼在它下面</b>（接在 CH11 拍照那段後面）。<span class="note">💡 跟 app.py 一樣，照著區塊名字放就對了。</span></p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>幫我接上「📎 上傳檔案」按鈕：按下 s_file 就觸發隱藏的 fileInput。
-選好檔後，用 FormData 夾帶檔案送 POST 到 /api/file，並帶 target（目標語言）。
-如果是圖片，先縮圖再放進 FormData；PDF、文字檔就直接放原檔。
-拿回結果後，用 renderVision() 顯示摘要與翻譯。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟三：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// 按「📎 上傳檔案」→ 點一下那個藏起來的檔案框</span>
-$('s_file').addEventListener('click', () =&gt; $('fileInput').click());
-
-$('fileInput').addEventListener('change', async (e) =&gt; {
-  const file = e.target.files && e.target.files[0];
-  e.target.value = '';                       <span class="cm">// 清掉，下次選同一檔也能觸發</span>
-  if (!file) return;
-  openVision('📎 檔案翻譯');                  <span class="cm">// 打開結果彈窗</span>
-  try {
-    const fd = new FormData();               <span class="cm">// ← 關鍵：用表單方式夾檔</span>
-    fd.append('target', byId($('vision_target').value).name);
-    if (file.type.startsWith('image/')) {    <span class="cm">// 圖片：先縮圖再送</span>
-      const dataURL = await fileToDownscaledDataURL(file);
-      fd.append('file', dataURLToBlob(dataURL), 'upload.jpg');
-    } else {                                 <span class="cm">// PDF / 文字檔：原檔直接送</span>
-      fd.append('file', file);
-    }
-    $('visionStatus').textContent = '上傳與翻譯中…（檔案越大越久）';
-    const res = await fetch('/api/file', { method:'POST', body: fd });  <span class="cm">// 不用設 Content-Type</span>
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || '翻譯失敗');
-    renderVision(data);                      <span class="cm">// 顯示摘要 + 翻譯</span>
-  } catch (err) { $('visionStatus').textContent = '❌ ' + err.message; }
-});</pre></div>
 </section>
 
 <section class="slide cs">

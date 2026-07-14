@@ -115,52 +115,8 @@
     <span class="step-tag">步驟 1／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：做一個網址 <code>/api/tts</code>，前端把「要念的文字」送進來，後端請 Gemini 產生一段語音，再把語音回傳。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">app.py</span>，找到 <code># ===== 3. 朗讀 TTS API =====</code> 這一區，把端點<b>貼在這一區裡</b>。<span class="note">💡 照著區塊名字放就對了，不用想「貼哪」。</span></p>
-    <p>💬 <b>對你的 AI 助手這樣說</b>（複製整段貼過去）：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>請在 app.py 新增一個 /api/tts 端點（POST）：
-從 JSON 收 text（要朗讀的文字），空的就回 204。
-用 Gemini 的語音模型 gemini-3.1-flash-tts-preview 把文字變成語音，
-指定預建語音 voice_name='Kore'，回應型別設成 AUDIO。
-預覽版模型偶爾會回文字而不是聲音，所以要重試最多 3 次；
-成功就把語音的 bytes 直接回傳（mimetype 用 application/octet-stream）。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟一：AI 會給你這段（貼上去）</h2><div class="k">貼進 app.py</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm"># app.py — 雲端 TTS：用 Gemini 原生語音朗讀「任何語言」</span>
-TTS_MODEL = "gemini-3.1-flash-tts-preview"
-
-@app.route('/api/tts', methods=['POST'])
-def api_tts():
-    from flask import Response
-    data = request.get_json(force=True, silent=True) or {}
-    text = (data.get('text') or '').strip()
-    if not text:
-        return ('', 204)                              <span class="cm"># 沒文字就不用念</span>
-    key = (data.get('gemini_key') or '').strip() or API_KEY
-    if not key:
-        return jsonify({'error': 'no gemini key'}), 400
-    from google.genai import types
-    client = genai.Client(api_key=key)
-    cfg = types.GenerateContentConfig(
-        response_modalities=['AUDIO'],                 <span class="cm"># 要「聲音」不要文字</span>
-        speech_config=types.SpeechConfig(
-            voice_config=types.VoiceConfig(
-                prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name='Kore'))))
-    last_err = 'unknown'
-    for _attempt in range(3):                          <span class="cm"># 預覽模型偶爾吐文字 → 重試</span>
-        try:
-            resp = client.models.generate_content(model=TTS_MODEL, contents=text, config=cfg)
-            for part in resp.candidates[0].content.parts:
-                inline = getattr(part, 'inline_data', None)
-                if inline is not None and inline.data:
-                    return Response(inline.data, mimetype='application/octet-stream')  <span class="cm"># 24kHz 16-bit PCM</span>
-            last_err = 'model returned text instead of audio'
-        except Exception as e:
-            last_err = str(e)
-    return jsonify({'error': last_err}), 400</pre></div>
 </section>
 
 <section class="slide cs">
@@ -193,50 +149,8 @@ def api_tts():
     <span class="step-tag">步驟 2／4</span>
     <div class="info-box">🎯 <b>這一步要做什麼</b>：寫一個 <code>speak()</code>，先去跟後端 <code>/api/tts</code> 要語音來播；萬一雲端失敗，就退回瀏覽器內建朗讀。</div>
     <p>📂 <b>打開這個檔案</b>：<span class="filechip">static/js/app.js</span>，找到 <code>// ===== 4. 朗讀 TTS =====</code> 這一區，把這幾個函式貼在<b>這一區裡</b>（緊接在第 2 區翻譯的下面）。<span class="note">💡 骨架分區的好處——照著區塊名字放就對了。</span></p>
-    <p>💬 <b>對 AI 這樣說</b>：</p>
-    <div class="prompt body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre>幫我在 app.js 寫朗讀功能：
-1) speak(text, bcp)：先呼叫 /api/tts 拿雲端語音來播；
-   在開始念之前，先呼叫 stopAllAudio() 把上一句還在播的中斷掉，只念最新這句。
-   若雲端失敗（沒回音訊），改用瀏覽器的 speechSynthesis 朗讀當後備。
-2) browserSpeak(text, bcp)：用 SpeechSynthesisUtterance 念，設定 lang=bcp。
-請都加上繁中註解，我是新手。</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
-</section>
-
-<section class="slide cs">
-  <div class="sh"><h2>步驟二：AI 會給你這段（貼上去）</h2><div class="k">貼進 static/js/app.js</div></div>
-  <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-    <pre><span class="cm">// ---------- TTS ----------</span>
-const synth = window.speechSynthesis;
-<span class="cm">// 瀏覽器內建朗讀（依賴手機語音包）；onEnd 於念完或出錯時回呼</span>
-function browserSpeak(text, bcp, onEnd = null) {
-  if (!synth || !text) { onEnd?.(); return; }
-  try {
-    synth.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = bcp;                                  <span class="cm">// 用目標語言念</span>
-    u.onend = () =&gt; onEnd?.();
-    u.onerror = () =&gt; onEnd?.();
-    synth.speak(u);
-  } catch (e) { onEnd?.(); }
-}
-<span class="cm">// 主朗讀：優先雲端 Gemini TTS（任何語言都有聲音），失敗才用瀏覽器</span>
-async function speak(text, bcp, force = false, onEnd = null) {
-  if ((!cfg.autospeak &amp;&amp; !force) || !text) { onEnd?.(); return; }
-  stopAllAudio();                                  <span class="cm">// ★先中斷上一句（下面詳說）</span>
-  try {
-    const res = await fetch('/api/tts', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, gemini_key: cfg.geminikey || '' })
-    });
-    if (res.ok) {
-      const buf = await res.arrayBuffer();
-      if (buf &amp;&amp; buf.byteLength &gt; 44) { onAllAudioEnd = onEnd; playLiveAudio(buf); return; }
-    }
-  } catch (e) { console.warn('雲端 TTS 失敗，改用瀏覽器', e); }
-  browserSpeak(text, bcp, onEnd);                  <span class="cm">// 後備</span>
-}</pre></div>
 </section>
 
 <section class="slide cs">
@@ -269,20 +183,7 @@ async function speak(text, bcp, force = false, onEnd = null) {
   <div class="body">
     <p>🎯 <b>這一步要做什麼</b>：在 <code>speak()</code> 真正開始念之前，先呼叫 <code>stopAllAudio()</code>，把上一句還在播或還在排隊的語音<b>全部中斷、隊伍歸零</b>，這樣就只會念最新這一句。</p>
     <p>📂 位置：就在步驟二 <code>speak()</code> 裡那行 <code>stopAllAudio();</code>（已經幫你放好了）。它同時要有一個對應的 <code>stopAllAudio()</code> 函式，一樣放在 <code>// ===== 4. 朗讀 TTS =====</code> 區——這也是「停止」鈕要用的那個。</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">// app.js — 播放 Gemini 24kHz PCM（CH09 即時語音就用這個，沿用）</span>
-let playCtx = null, nextTime = 0;
-let audioSources = [];      <span class="cm">// 進行中的語音節點（供停止用）</span>
-let onAllAudioEnd = null;   <span class="cm">// 全部播完的回呼（供「停止」鈕重置狀態）</span>
-
-<span class="cm">// 停止所有朗讀（雲端 Web Audio + 瀏覽器 TTS）</span>
-function stopAllAudio() {
-  audioSources.forEach(s =&gt; { try { s.onended = null; s.stop(); } catch (e) {} });
-  audioSources = [];        <span class="cm">// 清掉正在播的節點</span>
-  nextTime = 0;             <span class="cm">// ★排隊時間歸零 → 下一句從頭排，不接在舊的後面</span>
-  if (synth) { try { synth.cancel(); } catch (e) {} }   <span class="cm">// 連瀏覽器朗讀也一起停</span>
-  const cb = onAllAudioEnd; onAllAudioEnd = null; cb?.();
-}</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
 </section>
 
@@ -315,19 +216,7 @@ function stopAllAudio() {
   <div class="body">
     <p>🎯 <b>這一步要做什麼</b>：在使用者<b>按下按鈕的那一瞬間</b>（還沒去雲端拿語音之前），先把播音器 <code>resume()</code> 喚醒一次。門一旦被合法打開，之後就算等雲端回來也能出聲。</p>
     <p>📂 <b>打開</b>：<span class="filechip">static/js/app.js</span>，把這個小函式放在 <code>// ===== 4. 朗讀 TTS =====</code> 區，並在<b>「朗讀」按鈕的 click 裡呼叫它</b>（在 <code>speak()</code> 之前）。</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">// 在使用者點擊當下解鎖音訊（手機／iOS 要求音訊須由手勢啟動，否則靜音）</span>
-function ensureAudioUnlocked() {
-  try {
-    if (!playCtx) playCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-    if (playCtx.state === 'suspended') playCtx.resume();   <span class="cm">// 喚醒播音器</span>
-  } catch (e) { /* ignore */ }
-}
-<span class="cm">// 朗讀鈕：按下先解鎖，再念（force=true 無視自動朗讀設定）</span>
-speakBtn.addEventListener('click', () =&gt; {
-  ensureAudioUnlocked();                 <span class="cm">// ★一定要在點擊當下、speak 之前</span>
-  speak(lastText, targetBcp, true);
-});</pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
   </div>
 </section>
 
@@ -348,11 +237,7 @@ speakBtn.addEventListener('click', () =&gt; {
     <div class="info-box">🎯 <b>這一步要做什麼</b>：把剛做好的 <code>speak()</code> 接到「翻譯成功」的那一刻，讓它<b>翻完就自動念</b>。</div>
     <div class="info-box">🔌 <b>接線</b>：<code>speak()</code> 不是你手動去按才會念，而是在「<b>翻譯完成後</b>」被<b>自動呼叫</b>。CH06／CH07 的翻譯流程翻完就叫它——單人模式的 <code>onDone</code> 回呼裡，<code>translate()</code> 一拿到結果就接著跑 <code>speak(out, …)</code>。所以你這章寫的朗讀，會自動掛到前面章節做好的翻譯上，不用改翻譯流程。</div>
     <p>📂 <b>打開</b>：<span class="filechip">static/js/app.js</span>，找到翻譯成功、把結果放進畫面那一段（單人模式的 <code>onDone</code> 裡），<b>在它下面加一行</b>：</p>
-    <div class="term body"><button class="copy" onclick="cp(this)">複製</button>
-      <pre><span class="cm">// 翻譯成功後（把結果顯示到畫面之後）加一行</span>
-const out = await translate(text, a, b);
-setResult(sResult, out);
-speak(out, byId(b).bcp);        <span class="cm">// ← 用目標語言（b）的代碼朗讀</span></pre></div>
+    <div class="info-box">👉 這段程式改用本章開頭的 <b>🧩 生成器</b> 產生（複製提示詞 → 送出 → 採用），不必手打。</div>
     <p class="note body">💡 <code>byId(b).bcp</code> 是把目標語言選單的值換成朗讀用的語言代碼（像 <code>ja-JP</code>）。想「停止」時就呼叫 <code>stopAllAudio()</code>；朗讀鈕可做成「🔊 朗讀 ⇄ ⏹ 停止」切換。</p>
   </div>
 </section>
