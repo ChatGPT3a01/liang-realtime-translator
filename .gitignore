@@ -24,3 +24,4 @@ node_modules/
 # 使用卡含金鑰，不上傳
 *.pdf
 _ckpt_work/
+專案開發紀錄.md
