@@ -323,17 +323,19 @@ def analyze(provider, api_key, model, target_name,
 <section class="slide cs">
   <div class="sh"><h2>🗺️ 此刻你的 app.js 全貌</h2><div class="k">對一下你的檔案，區塊有沒有對上</div></div>
   <div class="body">
-    <p>做完這章，你的 9 區骨架應該長這樣（這章補齊的用 ⭐ 標出來）：</p>
+    <p>做完這章，你的 10 區骨架應該長這樣（這章補齊的用 ⭐ 標出來）：</p>
     <table class="tbl">
-      <tr><th>區</th><th>內容</th><th>狀態</th></tr>
-      <tr><td>1 設定與語言</td><td>語言清單、設定</td><td>✅</td></tr>
-      <tr><td>2 翻譯</td><td><code>translate()</code></td><td>✅</td></tr>
-      <tr><td>3 語音辨識 STT</td><td><code>Recognizer</code>、簡轉繁</td><td>✅</td></tr>
-      <tr><td>4 語音朗讀 TTS</td><td><code>speak()</code></td><td>✅</td></tr>
-      <tr><td>5 即時 / 面對面</td><td>Live、雙向模式</td><td>✅</td></tr>
-      <tr><td>6 歷史與設定面板</td><td>紀錄、金鑰設定</td><td>✅</td></tr>
-      <tr><td>7 拍照 / 檔案</td><td>拍照、<code>fileInput</code>、FormData 上傳</td><td>⭐ ✅ 拍照+檔案完整</td></tr>
-      <tr><td>8~9</td><td>匯率、天氣 / 旅遊…</td><td>⬜ 待填</td></tr>
+    <tr><th>區</th><th>內容</th><th>狀態</th></tr>
+    <tr><td>1 設定與語言</td><td>cfg 設定、LANGS 語言清單、共用小幫手</td><td>✅</td></tr>
+    <tr><td>2 翻譯</td><td>translate()</td><td>✅ CH06</td></tr>
+    <tr><td>3 語音辨識 STT</td><td>Recognizer、簡轉繁</td><td>✅ CH07</td></tr>
+    <tr><td>4 朗讀 TTS</td><td>speak()、playLiveAudio()</td><td>✅ CH08</td></tr>
+    <tr><td>5 即時語音</td><td>socket、startLive()／stopLive()</td><td>✅ CH09</td></tr>
+    <tr><td>6 面對面</td><td>makeFaceSide()、模式切換</td><td>✅ CH10</td></tr>
+    <tr><td>7 拍照／檔案</td><td>拍照翻譯、上傳檔案翻譯</td><td>⭐ 這章新增（檔案）</td></tr>
+    <tr><td>8 匯率／天氣／助手</td><td>匯率換算、天氣、旅遊問答</td><td>⬜ 還沒</td></tr>
+    <tr><td>9 設定面板／密碼／換風格</td><td>loadCfg/saveCfg、openSettings、applyTheme、密碼閘門</td><td>⬜ 還沒</td></tr>
+    <tr><td>10 啟動</td><td>初始化、綁定按鈕</td><td>✅</td></tr>
     </table>
     <div class="ok-box">👉 CH11 你已經把第 7 區「拍照」做好，這章補上「上傳檔案」——第 7 區現在<b>拍照＋檔案都完整</b>了。第 8、9 區留給後面的匯率、天氣工具。</div>
   </div>
