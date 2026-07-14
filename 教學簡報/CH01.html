@@ -43,24 +43,31 @@
       <div class="cc"><div class="ico">🚀</div><h3>Antigravity IDE</h3><p>選配·安裝時會開官方下載頁</p></div>
       <div class="cc"><div class="ico">📄</div><h3>Notepad++</h3><p>純文字編輯（Windows）</p></div>
     </div>
-    <div style="text-align:center;margin:18px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-      <a class="dlbtn" href="assets/liangclaw-installer-v2-codex.zip" download style="text-decoration:none;display:inline-block;font-size:17px;padding:14px 26px">⬇️ Windows 一鍵安裝</a>
-      <a class="dlbtn" href="assets/liangclaw-installer-mac.zip" download style="text-decoration:none;display:inline-block;font-size:17px;padding:14px 26px">⬇️ Mac 一鍵安裝</a>
+    <div class="ok-box"><b>✅ 最推薦：貼一行指令（最不會被系統擋、最快）</b>
+      <p style="margin:8px 0 2px">🪟 <b>Windows</b>：開始鍵打「PowerShell」開啟 → 貼上這行、按 Enter：</p>
+      <div class="term"><button class="copy" onclick="cp(this)">複製</button><pre>irm https://fable5-aliang-insight.netlify.app/assets/install_ai_tools.ps1 | iex</pre></div>
+      <p style="margin:8px 0 2px">🍎 <b>Mac</b>：開「終端機」(Terminal) → 貼上這行、按 Enter：</p>
+      <div class="term"><button class="copy" onclick="cp(this)">複製</button><pre>curl -fsSL https://fable5-aliang-insight.netlify.app/assets/install_ai_tools_mac.sh | bash</pre></div>
     </div>
-    <div class="info-box">🍎 <b>Mac 使用者</b>：改下載「Mac 一鍵安裝」——它用 <b>Homebrew</b> 幫你裝同一套工具（VS Code、Node、Git、Python、ChatGPT、Claude、Claude Code、Codex）。Notepad++ 是 Windows 專屬，Mac 用 VS Code 即可。</div>
+    <div class="info-box">📦 或用<b>檔案版</b>（一行指令不方便時）：
+      <a class="dlbtn" href="assets/liangclaw-installer-v2-codex.zip" download style="text-decoration:none;padding:6px 14px;font-size:14px">⬇️ Windows zip</a>
+      <a class="dlbtn" href="assets/liangclaw-installer-mac.zip" download style="text-decoration:none;padding:6px 14px;font-size:14px">⬇️ Mac zip</a>
+      　下載的檔案<b>可能被 Windows / Mac 擋住</b>，下一頁教你怎麼解除。（Notepad++ 為 Windows 專屬，Mac 用 VS Code。）</div>
   </div>
 </section>
 
 <section class="slide cs">
   <div class="sh"><h2>一鍵安裝：怎麼用？</h2><div class="k">三步驟，跟著做</div></div>
   <ol class="sl body">
-    <li><b>下載並解壓縮</b>上一頁的 zip，會看到裡面有一個 <span class="filechip">liangclaw.bat</span>。</li>
-    <li><b>雙擊 <code>liangclaw.bat</code></b>（若被攔，按右鍵→「以系統管理員身分執行」）。跳出的視窗會自動開始檢查、安裝。</li>
-    <li>過程中若出現<b>權限視窗就按「是」</b>。跑完後<b>關掉所有終端機視窗、再重新開一個</b>，讓 PATH 設定生效。</li>
+    <li><b>方法一（推薦）：貼一行指令</b>——照上一頁複製 Windows / Mac 那一行，貼進 <b>PowerShell / 終端機</b> 按 Enter，就會自動開始裝。出現權限視窗按「是」／輸入 Mac 密碼即可。<b>這個不會被系統擋。</b></li>
+    <li><b>方法二：下載 zip 檔</b>——解壓後 Windows 雙擊 <code>liangclaw.bat</code>、Mac 把 <code>install_ai_tools_mac.command</code> 拖進終端機按 Enter。</li>
   </ol>
-  <div class="ok-box body">✅ 想確認裝好了嗎？重開終端機後打 <code>node --version</code>、<code>python --version</code>、<code>git --version</code>、<code>code --version</code>、<code>claude --version</code>、<code>codex --version</code>，都有版本號就成功。</div>
-  <div class="warn-box body">⚠️ 需要 Windows 內建的 <b>winget</b>（Win10/11 通常已內建）。若提示找不到 winget，請到 Microsoft Store 更新「應用程式安裝程式」再重跑。安裝程式<b>不會亂下載來源不明的檔案</b>，很安全。</div>
-  <div class="info-box body">🍎 <b>Mac 版怎麼用</b>：解壓 zip → 打開「終端機」→ 把 <code>install_ai_tools_mac.command</code> 拖進終端機視窗按 Enter（或先 <code>chmod +x</code> 再雙擊）。它用 <b>Homebrew</b> 安裝（沒裝會先幫你裝好，可能要輸入 Mac 密碼）。測試一樣打 <code>node / git / python3 / code / claude / codex --version</code>。</div>
+  <div class="warn-box body">🛡️ <b>下載的檔案被系統擋住？</b>（很常見，別怕）<br>
+    🪟 Windows 跳「已保護你的電腦」→ 點<b>「其他資訊」→「仍要執行」</b>；或右鍵 <code>.bat</code> →「內容」→勾<b>「解除封鎖」</b>→確定。<br>
+    🍎 Mac 跳「來自未識別的開發者」→ 對檔案<b>按右鍵 →「打開」→ 再按「打開」</b>（或系統設定 → 隱私權與安全性 →「仍要打開」）。<br>
+    👉 <b>覺得麻煩就用「方法一：貼一行指令」，完全不會被擋。</b></div>
+  <div class="ok-box body">✅ 裝好了嗎？重開終端機打 <code>node --version</code>、<code>python --version</code>、<code>git --version</code>、<code>code --version</code>、<code>claude --version</code>、<code>codex --version</code>、<code>agy --version</code>，有版本號就成功。</div>
+  <div class="warn-box body">⚠️ Windows 需內建 <b>winget</b>（Win10/11 通常有）；找不到就到 Microsoft Store 更新「應用程式安裝程式」。Mac 用 <b>Homebrew</b>（沒裝會自動先幫你裝，可能要輸入 Mac 密碼）。</div>
   <div class="info-box body">💡 這一步只裝「<b>工具</b>」。每個專案自己的 Python 套件（Flask 等）之後用 <code>pip install -r requirements.txt</code> 安裝，<b>CH04 會教</b>——別擔心現在還沒裝到。</div>
 </section>
 
