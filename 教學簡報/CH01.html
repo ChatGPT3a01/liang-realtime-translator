@@ -26,7 +26,7 @@
 </section>
 
 <section class="slide cs">
-  <div class="sh"><h2>🚀 一鍵安裝所有工具（Windows）</h2><div class="k">不想一個一個裝？下載這個，全自動搞定</div></div>
+  <div class="sh"><h2>🚀 一鍵安裝所有工具（Windows／Mac）</h2><div class="k">不想一個一個裝？下載對應版本，全自動搞定</div></div>
   <div class="body">
     <p>阿亮老師準備了一個<b>自動安裝程式</b>，會自動幫你把整套課程要用的工具一次裝好，已經裝過的會<b>自動略過不重裝</b>。</p>
     <div class="cg c4" style="margin:14px 0">
@@ -39,10 +39,11 @@
       <div class="cc"><div class="ico">⌨️</div><h3>Codex CLI</h3><p>終端機 AI</p></div>
       <div class="cc"><div class="ico">📄</div><h3>Notepad++</h3><p>純文字編輯</p></div>
     </div>
-    <div style="text-align:center;margin:18px 0">
-      <a class="dlbtn" href="assets/liangclaw-installer-v2-codex.zip" download style="text-decoration:none;display:inline-block;font-size:17px;padding:14px 26px">⬇️ 下載一鍵安裝程式（liangclaw-installer）</a>
+    <div style="text-align:center;margin:18px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a class="dlbtn" href="assets/liangclaw-installer-v2-codex.zip" download style="text-decoration:none;display:inline-block;font-size:17px;padding:14px 26px">⬇️ Windows 一鍵安裝</a>
+      <a class="dlbtn" href="assets/liangclaw-installer-mac.zip" download style="text-decoration:none;display:inline-block;font-size:17px;padding:14px 26px">⬇️ Mac 一鍵安裝</a>
     </div>
-    <div class="info-box">🍎 <b>Mac 使用者</b>：這個安裝程式只支援 Windows，請直接照後面幾頁的手動步驟安裝（一樣簡單）。</div>
+    <div class="info-box">🍎 <b>Mac 使用者</b>：改下載「Mac 一鍵安裝」——它用 <b>Homebrew</b> 幫你裝同一套工具（VS Code、Node、Git、Python、ChatGPT、Claude、Claude Code、Codex）。Notepad++ 是 Windows 專屬，Mac 用 VS Code 即可。</div>
   </div>
 </section>
 
@@ -55,6 +56,7 @@
   </ol>
   <div class="ok-box body">✅ 想確認裝好了嗎？重開終端機後打 <code>node --version</code>、<code>python --version</code>、<code>git --version</code>、<code>code --version</code>、<code>claude --version</code>、<code>codex --version</code>，都有版本號就成功。</div>
   <div class="warn-box body">⚠️ 需要 Windows 內建的 <b>winget</b>（Win10/11 通常已內建）。若提示找不到 winget，請到 Microsoft Store 更新「應用程式安裝程式」再重跑。安裝程式<b>不會亂下載來源不明的檔案</b>，很安全。</div>
+  <div class="info-box body">🍎 <b>Mac 版怎麼用</b>：解壓 zip → 打開「終端機」→ 把 <code>install_ai_tools_mac.command</code> 拖進終端機視窗按 Enter（或先 <code>chmod +x</code> 再雙擊）。它用 <b>Homebrew</b> 安裝（沒裝會先幫你裝好，可能要輸入 Mac 密碼）。測試一樣打 <code>node / git / python3 / code / claude / codex --version</code>。</div>
   <div class="info-box body">💡 這一步只裝「<b>工具</b>」。每個專案自己的 Python 套件（Flask 等）之後用 <code>pip install -r requirements.txt</code> 安裝，<b>CH04 會教</b>——別擔心現在還沒裝到。</div>
 </section>
 
