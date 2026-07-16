@@ -70,6 +70,11 @@
       border-radius:10px;padding:11px 26px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit}
     .vsim .vs-send:hover{filter:brightness(1.06)}
     .vsim .vs-send:disabled{opacity:.5;cursor:default;filter:none}
+    /* 保守／創意 兩顆並排 */
+    .vsim .vs-btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .vsim .vs-btnrow .vs-send{margin-top:0;padding:11px 20px}
+    .vsim .vs-send.vs-creative{background:linear-gradient(135deg,#8e44ad,#F5A623)}
+    .vsim .vs-modehint{font-size:12.5px;color:#8a8a9a;margin-top:8px;line-height:1.5}
     /* 生成結果 */
     .vsim .vs-out-wrap{margin-top:14px}
     .vsim .vs-added{font-size:13.5px;color:#7a5c00;background:#fff8e1;border:1px solid var(--gold,#F5A623);
@@ -116,6 +121,63 @@
     if (cls) e.className = cls;
     if (html != null) e.innerHTML = html;
     return e;
+  }
+
+  // ---------- 2b. 創意模式：讀 CH01 的金鑰、呼叫學員自己的 AI ----------
+  function getAiCfg() {
+    try {
+      return {
+        key: localStorage.getItem('VIBE_AI_KEY') || '',
+        provider: localStorage.getItem('VIBE_AI_PROVIDER') || 'gemini',
+      };
+    } catch (e) { return { key: '', provider: 'gemini' }; }
+  }
+  // 去掉 AI 常加的 ``` 圍欄
+  function stripFences(t) {
+    t = (t || '').trim();
+    t = t.replace(/^```[a-zA-Z0-9]*\s*\n?/, '').replace(/\n?```\s*$/, '');
+    return t.trim();
+  }
+  // 組給 AI 的提示詞：學員提示詞（＋參考程式）＋「只輸出程式碼」
+  function buildAiPrompt(g, isFirst, refCode) {
+    let p = g.prompt;
+    if (!isFirst && refCode) {
+      p += '\n\n【目前已有的程式（請在這個基礎上「續寫」，回傳「到這一段為止的完整程式」）】：\n' + refCode;
+    }
+    p += '\n\n【輸出要求】只輸出程式碼本身，不要任何解說文字，不要用 ``` 圍欄。';
+    return p;
+  }
+  // 呼叫學員的 AI；回傳 Promise<string>（純程式碼）。Gemini 可瀏覽器直呼；OpenAI/Groq 走 chat/completions。
+  function callAI(promptText) {
+    const cfg = getAiCfg();
+    if (!cfg.key) return Promise.reject(new Error('尚未連結金鑰'));
+    if (cfg.provider === 'openai') {
+      // CH01 未存 base_url，用金鑰前綴猜 Groq(gsk_) / OpenAI(sk-)
+      const isGroq = cfg.key.indexOf('gsk_') === 0;
+      const base = isGroq ? 'https://api.groq.com/openai/v1' : 'https://api.openai.com/v1';
+      const model = isGroq ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini';
+      return fetch(base + '/chat/completions', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + cfg.key },
+        body: JSON.stringify({ model: model, messages: [{ role: 'user', content: promptText }] }),
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d.error) throw new Error(d.error.message || 'AI 回應錯誤');
+        return stripFences((((d.choices || [])[0] || {}).message || {}).content || '');
+      });
+    }
+    // Gemini
+    const model = 'gemini-3.5-flash';
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model +
+                ':generateContent?key=' + encodeURIComponent(cfg.key);
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d.error) throw new Error(d.error.message || 'AI 回應錯誤');
+      const parts = (((d.candidates || [])[0] || {}).content || {}).parts || [];
+      return stripFences(parts.map(function (p) { return p.text || ''; }).join(''));
+    });
   }
 
   // ---------- 3. 掛載一個生成器 ----------
@@ -265,82 +327,129 @@
         });
       };
 
-      const btnSend = el('button', 'vs-send', '送出 ▶');
-      // 第 2 段起：沒貼上參考程式不能送出（讓使用者確實做這個動作、才有參與感）
+      // 送出：兩種模式 —— 🛡️ 保守（老師原版）／✨ 創意（用學員自己的 AI）
+      const btnRow = el('div', 'vs-btnrow');
+      const btnSafe = el('button', 'vs-send', '🛡️ 保守生成（老師原版）');
+      const btnCreative = el('button', 'vs-send vs-creative', '✨ 創意生成（用我的 AI）');
+      btnRow.appendChild(btnSafe);
+      btnRow.appendChild(btnCreative);
+
+      // 第 2 段起：沒貼上參考程式，兩顆都不能送
       function syncSendEnabled() {
-        if (isFirst) return;
-        btnSend.disabled = !(refBox && refBox.value.trim());
+        const need = !isFirst && !(refBox && refBox.value.trim());
+        btnSafe.disabled = need;
+        btnCreative.disabled = need;
       }
       if (!isFirst) {
         refBox.addEventListener('input', syncSendEnabled);
-        syncSendEnabled();
         stage.appendChild(el('div', 'vs-hint-need', '＊送出前，請先貼上／帶入「參考程式」。'));
       }
-      stage.appendChild(btnSend);
+      stage.appendChild(btnRow);
+      stage.appendChild(el('div', 'vs-modehint',
+        '🛡️ 保守＝老師原版，全班一致、保證能跑。　✨ 創意＝用你在 CH01 連結的 AI 真的重新生成，會不一樣、也不保證能跑（真實 Vibe Coding！）。'));
+      syncSendEnabled();
 
       const outWrap = el('div', 'vs-out-wrap');
       outWrap.hidden = true;
       stage.appendChild(outWrap);
 
-      btnSend.onclick = function () {
-        if (!isFirst && !(refBox && refBox.value.trim())) return;   // 保險
-        btnSend.disabled = true;
-        ta.disabled = true;
-        if (refBox) refBox.disabled = true;
-        outWrap.hidden = false;
-        outWrap.innerHTML = '';
-
-        // 若學員在建議內容之外自己加了字，貼心回應一下（但程式仍輸出標準解答）
+      function lockInputs() {
+        btnSafe.disabled = true; btnCreative.disabled = true;
+        ta.disabled = true; if (refBox) refBox.disabled = true;
+      }
+      function reenable() {
+        ta.disabled = false; if (refBox) refBox.disabled = false;
+        syncSendEnabled();
+      }
+      function showExtra() {
         const extra = extractExtra(ta.value, promptText);
-        if (extra) {
-          outWrap.appendChild(el('div', 'vs-added',
-            '📎 已收到你的補充：「' + esc(extra.slice(0, 60)) + (extra.length > 60 ? '…' : '') +
-            '」　（教學版會輸出標準解答，確保全班一致）'));
-        }
-        // 有沒有連結金鑰（CH01 存進 localStorage）——用來強化「真的在用你的 AI」的臨場感
-        let hasKey = false;
-        try { hasKey = !!localStorage.getItem('VIBE_AI_KEY'); } catch (e) {}
-        const keyNote = hasKey ? ' · 🔑 用你的金鑰' : '';
-        outWrap.appendChild(el('div', 'vs-lbl',
-          (isFirst ? '🤖 生成結果' : '🤖 生成結果（在你的參考程式上續寫 · 到這一段為止的完整程式）') + keyNote));
-        const think = el('div', 'vs-think', hasKey ? '🔑 連線你的 AI' : '🤔 分析你的需求');
+        if (extra) outWrap.appendChild(el('div', 'vs-added',
+          '📎 已收到你的補充：「' + esc(extra.slice(0, 60)) + (extra.length > 60 ? '…' : '') + '」'));
+      }
+      // 生成完 → 加「採用」鈕。isFullReplace=true（創意）時用整份 AI 結果取代累積檔
+      function addAccept(codeToUse, isFullReplace) {
+        const last = state.idx === gen.goals.length - 1;
+        const acc = el('button', 'vs-accept', last ? '✅ 採用這份程式，完成！' : '✅ 採用這份程式，下一段');
+        outWrap.appendChild(acc);
+        acc.onclick = function () {
+          if (isFullReplace) state.parts = [codeToUse];
+          else state.parts.push(codeToUse);
+          state.idx++;
+          refreshFileView();
+          refreshProg();
+          if (state.idx < gen.goals.length) {
+            renderGoal();
+            host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } else {
+            renderDone();
+          }
+        };
+      }
+      // 思考動畫
+      function runThink(msgs) {
+        const think = el('div', 'vs-think', msgs[0]);
         outWrap.appendChild(think);
-
-        // 假思考動畫：分階段顯示訊息，做出「AI 正在想」的臨場感 → 再逐字吐程式
-        const thinkMsgs = hasKey
-          ? ['🔑 連線你的 AI', '🤔 分析你的需求', '✍️ 撰寫程式中']
-          : ['🤔 分析你的需求', '🔎 對照參考程式', '✍️ 撰寫程式中'];
         let dotN = 0, ti = 0;
-        const thinkTimer = setInterval(() => {
+        const timer = setInterval(function () {
           dotN = (dotN + 1) % 4;
-          if (dotN === 0) ti = Math.min(ti + 1, thinkMsgs.length - 1);
-          think.textContent = thinkMsgs[ti] + '.'.repeat(dotN);
+          if (dotN === 0) ti = Math.min(ti + 1, msgs.length - 1);
+          think.textContent = msgs[ti] + '.'.repeat(dotN);
         }, 260);
+        return { stop: function () { clearInterval(timer); think.remove(); } };
+      }
 
-        setTimeout(() => {
-          clearInterval(thinkTimer);
-          think.remove();
-          // 第 2 段起：先秀出「目前的程式」(灰)，再逐字打出這段新增的部分；
-          // 打完即為「到目前為止的完整程式」
-          typeCumulative(outWrap, isFirst ? '' : prevCode, g.code, () => {
-            const last = state.idx === gen.goals.length - 1;
-            const acc = el('button', 'vs-accept',
-              last ? '✅ 採用這份程式，完成！' : '✅ 採用這份程式，下一段');
-            outWrap.appendChild(acc);
-            acc.onclick = function () {
-              state.parts.push(g.code);
-              state.idx++;
-              refreshFileView();
-              refreshProg();
-              if (state.idx < gen.goals.length) {
-                renderGoal();
-                host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-              } else {
-                renderDone();
-              }
-            };
+      // 🛡️ 保守：原本的模擬（逐字吐老師原版 g.code）
+      btnSafe.onclick = function () {
+        if (!isFirst && !(refBox && refBox.value.trim())) return;
+        lockInputs();
+        outWrap.hidden = false; outWrap.innerHTML = '';
+        showExtra();
+        outWrap.appendChild(el('div', 'vs-lbl',
+          isFirst ? '🛡️ 保守生成結果（老師原版）'
+                  : '🛡️ 保守生成結果（在參考程式上續寫 · 到這一段為止的完整程式）'));
+        const th = runThink(['🤔 分析你的需求', '🔎 對照參考程式', '✍️ 撰寫程式中']);
+        setTimeout(function () {
+          th.stop();
+          typeCumulative(outWrap, isFirst ? '' : prevCode, g.code, function () {
+            addAccept(g.code, false);
           });
-        }, 2000);
+        }, 1600);
+      };
+
+      // ✨ 創意：真的呼叫學員的 AI
+      btnCreative.onclick = function () {
+        if (!isFirst && !(refBox && refBox.value.trim())) return;
+        const aic = getAiCfg();
+        if (!aic.key) {
+          outWrap.hidden = false; outWrap.innerHTML = '';
+          outWrap.appendChild(el('div', 'vs-added',
+            '🔑 你還沒連結 AI 金鑰。請先到 <b>CH01</b> 連結你自己的金鑰再用創意生成（或改按「🛡️ 保守生成」）。'));
+          return;
+        }
+        lockInputs();
+        outWrap.hidden = false; outWrap.innerHTML = '';
+        showExtra();
+        outWrap.appendChild(el('div', 'vs-lbl', '✨ 創意生成結果（用你的 ' + esc(aic.provider) + ' 金鑰 · 真實 AI）'));
+        const th = runThink(['🔑 連線你的 AI', '🤔 AI 分析你的需求', '✍️ AI 撰寫程式中']);
+        const refCode = isFirst ? '' : (refBox ? refBox.value.trim() : '');
+        callAI(buildAiPrompt(g, isFirst, refCode)).then(function (code) {
+          th.stop();
+          if (!code) {
+            outWrap.appendChild(el('div', 'vs-added', '⚠ AI 沒有回傳內容，請再試一次，或改用「🛡️ 保守生成」。'));
+            reenable(); return;
+          }
+          const pre = el('pre', 'vs-output', esc(code));
+          outWrap.appendChild(pre);
+          outWrap.appendChild(el('div', 'vs-skip',
+            '✨ 這是 AI 現場生成的版本，可能和老師原版不同 —— 這就是真實的 Vibe Coding！'));
+          addAccept(code, true);
+        }).catch(function (err) {
+          th.stop();
+          outWrap.appendChild(el('div', 'vs-added',
+            '⚠ 創意生成失敗：' + esc((err && err.message) || '呼叫失敗') +
+            '<br>可能是金鑰無效／額度用完，或此供應商不支援瀏覽器直接呼叫（OpenAI 常見）。可改用 <b>Gemini／Groq</b>，或按「🛡️ 保守生成」。'));
+          reenable();
+        });
       };
 
       refreshProg();
