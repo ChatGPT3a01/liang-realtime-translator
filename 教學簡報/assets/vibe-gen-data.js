@@ -11,27 +11,27 @@ window.VIBE_GENERATORS = {
     "goals": [
       {
         "title": "打好伺服器地基",
-        "note": "匯入需要的工具、建立 Flask 應用程式、把即時語音之後會用到的設定先準備好。",
-        "prompt": "我要用 Python 的 Flask 做一個網站後端，檔名 app.py。\n幫我把最開頭的「地基」準備好：\n1. 匯入之後會用到的基本工具。\n2. 讀取 .env 裡的 API 金鑰。\n3. 建立 Flask 應用程式，並開啟即時通訊（SocketIO）。\n我是新手，請每個地方都加上清楚的中文註解。",
-        "code": "import os\nimport sys\nimport asyncio\nimport threading\nimport queue\nimport logging\nimport requests\n\n# 確保本檔所在目錄在 import 路徑上 (環境可能啟用 PYTHONSAFEPATH)\nsys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))\n\nfrom flask import Flask, render_template, request, jsonify, send_from_directory\nfrom flask_socketio import SocketIO, emit\nfrom dotenv import load_dotenv\nfrom google import genai\n\nimport providers\n\n# Load Env with override\nload_dotenv(override=True)\n# 有效金鑰解析：優先環境變數 GEMINI_API_KEY，其次 .env 的 GOOGLE_API_KEY\nAPI_KEY = os.getenv(\"GEMINI_API_KEY\") or os.getenv(\"GOOGLE_API_KEY\")\nif API_KEY:\n    print(f\"🔑 API Key loaded (starts with): {API_KEY[:6]}...\")\nelse:\n    print(\"❌ API Key NOT found! (set GEMINI_API_KEY or GOOGLE_API_KEY)\")\n\n# App Setup\napp = Flask(__name__)\napp.config['SECRET_KEY'] = 'gemini_secret!'\nsocketio = SocketIO(app, cors_allowed_origins=\"*\", async_mode='threading')\n\n# Logging\nlogging.basicConfig(level=logging.INFO)\nlogger = logging.getLogger(__name__)\n\n# Gemini Live realtime 模型 (即時語音對話模式)\n# gemini-3.5-live-translate-preview：3.5、專為即時翻譯設計，原生語音 AUDIO 輸出\n# （若即時翻譯品質或行為異常，可回退 gemini-3.1-flash-live-preview）\nLIVE_MODEL = \"gemini-3.5-live-translate-preview\"\n\n# Session Storage: Key: sid, Value: GeminiSession\nactive_sessions = {}"
+        "note": "匯入需要的工具、讀取設定、建立 Flask 應用程式。",
+        "prompt": "我要用 Python 的 Flask 做一個網站後端，檔名 app.py。\n幫我把最開頭的「地基」準備好：\n1. 匯入需要的基本工具（os、Flask、dotenv）。\n2. 讀取 .env 裡的設定。\n3. 建立 Flask 應用程式。\n4. 先用註解把整支檔案分成 10 區（之後每一章各填一區）。\n我是新手，請每個地方都加上清楚的中文註解。",
+        "code": "# app.py —— 整支檔案先分成 10 區，之後每一章填其中一區\nimport os\nfrom flask import Flask, jsonify, render_template\nfrom dotenv import load_dotenv\n\n# ===== 1. 設定與金鑰 =====（CH04，這章先放一點）\nload_dotenv()                      # 讀取 .env 裡的設定\napp = Flask(__name__)\n\n# ===== 2. 翻譯 API =====（CH06 會填 /api/translate）\n# ===== 3. 朗讀 TTS API =====（CH08 會填 /api/tts）\n# ===== 4. 即時語音 SocketIO =====（CH09 會填）\n# ===== 5. 拍照 / 檔案 API =====（CH11–12 會填）\n# ===== 6. 匯率 API =====（CH13 會填 /api/currency）\n# ===== 7. 天氣 API =====（CH14 會填 /api/weather）\n# ===== 8. 旅遊助手 API =====（CH15 會填）\n# ===== 9. PWA 與路由 =====（CH16 會填 / 與靜態檔）"
       },
       {
         "title": "做一個首頁",
-        "note": "有人打開網站時，回傳我們的前端頁面。",
-        "prompt": "幫我加一個「首頁」路由：當有人打開網站根目錄時，回傳前端頁面 index.html。請加中文註解。",
-        "code": "@app.route('/')\ndef index():\n    return render_template('index.html')"
+        "note": "有人打開網站時，先回一句話，證明伺服器活著。",
+        "prompt": "幫我加一個「首頁」路由：當有人打開網站根目錄時，先回傳一句話（例如「Hello 亮言！我的翻譯 App 開工了 🚀」），證明伺服器有活著。（等 CH05 做好前端頁面，再改成回傳 index.html。）請加中文註解。",
+        "code": "# ===== 10. 啟動 =====\n# 首頁：先回一句話，證明伺服器活著\n# （CH05 做好前端後，這裡會改成 return render_template('index.html')）\n@app.route('/')\ndef index():\n    return 'Hello 亮言！我的翻譯 App 開工了 🚀'"
       },
       {
         "title": "做一個健康檢查",
-        "note": "一個可以確認伺服器活著、金鑰有沒有讀到的檢查點。",
-        "prompt": "幫我加一個 /api/health 的檢查路由，回傳一個 JSON，讓我能確認伺服器正常運作、以及有沒有讀到金鑰。請加中文註解。",
-        "code": "@app.route('/api/health')\ndef health():\n    return jsonify({\n        \"ok\": True,\n        \"gemini_key\": bool(API_KEY),\n        \"live_model\": LIVE_MODEL,\n    })"
+        "note": "一個可以確認伺服器活著的檢查點。",
+        "prompt": "幫我加一個 /api/health 的檢查路由，回傳一個簡單的 JSON（例如 {\"ok\": true}），讓我能確認伺服器正常運作。請加中文註解。",
+        "code": "# 健康檢查：回傳一小段 JSON，用來確認伺服器有正常運作\n@app.route('/api/health')\ndef health():\n    return jsonify({'ok': True})"
       },
       {
         "title": "讓伺服器可以啟動",
         "note": "加上啟動程式，本機和雲端都能跑起來。",
         "prompt": "最後幫我加上「啟動伺服器」的程式：本機用預設埠號，雲端則讀環境變數的 PORT。請加中文註解。",
-        "code": "if __name__ == '__main__':\n    if not API_KEY:\n        print(\"⚠️  無 Gemini 金鑰：即時模式與 Gemini 翻譯將無法使用，但 OpenAI 相容供應商仍可用。\")\n    port = int(os.getenv('PORT', '5001'))          # 雲端平台會用 PORT 環境變數指定埠號\n    debug = os.getenv('FLASK_DEBUG', '0') == '1'    # 公開部署預設關閉 debug\n    print(f\"🚀 Starting Flask Server on port {port} (debug={debug})\")\n    socketio.run(app, host='0.0.0.0', port=port, debug=debug, allow_unsafe_werkzeug=True)"
+        "code": "# 啟動伺服器：本機用預設埠號 5001，雲端平台會用 PORT 環境變數指定\nif __name__ == '__main__':\n    port = int(os.getenv('PORT', '5001'))\n    app.run(host='0.0.0.0', port=port, debug=True)"
       }
     ]
   },
